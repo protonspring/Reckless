@@ -10,7 +10,7 @@ impl super::Board {
     ///
     /// Promotions and castling always pass this check.
     pub fn see(&self, mv: Move, threshold: i32) -> bool {
-        if mv.is_castling() {
+        if mv.is_castling() || mv.is_en_passant() {
             return true;
         }
 
@@ -34,10 +34,6 @@ impl super::Board {
         let mut occupancies = self.occupancies();
         occupancies.clear(mv.from());
         occupancies.set(mv.to());
-
-        if mv.is_en_passant() {
-            occupancies.clear(mv.to() ^ 8);
-        }
 
         let mut attackers = self.attackers_to(mv.to(), occupancies) & occupancies;
         let mut stm = !self.side_to_move();
