@@ -48,9 +48,15 @@ impl super::Board {
         let white_pins = self.pinned(Color::White) & !between(self.king_square(Color::White), mv.to());
         let black_pins = self.pinned(Color::Black) & !between(self.king_square(Color::Black), mv.to());
 
-        let allowed = !(white_pins | black_pins);
+        let mut allowed = !(white_pins | black_pins);
 
         loop {
+
+            // Allow all pieces on this stm, if the enemy pinners are gone
+            if (occupancies & self.pinner(!stm)).is_empty() {
+                allowed = allowed | self.colors(stm);
+            }
+
             let our_attackers = attackers & allowed & self.colors(stm);
             if our_attackers.is_empty() {
                 break;
