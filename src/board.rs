@@ -32,7 +32,8 @@ struct InternalState {
     repetition: i32,
     captured: Option<Piece>,
     recapture_square: Square,
-    threats: Bitboard,
+    pawn_threats: Bitboard,
+    all_threats: Bitboard,
     pinned: [Bitboard; Color::NUM],
     checkers: Bitboard,
 }
@@ -97,12 +98,16 @@ impl Board {
         self.state.checkers
     }
 
-    pub const fn threats(&self) -> Bitboard {
-        self.state.threats
+    pub const fn pawn_threats(&self) -> Bitboard {
+        self.state.pawn_threats
+    }
+
+    pub const fn all_threats(&self) -> Bitboard {
+        self.state.all_threats
     }
 
     pub fn prior_threats(&self) -> Bitboard {
-        self.state_stack[self.state_stack.len() - 1].threats
+        self.state_stack[self.state_stack.len() - 1].all_threats
     }
 
     pub const fn captured_piece(&self) -> Option<Piece> {
@@ -331,11 +336,11 @@ impl Board {
                 _ => unreachable!(),
             };
 
-            return !self.threats().contains(to) && !self.pinned(self.side_to_move).contains(self.castling_rooks[kind]);
+            return !self.all_threats().contains(to) && !self.pinned(self.side_to_move).contains(self.castling_rooks[kind]);
         }
 
         if self.piece_on(from).piece_type() == PieceType::King {
-            return !self.threats().contains(to);
+            return !self.all_threats().contains(to);
         }
 
         if self.pinned(self.side_to_move).contains(from) {
@@ -384,7 +389,7 @@ impl Board {
 
             return self.castling().is_allowed(kind)
                 && (self.castling_path[kind] & self.occupancies()).is_empty()
-                && (self.castling_threat[kind] & self.threats()).is_empty();
+                && (self.castling_threat[kind] & self.all_threats()).is_empty();
         }
 
         if piece == PieceType::None || !self.us().contains(from) || self.us().contains(to) {
@@ -465,6 +470,7 @@ impl Board {
         let mut threats = Bitboard::default();
 
         threats |= pawn_attacks_setwise(self.their(PieceType::Pawn), !self.side_to_move);
+        self.state.pawn_threats = threats;
 
         for square in self.their(PieceType::Knight) {
             threats |= knight_attacks(square);
@@ -492,7 +498,7 @@ impl Board {
             }
         }
 
-        self.state.threats = threats | king_attacks(self.their(PieceType::King).lsb());
+        self.state.all_threats = threats | king_attacks(self.their(PieceType::King).lsb());
     }
 
     /// Updates the checkers bitboard to mark opponent pieces currently threatening our king,

@@ -1,7 +1,7 @@
 use crate::{
     search::NodeType,
     thread::ThreadData,
-    types::{ArrayVec, MAX_MOVES, Move, MoveList, PieceType},
+    types::{ArrayVec, MAX_MOVES, Move, MoveList, PieceType, Bitboard},
 };
 
 #[derive(Copy, Clone, Eq, PartialEq, PartialOrd)]
@@ -160,7 +160,7 @@ impl MovePicker {
     }
 
     fn score_noisy(&mut self, td: &ThreadData) {
-        let threats = td.board.threats();
+        let threats = td.board.all_threats();
 
         for entry in self.list.iter_mut() {
             let mv = entry.mv;
@@ -179,7 +179,7 @@ impl MovePicker {
     }
 
     fn score_quiet(&mut self, td: &ThreadData, ply: isize) {
-        let threats = td.board.threats();
+        let threats = td.board.all_threats();
         let side = td.board.side_to_move();
 
         for entry in self.list.iter_mut() {
@@ -195,6 +195,11 @@ impl MovePicker {
                 + td.conthist(ply, 2, mv)
                 + td.conthist(ply, 4, mv)
                 + td.conthist(ply, 6, mv);
+
+            //Further penalize bad threats
+            if (td.board.pawn_threats() & mv.to().to_bb()) != Bitboard(0) {
+                entry.score -= 5000;
+            }
         }
     }
 }
