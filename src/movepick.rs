@@ -195,6 +195,16 @@ impl MovePicker {
                 + td.conthist(ply, 2, mv)
                 + td.conthist(ply, 4, mv)
                 + td.conthist(ply, 6, mv);
+
+            if mv.is_promotion() {
+
+                if mv.promotion_piece() == Some(PieceType::Queen) {
+                    entry.score += 50000;
+                }
+                else {
+                    entry.score -= 50000;
+                }
+            }
         }
     }
 }
