@@ -200,13 +200,8 @@ impl MovePicker {
             if (td.board.pawn_threats() & mv.to().to_bb()) != Bitboard(0) {
                 let pt = td.board.piece_on(mv.from()).piece_type();
 
-                match pt {
-                    PieceType::Pawn   => entry.score -=    0,
-                    PieceType::Knight => entry.score -= 1000,
-                    PieceType::Bishop => entry.score -= 1000,
-                    PieceType::Rook   => entry.score -= 4000,
-                    PieceType::Queen  => entry.score -= 5000,
-                    _ => entry.score -= 6000, //king = illegal
+                if pt == PieceType::Queen {
+                    entry.score -= 5000;
                 }
             }
         }
