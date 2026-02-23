@@ -1,6 +1,6 @@
 use crate::{
             //(self.pieces(attacker) & our_attackers).lsb());
-    lookup::{between, ray_pass, bishop_attacks, rook_attacks},
+    lookup::{ray_pass, bishop_attacks, rook_attacks},
     types::{Bitboard, Color, Move, PieceType},
 };
 
@@ -46,8 +46,8 @@ impl super::Board {
         let diagonal = self.pieces(PieceType::Bishop) | self.pieces(PieceType::Queen);
         let orthogonal = self.pieces(PieceType::Rook) | self.pieces(PieceType::Queen);
 
-        let white_pins = self.pinned(Color::White) & !between(self.king_square(Color::White), mv.to());
-        let black_pins = self.pinned(Color::Black) & !between(self.king_square(Color::Black), mv.to());
+        let white_pins = self.pinned(Color::White) & !ray_pass(self.king_square(Color::White), mv.to());
+        let black_pins = self.pinned(Color::Black) & !ray_pass(self.king_square(Color::Black), mv.to());
 
         let white_pinner = self.pinner(Color::White) & !ray_pass(self.king_square(Color::Black), mv.to());
         let black_pinner = self.pinner(Color::Black) & !ray_pass(self.king_square(Color::White), mv.to());
@@ -85,8 +85,11 @@ impl super::Board {
 
             //if (self.pinner(stm) & the_attacker.to_bb() & (white_pins | black_pins)) != Bitboard(0) { 
             if (the_attacker.to_bb() & unaligned_pinners) != Bitboard(0) { 
+            //if (self.pieces(attacker) & our_attackers & unaligned_pinners) != Bitboard(0) {
                 //println!("unaligned pinner gone");
-                allowed |= between(self.king_square(!stm), the_attacker);
+                //allowed |= between(self.king_square(!stm), the_attacker);
+                //allowed |= ray_pass(self.king_square(!stm), the_attacker);
+                allowed |= self.colors(!stm); //ray_pass(self.king_square(!stm), the_attacker);
             }
             //if (the_attacker.to_bb() & self.pinned(stm) & (white_pins | black_pins)) != Bitboard(0) { 
                 //println!("previously not allowed allowed");
