@@ -204,4 +204,28 @@ impl Board {
         fen.push_str(&self.fullmove_number.to_string());
         fen
     }
+
+    pub fn to_ascii(&self) -> String {
+        let mut ascii = String::new();
+        ascii.push_str(" +---+---+---+---+---+---+---+---+\n");
+        for rank in (0..8).rev() {
+            ascii.push_str(" |");
+            for file in 0..8 {
+                let square = Square::from_rank_file(rank, file);
+                let piece = self.piece_on(square);
+                let symbol = piece.try_into().unwrap_or(' ');
+                ascii.push_str(&format!(" {symbol} |"));
+            }
+            ascii.push_str(&format!(" {}\n", rank + 1));
+            ascii.push_str(" +---+---+---+---+---+---+---+---+\n");
+        }
+        ascii.push_str("   a   b   c   d   e   f   g   h\n");
+        ascii
+    }
+}
+
+impl std::fmt::Display for Board {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}\nFEN: {}", self.to_ascii(), self.to_fen())
+    }
 }

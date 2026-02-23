@@ -10,7 +10,7 @@ use crate::{
     time::{Limits, TimeManager},
     tools,
     transposition::DEFAULT_TT_SIZE,
-    types::{Color, MAX_MOVES, Move, Score, Square, is_decisive, is_loss, is_win},
+    types::{Color, MAX_MOVES, Move, Score, is_decisive, is_loss, is_win},
 };
 
 #[derive(Copy, Clone, PartialEq, Eq)]
@@ -81,7 +81,7 @@ pub fn message_loop(mut buffer: VecDeque<String>) {
             // Non-UCI commands
             ["compiler"] => compiler(),
             ["eval"] => eval(threads.main_thread()),
-            ["d"] => display(threads.main_thread()),
+            ["d"] => println!("{}", threads.main_thread().board),
             ["bench", args @ ..] => match mode {
                 Mode::Uci => tools::bench::<true>(args),
                 Mode::Cli => tools::bench::<false>(args),
@@ -334,25 +334,6 @@ fn eval(td: &mut ThreadData) {
         Color::Black => -td.nnue.evaluate(&td.board),
     };
     println!("{eval}");
-}
-
-fn display(td: &ThreadData) {
-    println!(" +---+---+---+---+---+---+---+---+");
-    for rank in (0..8).rev() {
-        print!(" |");
-        for file in 0..8 {
-            let square = Square::from_rank_file(rank, file);
-            let piece = td.board.piece_on(square);
-            let symbol = piece.try_into().unwrap_or(' ');
-            print!(" {symbol} |");
-        }
-        println!(" {}", rank + 1);
-        println!(" +---+---+---+---+---+---+---+---+");
-    }
-    println!("   a   b   c   d   e   f   g   h");
-    println!();
-
-    println!("FEN: {}", td.board.to_fen());
 }
 
 fn parse_limits(color: Color, tokens: &[&str]) -> Limits {
