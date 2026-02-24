@@ -46,27 +46,18 @@ impl super::Board {
         let diagonal = self.pieces(PieceType::Bishop) | self.pieces(PieceType::Queen);
         let orthogonal = self.pieces(PieceType::Rook) | self.pieces(PieceType::Queen);
 
-        let white_pins = self.pinned(Color::White) & !ray_pass(self.king_square(Color::White), mv.to());
-        let black_pins = self.pinned(Color::Black) & !ray_pass(self.king_square(Color::Black), mv.to());
-
-        let white_pinner = self.pinner(Color::White) & !ray_pass(self.king_square(Color::Black), mv.to());
-        let black_pinner = self.pinner(Color::Black) & !ray_pass(self.king_square(Color::White), mv.to());
-
-        let mut allowed = !(white_pins | black_pins);
-
-        let unaligned_pinners = white_pinner | black_pinner;
-
-        //println!("{self}");
-        //println!("Move: {} - {}", mv.from(), mv.to());
-
+        let king_rays: [Bitboard; 2] = [ ray_pass(self.king_square(Color::White), mv.to()),
+                          ray_pass(self.king_square(Color::Black), mv.to()) ];
+                            
         loop {
 
-            // Allow all pieces on this stm, if the enemy pinners are gone
-            //if (occupancies & self.pinner(!stm)).is_empty() {
-                //allowed = allowed | self.colors(stm);
-            //}
+            let mut our_attackers = attackers & self.colors(stm);
 
-            let our_attackers = attackers & allowed & self.colors(stm);
+            // Exclude pinned pieces if pinners are still on the board
+            if (self.pinner(!stm) & occupancies) != Bitboard(0) {
+                our_attackers &= !(self.pinned(stm) & !king_rays[stm]);
+            }
+
             if our_attackers.is_empty() {
                 break;
             }
@@ -80,21 +71,6 @@ impl super::Board {
 
             // Make the capture
             let the_attacker = (self.pieces(attacker) & our_attackers).lsb();
-
-            //println!("Attack from: {}", the_attacker);
-
-            //if (self.pinner(stm) & the_attacker.to_bb() & (white_pins | black_pins)) != Bitboard(0) { 
-            if (the_attacker.to_bb() & unaligned_pinners) != Bitboard(0) { 
-            //if (self.pieces(attacker) & our_attackers & unaligned_pinners) != Bitboard(0) {
-                //println!("unaligned pinner gone");
-                //allowed |= between(self.king_square(!stm), the_attacker);
-                //allowed |= ray_pass(self.king_square(!stm), the_attacker);
-                allowed |= self.colors(!stm); //ray_pass(self.king_square(!stm), the_attacker);
-            }
-            //if (the_attacker.to_bb() & self.pinned(stm) & (white_pins | black_pins)) != Bitboard(0) { 
-                //println!("previously not allowed allowed");
-            //}
-
             occupancies.clear(the_attacker);
             stm = !stm;
 
