@@ -10,8 +10,8 @@ impl super::Board {
     ///
     /// Promotions and castling always pass this check.
     pub fn see(&self, mv: Move, threshold: i32) -> bool {
-        if mv.is_castling() {
-            return true;
+        if mv.is_castling() || mv.is_promotion() || mv.is_en_passant() {
+            return threshold <= 0;
         }
 
         // In the best case, we win a piece, but still end up with a negative balance
@@ -34,10 +34,6 @@ impl super::Board {
         let mut occupancies = self.occupancies();
         occupancies.clear(mv.from());
         occupancies.set(mv.to());
-
-        if mv.is_en_passant() {
-            occupancies.clear(mv.to() ^ 8);
-        }
 
         let mut attackers = self.attackers_to(mv.to(), occupancies) & occupancies;
         let mut stm = !self.side_to_move();
@@ -93,9 +89,6 @@ impl super::Board {
     }
 
     fn move_value(&self, mv: Move) -> i32 {
-        if mv.is_en_passant() {
-            return PieceType::Pawn.value();
-        }
 
         let capture = self.piece_on(mv.to()).piece_type();
 
