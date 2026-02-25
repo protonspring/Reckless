@@ -11,7 +11,7 @@ impl super::Board {
     /// Promotions and castling always pass this check.
     pub fn see(&self, mv: Move, threshold: i32) -> bool {
         if mv.is_castling() {
-            return true;
+            return threshold <= 1;
         }
 
         // In the best case, we win a piece, but still end up with a negative balance
