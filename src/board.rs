@@ -33,7 +33,7 @@ struct InternalState {
     captured: Option<Piece>,
     recapture_square: Square,
     threats: Bitboard,
-    pinned:  [Bitboard; Color::NUM],
+    pinned: [Bitboard; Color::NUM],
     pinners: [Bitboard; Color::NUM],
     checkers: Bitboard,
 }
@@ -505,8 +505,8 @@ impl Board {
     pub fn update_king_threats(&mut self) {
         let our_king = self.king_square(self.side_to_move);
 
-        self.state.pinned   = [Bitboard::default(); 2];
-        self.state.pinners  = [Bitboard::default(); 2];
+        self.state.pinned = [Bitboard::default(); 2];
+        self.state.pinners = [Bitboard::default(); 2];
         self.state.checkers = Bitboard::default();
 
         self.state.checkers |= pawn_attacks(our_king, self.side_to_move) & self.their(PieceType::Pawn);

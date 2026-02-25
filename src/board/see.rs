@@ -1,5 +1,5 @@
 use crate::{
-    lookup::{ray_pass, bishop_attacks, rook_attacks},
+    lookup::{bishop_attacks, ray_pass, rook_attacks},
     types::{Bitboard, Color, Move, PieceType},
 };
 
@@ -45,11 +45,10 @@ impl super::Board {
         let diagonal = self.pieces(PieceType::Bishop) | self.pieces(PieceType::Queen);
         let orthogonal = self.pieces(PieceType::Rook) | self.pieces(PieceType::Queen);
 
-        let king_rays: [Bitboard; 2] = [ ray_pass(self.king_square(Color::White), mv.to()),
-                          ray_pass(self.king_square(Color::Black), mv.to()) ];
+        let king_rays =
+            [ray_pass(self.king_square(Color::White), mv.to()), ray_pass(self.king_square(Color::Black), mv.to())];
 
         loop {
-
             let mut our_attackers = attackers & self.colors(stm);
 
             // Exclude pinned pieces if pinners are still on the board
