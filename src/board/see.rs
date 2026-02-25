@@ -1,5 +1,4 @@
 use crate::{
-            //(self.pieces(attacker) & our_attackers).lsb());
     lookup::{ray_pass, bishop_attacks, rook_attacks},
     types::{Bitboard, Color, Move, PieceType},
 };
@@ -48,13 +47,13 @@ impl super::Board {
 
         let king_rays: [Bitboard; 2] = [ ray_pass(self.king_square(Color::White), mv.to()),
                           ray_pass(self.king_square(Color::Black), mv.to()) ];
-                            
+
         loop {
 
             let mut our_attackers = attackers & self.colors(stm);
 
             // Exclude pinned pieces if pinners are still on the board
-            if (self.pinner(!stm) & occupancies) != Bitboard(0) {
+            if (self.pinners(!stm) & occupancies) != Bitboard(0) {
                 our_attackers &= !(self.pinned(stm) & !king_rays[stm]);
             }
 
@@ -70,8 +69,7 @@ impl super::Board {
             }
 
             // Make the capture
-            let the_attacker = (self.pieces(attacker) & our_attackers).lsb();
-            occupancies.clear(the_attacker);
+            occupancies.clear((self.pieces(attacker) & our_attackers).lsb());
             stm = !stm;
 
             // Assume our piece is going to be captured

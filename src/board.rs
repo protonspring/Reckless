@@ -33,8 +33,8 @@ struct InternalState {
     captured: Option<Piece>,
     recapture_square: Square,
     threats: Bitboard,
-    pinned: [Bitboard; Color::NUM],
-    pinner: [Bitboard; Color::NUM],
+    pinned:  [Bitboard; Color::NUM],
+    pinners: [Bitboard; Color::NUM],
     checkers: Bitboard,
 }
 
@@ -94,8 +94,8 @@ impl Board {
         self.state.pinned[color as usize]
     }
 
-    pub const fn pinner(&self, color: Color) -> Bitboard {
-        self.state.pinner[color as usize]
+    pub const fn pinners(&self, color: Color) -> Bitboard {
+        self.state.pinners[color as usize]
     }
 
     pub const fn checkers(&self) -> Bitboard {
@@ -505,8 +505,8 @@ impl Board {
     pub fn update_king_threats(&mut self) {
         let our_king = self.king_square(self.side_to_move);
 
-        self.state.pinned = [Bitboard::default(); 2];
-        self.state.pinner = [Bitboard::default(); 2];
+        self.state.pinned   = [Bitboard::default(); 2];
+        self.state.pinners  = [Bitboard::default(); 2];
         self.state.checkers = Bitboard::default();
 
         self.state.checkers |= pawn_attacks(our_king, self.side_to_move) & self.their(PieceType::Pawn);
@@ -526,7 +526,7 @@ impl Board {
                 match blockers.popcount() {
                     0 if color == self.side_to_move => self.state.checkers.set(square),
                     1 => {
-                        self.state.pinner[!color].set(square);
+                        self.state.pinners[!color].set(square);
                         self.state.pinned[color] |= blockers;
                     }
                     _ => (),
