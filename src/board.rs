@@ -464,19 +464,11 @@ impl Board {
 
         let king_sq = self.their(PieceType::King).lsb();
 
-        //println!("looking at move: {}-{}", mv.from(), mv.to());
         // Check discovery checks
-        if self.state.dcblockers[self.side_to_move].contains(mv.from()) {
-
-            //println!("{self}");
-            //println!("moving blocker: {}-{}", mv.from(), mv.to());
+        if self.dcblockers(self.side_to_move).contains(mv.from()) {
 
             // The moving piece was a blocker.  Now check if it moves out of the ray.
-            if !ray_pass(king_sq, mv.from()).contains(mv.to()) {
-            
-                //println!("{self}");
-                //println!("move checks: {}-{}", mv.from(), mv.to());
-
+            if ray_pass(king_sq, mv.from()) != ray_pass(king_sq, mv.to()) {
                 return true;
             }
         }
@@ -584,11 +576,6 @@ impl Board {
                 }
             }
         }
-
-        //if self.state.dccheckers[Color::White] != Bitboard(0) {
-            //println!("{self}");
-            //println!("{}", self.state.dccheckers[Color::White]);
-        //}
     }
 
     pub fn update_hash_keys(&mut self) {
