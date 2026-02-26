@@ -23,8 +23,8 @@ pub use zobrist::*;
 /// The maximum number of plies that can be searched.
 pub const MAX_PLY: usize = 128;
 
-/// According to [Chess Programming Wiki](https://www.chessprogramming.org/Encoding_Moves#MoveIndex),
-/// the maximum number of chess moves in a certain position *appears* to be 218.
+/// The maximum number of chess moves in any legal position is 218.
+/// For more details see https://lichess.org/@/Tobs40/blog/why-a-position-cant-have-more-than-218-moves/a5xdxeqs
 /// Padding added because an optimization in MoveList::push_setwise writes 16 moves at a time to the move list (218 + 16 < 256).
 pub const MAX_MOVES: usize = 256;
 

@@ -553,9 +553,10 @@ impl Board {
                 let blockers = between(king, square) & self.occupancies();
 
                 match blockers.popcount() {
-
-                    // Illegal if this is the wrong color
-                    0 => self.state.checkers.set(square),
+                    0 => {
+                        debug_assert_eq!(color, self.side_to_move);
+                        self.state.checkers.set(square);
+                    }
                     1 => {
 
                         // If the blocking piece is same as the king
