@@ -40,6 +40,7 @@ impl super::Board {
 
         let mut attackers = self.attackers_to(mv.to(), occupancies) & occupancies;
         let mut stm = !self.side_to_move();
+        let mut last_attacker = mv.from();
 
         let diagonal = self.pieces(PieceType::Bishop) | self.pieces(PieceType::Queen);
         let orthogonal = self.pieces(PieceType::Rook) | self.pieces(PieceType::Queen);
@@ -55,6 +56,11 @@ impl super::Board {
                 our_attackers &= !(self.pinned(stm) & !king_rays[stm]);
             }
 
+            // Limit to king if the previous move exposed a discovery check
+            if (self.dcblockers(!stm) & !king_rays[stm]).contains(last_attacker) {
+                our_attackers &= self.pieces(PieceType::King);
+            }
+
             if our_attackers.is_empty() {
                 break;
             }
@@ -67,7 +73,8 @@ impl super::Board {
             }
 
             // Make the capture
-            occupancies.clear((self.pieces(attacker) & our_attackers).lsb());
+            last_attacker = (self.pieces(attacker) & our_attackers).lsb();
+            occupancies.clear(last_attacker);
             stm = !stm;
 
             // Assume our piece is going to be captured
