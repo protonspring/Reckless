@@ -460,15 +460,23 @@ impl Board {
     ///
     /// Roughly 90–95% accurate. Does not account for discovered checks, promotions,
     /// en passant, or checks delivered via castling.
-    pub fn is_direct_check(&self, mv: Move) -> bool {
+    pub fn move_checks(&self, mv: Move) -> bool {
 
         let king_sq = self.their(PieceType::King).lsb();
 
+        //println!("looking at move: {}-{}", mv.from(), mv.to());
         // Check discovery checks
         if self.state.dcblockers[self.side_to_move].contains(mv.from()) {
 
+            //println!("{self}");
+            //println!("moving blocker: {}-{}", mv.from(), mv.to());
+
             // The moving piece was a blocker.  Now check if it moves out of the ray.
             if !ray_pass(king_sq, mv.from()).contains(mv.to()) {
+            
+                //println!("{self}");
+                //println!("move checks: {}-{}", mv.from(), mv.to());
+
                 return true;
             }
         }
@@ -538,19 +546,20 @@ impl Board {
         self.state.checkers |= pawn_attacks(our_king, self.side_to_move) & self.their(PieceType::Pawn);
         self.state.checkers |= knight_attacks(our_king) & self.their(PieceType::Knight);
 
-        let diagonal = self.pieces(PieceType::Bishop) | self.pieces(PieceType::Queen);
-        let orthogonal = self.pieces(PieceType::Rook) | self.pieces(PieceType::Queen);
+        let alldiagonal = self.pieces(PieceType::Bishop) | self.pieces(PieceType::Queen);
+        let allorthogonal = self.pieces(PieceType::Rook) | self.pieces(PieceType::Queen);
 
         for color in [Color::White, Color::Black] {
             let king = self.king_square(color);
 
-            let diagonal = diagonal & bishop_attacks(king, self.colors(!color)) & self.colors(!color);
-            let orthogonal = orthogonal & rook_attacks(king, self.colors(!color)) & self.colors(!color);
+            let diagonal   =   alldiagonal & bishop_attacks(king, Bitboard(0)) & self.colors(!color);
+            let orthogonal = allorthogonal &   rook_attacks(king, Bitboard(0)) & self.colors(!color);
 
             for square in diagonal | orthogonal {
 
                 //check blockers for both colors
                 let blockers = between(king, square) & self.occupancies();
+
                 match blockers.popcount() {
 
                     // Illegal if this is the wrong color
@@ -568,13 +577,18 @@ impl Board {
                         // So, discovery checker possibility
                         else {
                             self.state.dccheckers[!color].set(square);
-                            self.state.dcblockers[color] |= blockers;
+                            self.state.dcblockers[!color] |= blockers;
                         }
                     },
                     _ => (),
                 }
             }
         }
+
+        //if self.state.dccheckers[Color::White] != Bitboard(0) {
+            //println!("{self}");
+            //println!("{}", self.state.dccheckers[Color::White]);
+        //}
     }
 
     pub fn update_hash_keys(&mut self) {
