@@ -35,6 +35,8 @@ struct InternalState {
     threats: Bitboard,
     pinned: [Bitboard; Color::NUM],
     pinners: [Bitboard; Color::NUM],
+    dcblockers: [Bitboard; Color::NUM],
+    dccheckers: [Bitboard; Color::NUM],
     checkers: Bitboard,
 }
 
@@ -96,6 +98,14 @@ impl Board {
 
     pub const fn pinners(&self, color: Color) -> Bitboard {
         self.state.pinners[color as usize]
+    }
+
+    pub const fn dcblockers(&self, color: Color) -> Bitboard {
+        self.state.dcblockers[color as usize]
+    }
+
+    pub const fn dccheckers(&self, color: Color) -> Bitboard {
+        self.state.dccheckers[color as usize]
     }
 
     pub const fn checkers(&self) -> Bitboard {
@@ -507,6 +517,8 @@ impl Board {
 
         self.state.pinned = [Bitboard::default(); 2];
         self.state.pinners = [Bitboard::default(); 2];
+        self.state.dcblockers = [Bitboard::default(); 2];
+        self.state.dccheckers = [Bitboard::default(); 2];
         self.state.checkers = Bitboard::default();
 
         self.state.checkers |= pawn_attacks(our_king, self.side_to_move) & self.their(PieceType::Pawn);
@@ -522,13 +534,29 @@ impl Board {
             let orthogonal = orthogonal & rook_attacks(king, self.colors(!color)) & self.colors(!color);
 
             for square in diagonal | orthogonal {
-                let blockers = between(king, square) & self.colors(color);
+
+                //check blockers for both colors
+                let blockers = between(king, square) & self.occupancies();
                 match blockers.popcount() {
-                    0 if color == self.side_to_move => self.state.checkers.set(square),
+
+                    // Illegal if this is the wrong color
+                    0 => self.state.checkers.set(square),
                     1 => {
-                        self.state.pinners[!color].set(square);
-                        self.state.pinned[color] |= blockers;
-                    }
+
+                        // If the blocking piece is same as the king
+                        // It's pinner and pinned
+                        if (self.colors(color) & blockers) != Bitboard(0) {
+                            self.state.pinners[!color].set(square);
+                            self.state.pinned[color] |= blockers;
+                        }
+
+                        // The blocking piece is same color as the pinner
+                        // So, discovery checker possibility
+                        else {
+                            self.state.dccheckers[!color].set(square);
+                            self.state.dcblockers[color] |= blockers;
+                        }
+                    },
                     _ => (),
                 }
             }
