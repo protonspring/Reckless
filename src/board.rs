@@ -1,6 +1,6 @@
 use crate::{
     lookup::{
-        attacks, between, bishop_attacks, cuckoo, cuckoo_a, cuckoo_b, h1, h2, king_attacks, knight_attacks,
+        attacks, ray_pass, between, bishop_attacks, cuckoo, cuckoo_a, cuckoo_b, h1, h2, king_attacks, knight_attacks,
         pawn_attacks, pawn_attacks_setwise, queen_attacks, rook_attacks,
     },
     types::{ArrayVec, Bitboard, Castling, CastlingKind, Color, Move, Piece, PieceType, Square, ZOBRIST},
@@ -461,9 +461,23 @@ impl Board {
     /// Roughly 90–95% accurate. Does not account for discovered checks, promotions,
     /// en passant, or checks delivered via castling.
     pub fn is_direct_check(&self, mv: Move) -> bool {
+
+        let king_sq = self.their(PieceType::King).lsb();
+
+        // Check discovery checks
+        if self.state.dcblockers[self.side_to_move].contains(mv.from()) {
+
+            // The moving piece was a blocker.  Now check if it moves out of the ray.
+            if !ray_pass(king_sq, mv.from()).contains(mv.to()) {
+                return true;
+            }
+        }
+
+        // Check direct checks
         let occupancies = self.occupancies() ^ mv.from().to_bb() ^ mv.to().to_bb();
         let direct_attacks = attacks(self.moved_piece(mv), mv.to(), occupancies);
-        direct_attacks.contains(self.their(PieceType::King).lsb())
+
+        return direct_attacks.contains(king_sq);
     }
 
     pub fn update_threats(&mut self) {
