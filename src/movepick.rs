@@ -195,6 +195,11 @@ impl MovePicker {
                 + td.conthist(ply, 2, mv)
                 + td.conthist(ply, 4, mv)
                 + td.conthist(ply, 6, mv);
+
+            // Bonus for checking moves
+            if td.board.checking_squares(td.board.moved_piece(mv).piece_type()).contains(mv.to()) {
+                entry.score += 5000;
+            }
         }
     }
 }
