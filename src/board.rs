@@ -524,7 +524,7 @@ impl Board {
             for square in diagonal | orthogonal {
                 let blockers = between(king, square) & self.colors(color);
                 match blockers.popcount() {
-                    0 if color == self.side_to_move => self.state.checkers.set(square),
+                    0 => self.state.checkers.set(square),
                     1 => {
                         self.state.pinners[!color].set(square);
                         self.state.pinned[color] |= blockers;
