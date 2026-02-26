@@ -198,7 +198,7 @@ impl MovePicker {
 
             // Bonus for checking moves
             if td.board.checking_squares(td.board.moved_piece(mv).piece_type()).contains(mv.to()) {
-                entry.score += 1000;
+                entry.score += 10000;
             }
         }
     }
