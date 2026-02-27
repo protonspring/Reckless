@@ -1,8 +1,8 @@
 use crate::{
+    lookup::{bishop_attacks, knight_attacks, pawn_attacks_setwise, rook_attacks},
     search::NodeType,
     thread::ThreadData,
     types::{ArrayVec, Bitboard, MAX_MOVES, Move, MoveList, PieceType},
-    lookup::{pawn_attacks_setwise, knight_attacks, bishop_attacks, rook_attacks}
 };
 
 #[derive(Copy, Clone, Eq, PartialEq, PartialOrd)]
@@ -201,10 +201,10 @@ impl MovePicker {
         }
         rook_threats |= minor_threats;
 
-        let threatened = (td.board.our(PieceType::Queen)  & rook_threats)
-                       | (td.board.our(PieceType::Rook)   & minor_threats)
-                       | (td.board.our(PieceType::Knight) & pawn_threats)
-                       | (td.board.our(PieceType::Bishop) & pawn_threats);
+        let threatened = (td.board.our(PieceType::Queen) & rook_threats)
+            | (td.board.our(PieceType::Rook) & minor_threats)
+            | (td.board.our(PieceType::Knight) & pawn_threats)
+            | (td.board.our(PieceType::Bishop) & pawn_threats);
 
         for entry in self.list.iter_mut() {
             let mv = entry.mv;
@@ -222,16 +222,12 @@ impl MovePicker {
 
             // bonus for escaping capture
             if threatened.contains(mv.from()) {
-
                 let pt = td.board.piece_on(mv.from()).piece_type();
-
                 if pt == PieceType::Queen {
                     entry.score += 20000;
-                }
-                else if pt == PieceType::Rook {
+                } else if pt == PieceType::Rook {
                     entry.score += 10000;
-                }
-                else if pt != PieceType::Pawn {
+                } else if pt != PieceType::Pawn {
                     entry.score += 4000;
                 }
             }
