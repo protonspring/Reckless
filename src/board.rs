@@ -1,7 +1,7 @@
 use crate::{
     lookup::{
-        between, bishop_attacks, cuckoo, cuckoo_a, cuckoo_b, h1, h2, king_attacks, knight_attacks,
-        pawn_attacks, pawn_attacks_setwise, queen_attacks, rook_attacks,
+        between, bishop_attacks, cuckoo, cuckoo_a, cuckoo_b, h1, h2, king_attacks, knight_attacks, pawn_attacks,
+        pawn_attacks_setwise, queen_attacks, rook_attacks,
     },
     types::{ArrayVec, Bitboard, Castling, CastlingKind, Color, Move, Piece, PieceType, Square, ZOBRIST},
 };
@@ -545,7 +545,8 @@ impl Board {
         self.state.checking_squares[PieceType::Knight] = knight_attacks(their_king);
         self.state.checking_squares[PieceType::Bishop] = bishop_attacks(their_king, self.occupancies());
         self.state.checking_squares[PieceType::Rook] = rook_attacks(their_king, self.occupancies());
-        self.state.checking_squares[PieceType::Queen] = self.checking_squares(PieceType::Bishop) | self.checking_squares(PieceType::Rook);
+        self.state.checking_squares[PieceType::Queen] =
+            self.checking_squares(PieceType::Bishop) | self.checking_squares(PieceType::Rook);
     }
 
     pub fn update_hash_keys(&mut self) {
