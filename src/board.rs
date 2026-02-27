@@ -1,7 +1,7 @@
 use crate::{
     lookup::{
-        attacks, between, bishop_attacks, cuckoo, cuckoo_a, cuckoo_b, h1, h2, king_attacks, knight_attacks,
-        pawn_attacks, pawn_attacks_setwise, queen_attacks, rook_attacks,
+        between, bishop_attacks, cuckoo, cuckoo_a, cuckoo_b, h1, h2, king_attacks, knight_attacks, pawn_attacks,
+        pawn_attacks_setwise, queen_attacks, rook_attacks,
     },
     types::{ArrayVec, Bitboard, Castling, CastlingKind, Color, Move, Piece, PieceType, Square, ZOBRIST},
 };
@@ -36,6 +36,7 @@ struct InternalState {
     pinned: [Bitboard; Color::NUM],
     pinners: [Bitboard; Color::NUM],
     checkers: Bitboard,
+    checking_squares: [Bitboard; PieceType::NUM],
 }
 
 #[derive(Clone)]
@@ -96,6 +97,10 @@ impl Board {
 
     pub const fn pinners(&self, color: Color) -> Bitboard {
         self.state.pinners[color as usize]
+    }
+
+    pub const fn checking_squares(&self, pt: PieceType) -> Bitboard {
+        self.state.checking_squares[pt as usize]
     }
 
     pub const fn checkers(&self) -> Bitboard {
@@ -451,9 +456,7 @@ impl Board {
     /// Roughly 90–95% accurate. Does not account for discovered checks, promotions,
     /// en passant, or checks delivered via castling.
     pub fn is_direct_check(&self, mv: Move) -> bool {
-        let occupancies = self.occupancies() ^ mv.from().to_bb() ^ mv.to().to_bb();
-        let direct_attacks = attacks(self.moved_piece(mv), mv.to(), occupancies);
-        direct_attacks.contains(self.their(PieceType::King).lsb())
+        self.checking_squares(self.moved_piece(mv).piece_type()).contains(mv.to())
     }
 
     pub fn update_threats(&mut self) {
@@ -536,6 +539,14 @@ impl Board {
                 }
             }
         }
+
+        let their_king = self.king_square(!self.side_to_move);
+        self.state.checking_squares[PieceType::Pawn] = pawn_attacks(their_king, !self.side_to_move);
+        self.state.checking_squares[PieceType::Knight] = knight_attacks(their_king);
+        self.state.checking_squares[PieceType::Bishop] = bishop_attacks(their_king, self.occupancies());
+        self.state.checking_squares[PieceType::Rook] = rook_attacks(their_king, self.occupancies());
+        self.state.checking_squares[PieceType::Queen] =
+            self.checking_squares(PieceType::Bishop) | self.checking_squares(PieceType::Rook);
     }
 
     pub fn update_hash_keys(&mut self) {
