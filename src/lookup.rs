@@ -2,7 +2,6 @@ use crate::types::{Bitboard, Color, File, Piece, PieceType, Square, ZOBRIST};
 
 include!(concat!(env!("OUT_DIR"), "/lookup.rs"));
 
-static mut BETWEEN: [[Bitboard; 64]; 64] = [[Bitboard(0); 64]; 64];
 static mut RAY_PASS: [[Bitboard; 64]; 64] = [[Bitboard(0); 64]; 64];
 
 static mut CUCKOO: [u64; 0x2000] = [0; 0x2000];
@@ -23,12 +22,10 @@ unsafe fn init_luts() {
             let b = Square::new(b);
 
             if rook_attacks(a, Bitboard(0)).contains(b) {
-                BETWEEN[a][b] = rook_attacks(a, b.to_bb()) & rook_attacks(b, a.to_bb());
                 RAY_PASS[a][b] = rook_attacks(a, Bitboard(0)) & rook_attacks(b, a.to_bb());
             }
 
             if bishop_attacks(a, Bitboard(0)).contains(b) {
-                BETWEEN[a][b] = bishop_attacks(a, b.to_bb()) & bishop_attacks(b, a.to_bb());
                 RAY_PASS[a][b] = bishop_attacks(a, Bitboard(0)) & bishop_attacks(b, a.to_bb());
             }
         }
@@ -100,13 +97,13 @@ pub fn cuckoo_b(index: usize) -> Square {
     unsafe { B[index] }
 }
 
-pub fn between(a: Square, b: Square) -> Bitboard {
-    unsafe { BETWEEN[a as usize][b as usize] }
-}
-
 #[allow(dead_code)]
 pub fn ray_pass(a: Square, b: Square) -> Bitboard {
     unsafe { RAY_PASS[a as usize][b as usize] }
+}
+
+pub fn between(a: Square, b: Square) -> Bitboard {
+    ray_pass(a, b) & ray_pass(b, a)
 }
 
 pub fn attacks(piece: Piece, square: Square, occupancies: Bitboard) -> Bitboard {
