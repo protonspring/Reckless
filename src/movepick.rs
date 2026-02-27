@@ -226,13 +226,13 @@ impl MovePicker {
                 let pt = td.board.piece_on(mv.from()).piece_type();
 
                 if pt == PieceType::Queen {
-                    entry.score += 4000;
+                    entry.score += 20000;
                 }
                 else if pt == PieceType::Rook {
-                    entry.score += 2000;
+                    entry.score += 10000;
                 }
                 else if pt != PieceType::Pawn {
-                    entry.score += 1000;
+                    entry.score += 4000;
                 }
             }
 
