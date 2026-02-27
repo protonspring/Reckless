@@ -191,20 +191,20 @@ impl MovePicker {
             minor_threats |= knight_attacks(square);
         }
         for square in td.board.their(PieceType::Bishop) {
-            minor_threats |= bishop_attacks(square, occ);
+            minor_threats |= bishop_attacks(square, occ & !td.board.our(PieceType::Queen));
         }
         minor_threats |= pawn_threats;
 
         let mut rook_threats = Bitboard(0);
         for square in td.board.their(PieceType::Rook) {
-            rook_threats |= rook_attacks(square, occ);
+            rook_threats |= rook_attacks(square, occ & !td.board.our(PieceType::Queen));
         }
         rook_threats |= minor_threats;
 
-        let threatened = (td.board.our(PieceType::Queen)  & rook_threats)
-                       | (td.board.our(PieceType::Rook)   & minor_threats)
-                       | (td.board.our(PieceType::Knight) & pawn_threats)
-                       | (td.board.our(PieceType::Bishop) & pawn_threats);
+        //let threatened = (td.board.our(PieceType::Queen)  & rook_threats)
+                       //| (td.board.our(PieceType::Rook)   & minor_threats)
+                       //| (td.board.our(PieceType::Knight) & pawn_threats)
+                       //| (td.board.our(PieceType::Bishop) & pawn_threats);
 
         for entry in self.list.iter_mut() {
             let mv = entry.mv;
@@ -220,20 +220,24 @@ impl MovePicker {
                 + td.conthist(ply, 4, mv)
                 + td.conthist(ply, 6, mv);
 
-            // bonus for escaping capture
-            if threatened.contains(mv.from()) {
+            // bonus for queens escaping capture
+            if td.board.piece_on(mv.from()).piece_type() == PieceType::Queen {
 
-                let pt = td.board.piece_on(mv.from()).piece_type();
-
-                if pt == PieceType::Queen {
-                    entry.score += 20000;
-                }
-                else if pt == PieceType::Rook {
+                if rook_threats.contains(mv.from()) && !rook_threats.contains(mv.to()) {
                     entry.score += 10000;
+                    //println!("{}", td.board);
+                    //println!("Moving from: {}-{}", mv.from(), mv.to());
                 }
-                else if pt != PieceType::Pawn {
-                    entry.score += 4000;
-                }
+
+                //if pt == PieceType::Queen {
+                    //entry.score += 20000;
+                //}
+                //else if pt == PieceType::Rook {
+                    //entry.score += 10000;
+                //}
+                //else if pt != PieceType::Pawn {
+                    //entry.score += 4000;
+                //}
             }
 
             // Bonus for checking moves
