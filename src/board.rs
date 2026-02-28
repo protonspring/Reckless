@@ -470,9 +470,7 @@ impl Board {
         // This "hack" is used to speed up the implementation of `Board::is_legal`.
         let occupancies = self.occupancies() ^ self.our(PieceType::King);
 
-        let mut threats = Bitboard::default();
-
-        threats |= pawn_attacks_setwise(self.their(PieceType::Pawn), !self.side_to_move);
+        let mut threats = pawn_attacks_setwise(self.their(PieceType::Pawn), !self.side_to_move);
 
         for square in self.their(PieceType::Knight) {
             threats |= knight_attacks(square);
@@ -500,20 +498,16 @@ impl Board {
             }
         }
 
-        self.state.threats = threats | king_attacks(self.their(PieceType::King).lsb());
-    }
+        threats |= king_attacks(self.their(PieceType::King).lsb());
 
-    /// Updates the checkers bitboard to mark opponent pieces currently threatening our king,
-    /// and our pinned pieces that cannot move without leaving the king in check.
-    pub fn update_king_threats(&mut self) {
+        // Updates the checkers bitboard to mark opponent pieces currently threatening our king,
+        // and our pinned pieces that cannot move without leaving the king in check.
         let our_king = self.king_square(self.side_to_move);
 
         self.state.pinned = [Bitboard::default(); 2];
         self.state.pinners = [Bitboard::default(); 2];
-        self.state.checkers = Bitboard::default();
-
-        self.state.checkers |= pawn_attacks(our_king, self.side_to_move) & self.their(PieceType::Pawn);
-        self.state.checkers |= knight_attacks(our_king) & self.their(PieceType::Knight);
+        self.state.checkers = (pawn_attacks(our_king, self.side_to_move) & self.their(PieceType::Pawn))
+                            | (knight_attacks(our_king) & self.their(PieceType::Knight));
 
         let diagonal = self.pieces(PieceType::Bishop) | self.pieces(PieceType::Queen);
         let orthogonal = self.pieces(PieceType::Rook) | self.pieces(PieceType::Queen);
@@ -547,6 +541,8 @@ impl Board {
         self.state.checking_squares[PieceType::Rook] = rook_attacks(their_king, self.occupancies());
         self.state.checking_squares[PieceType::Queen] =
             self.checking_squares(PieceType::Bishop) | self.checking_squares(PieceType::Rook);
+
+        self.state.threats = threats
     }
 
     pub fn update_hash_keys(&mut self) {

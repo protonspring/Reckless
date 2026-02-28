@@ -15,7 +15,6 @@ impl Board {
         self.state.checkers = Bitboard::default();
 
         self.update_threats();
-        self.update_king_threats();
 
         if self.state.en_passant != Square::None {
             self.state.key ^= ZOBRIST.en_passant[self.state.en_passant];
@@ -139,7 +138,6 @@ impl Board {
         self.state.key ^= ZOBRIST.castling[self.state.castling];
 
         self.update_threats();
-        self.update_king_threats();
 
         self.state.repetition = 0;
 
