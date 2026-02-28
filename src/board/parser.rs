@@ -54,13 +54,16 @@ impl Board {
         board.set_castling(parts.next().unwrap());
 
         board.state.en_passant = parts.next().unwrap_or_default().try_into().unwrap_or_default();
-        board.state.fmrmove_clock = parts.next().unwrap_or_default().parse().unwrap_or_default();
+        board.state.fmr_reset_idx = parts.next().unwrap_or_default().parse().unwrap_or_default();
+
         board.halfmove_number = parts.next().unwrap_or_default().parse().unwrap_or_default();
         board.halfmove_number *= 2;
 
         if stm == Color::Black {
             board.halfmove_number += 1;
         }
+
+        board.state.fmr_reset_idx = board.halfmove_number - board.state.fmr_reset_idx as usize;
 
         board.update_threats();
         board.update_king_threats();
@@ -204,7 +207,7 @@ impl Board {
         fen.push(' ');
         fen.push_str(&self.state.en_passant.to_string());
         fen.push(' ');
-        fen.push_str(&self.state.fmrmove_clock.to_string());
+        fen.push_str(&self.fmrmove_clock().to_string());
         fen.push(' ');
         fen.push_str(&self.fullmove_number().to_string());
         fen

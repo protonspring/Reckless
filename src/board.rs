@@ -26,7 +26,7 @@ struct InternalState {
     non_pawn_keys: [u64; Color::NUM],
     en_passant: Square,
     castling: Castling,
-    fmrmove_clock: u8,
+    fmr_reset_idx: usize,
     material: i32,
     plies_from_null: usize,
     repetition: i32,
@@ -131,7 +131,7 @@ impl Board {
     }
 
     pub const fn fmrmove_clock(&self) -> u8 {
-        self.state.fmrmove_clock
+        (self.halfmove_number - self.state.fmr_reset_idx) as u8
     }
 
     pub const fn material(&self) -> i32 {
