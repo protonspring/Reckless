@@ -3,7 +3,7 @@ use crate::types::{Bitboard, Move, MoveKind, Piece, PieceType, Square, ZOBRIST};
 
 impl Board {
     pub fn make_null_move(&mut self) {
-        self.side_to_move = !self.side_to_move;
+        self.halfmove_number += 1;
         self.state_stack.push(self.state);
 
         self.state.key ^= ZOBRIST.side;
@@ -24,7 +24,7 @@ impl Board {
     }
 
     pub fn undo_null_move(&mut self) {
-        self.side_to_move = !self.side_to_move;
+        self.halfmove_number -= 1;
         self.state = self.state_stack.pop().unwrap();
     }
 
@@ -37,7 +37,7 @@ impl Board {
         let to = mv.to();
         let piece = self.piece_on(from);
         let pt = piece.piece_type();
-        let stm = self.side_to_move;
+        let stm = self.side_to_move();
 
         self.state_stack.push(self.state);
 
@@ -53,9 +53,9 @@ impl Board {
         self.state.recapture_square = Square::None;
 
         if mv.kind() == MoveKind::Capture || pt == PieceType::Pawn {
-            self.state.halfmove_clock = 0;
+            self.state.fmrmove_clock = 0;
         } else {
-            self.state.halfmove_clock += 1;
+            self.state.fmrmove_clock += 1;
         }
         self.state.plies_from_null += 1;
 
@@ -133,7 +133,7 @@ impl Board {
             _ => (),
         }
 
-        self.side_to_move = !self.side_to_move;
+        self.halfmove_number += 1;
 
         self.state.castling.raw &= self.castling_rights[from] & self.castling_rights[to];
         self.state.key ^= ZOBRIST.castling[self.state.castling];
@@ -143,7 +143,7 @@ impl Board {
 
         self.state.repetition = 0;
 
-        let end = self.state.plies_from_null.min(self.state.halfmove_clock as usize);
+        let end = self.state.plies_from_null.min(self.state.fmrmove_clock as usize);
 
         if end >= 4 {
             let mut idx = self.state_stack.len() as isize - 4;
@@ -165,12 +165,12 @@ impl Board {
     }
 
     pub fn undo_move(&mut self, mv: Move) {
-        self.side_to_move = !self.side_to_move;
+        self.halfmove_number -= 1;
 
         let from = mv.from();
         let to = mv.to();
         let piece = self.piece_on(to);
-        let stm = self.side_to_move;
+        let stm = self.side_to_move();
 
         if !mv.is_castling() {
             self.add_piece(piece, from);

@@ -320,7 +320,7 @@ fn search<NODE: NodeType>(
     let mut depth = depth.min(MAX_PLY as i32 - 1);
 
     let hash = td.board.hash();
-    let entry = td.shared.tt.read(hash, td.board.halfmove_clock(), ply);
+    let entry = td.shared.tt.read(hash, td.board.fmrmove_clock(), ply);
 
     let mut tt_depth = 0;
     let mut tt_move = Move::NULL;
@@ -354,7 +354,7 @@ fn search<NODE: NodeType>(
                 update_continuation_histories(td, ply, td.board.moved_piece(tt_move), tt_move.to(), cont_bonus);
             }
 
-            if td.board.halfmove_clock() < 90 {
+            if td.board.fmrmove_clock() < 90 {
                 return tt_score;
             }
         }
@@ -365,7 +365,7 @@ fn search<NODE: NodeType>(
     if !NODE::ROOT
         && !excluded
         && !td.stop_probing_tb
-        && td.board.halfmove_clock() == 0
+        && td.board.fmrmove_clock() == 0
         && td.board.castling().raw() == 0
         && td.board.occupancies().popcount() <= tb::size()
         && let Some(outcome) = tb::probe(&td.board)
@@ -1120,7 +1120,7 @@ fn qsearch<NODE: NodeType>(td: &mut ThreadData, mut alpha: i32, beta: i32, ply: 
     }
 
     let hash = td.board.hash();
-    let entry = td.shared.tt.read(hash, td.board.halfmove_clock(), ply);
+    let entry = td.shared.tt.read(hash, td.board.fmrmove_clock(), ply);
 
     let mut tt_score = Score::NONE;
     let mut tt_bound = Bound::None;
