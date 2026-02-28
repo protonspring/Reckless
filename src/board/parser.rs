@@ -55,7 +55,9 @@ impl Board {
 
         board.state.en_passant = parts.next().unwrap_or_default().try_into().unwrap_or_default();
         board.state.halfmove_clock = parts.next().unwrap_or_default().parse().unwrap_or_default();
-        board.fullmove_number = parts.next().unwrap_or_default().parse().unwrap_or_default();
+        //let fullmove = parts.next().unwrap_or_default().parse().unwrap_or_default();
+        board.halfmove_number = parts.next().unwrap_or_default().parse().unwrap_or_default();
+        board.halfmove_number *= 2;
 
         board.update_threats();
         board.update_king_threats();
@@ -201,7 +203,7 @@ impl Board {
         fen.push(' ');
         fen.push_str(&self.state.halfmove_clock.to_string());
         fen.push(' ');
-        fen.push_str(&self.fullmove_number.to_string());
+        fen.push_str(&self.fullmove_number().to_string());
         fen
     }
 
