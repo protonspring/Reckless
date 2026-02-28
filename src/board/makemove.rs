@@ -53,9 +53,9 @@ impl Board {
         self.state.recapture_square = Square::None;
 
         if mv.kind() == MoveKind::Capture || pt == PieceType::Pawn {
-            self.state.halfmove_clock = 0;
+            self.state.fmrmove_clock = 0;
         } else {
-            self.state.halfmove_clock += 1;
+            self.state.fmrmove_clock += 1;
         }
         self.state.plies_from_null += 1;
 
@@ -143,7 +143,7 @@ impl Board {
 
         self.state.repetition = 0;
 
-        let end = self.state.plies_from_null.min(self.state.halfmove_clock as usize);
+        let end = self.state.plies_from_null.min(self.state.fmrmove_clock as usize);
 
         if end >= 4 {
             let mut idx = self.state_stack.len() as isize - 4;

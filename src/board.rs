@@ -26,7 +26,7 @@ struct InternalState {
     non_pawn_keys: [u64; Color::NUM],
     en_passant: Square,
     castling: Castling,
-    halfmove_clock: u8,
+    fmrmove_clock: u8,
     material: i32,
     plies_from_null: usize,
     repetition: i32,
@@ -66,6 +66,7 @@ impl Board {
 
     pub const fn side_to_move(&self) -> Color {
         self.side_to_move
+        //Color::new(self.halfmove_number as u8 & 1)
     }
 
     pub const fn fullmove_number(&self) -> usize {
@@ -76,7 +77,7 @@ impl Board {
         // To mitigate Graph History Interaction (GHI) problems, the hash key is changed
         // every 8 plies to distinguish between positions that would otherwise appear
         // identical to the transposition table.
-        self.state.key ^ ZOBRIST.halfmove_clock[(self.state.halfmove_clock.saturating_sub(8) as usize / 8).min(15)]
+        self.state.key ^ ZOBRIST.fmrmove_clock[(self.state.fmrmove_clock.saturating_sub(8) as usize / 8).min(15)]
     }
 
     pub const fn pawn_key(&self) -> u64 {
@@ -131,8 +132,8 @@ impl Board {
         self.state.castling
     }
 
-    pub const fn halfmove_clock(&self) -> u8 {
-        self.state.halfmove_clock
+    pub const fn fmrmove_clock(&self) -> u8 {
+        self.state.fmrmove_clock
     }
 
     pub const fn material(&self) -> i32 {
@@ -199,12 +200,6 @@ impl Board {
         self.our(PieceType::Pawn) | self.our(PieceType::King) != self.us()
     }
 
-    //pub fn advance_fullmove_counter(&mut self) {
-        //if self.side_to_move == Color::Black {
-            //self.fullmove_number += 1;
-        //}
-    //}
-
     pub fn set_frc(&mut self, frc: bool) {
         self.frc = frc;
     }
@@ -249,7 +244,7 @@ impl Board {
     }
 
     pub fn draw_by_fifty_move_rule(&self) -> bool {
-        self.state.halfmove_clock >= 100 && (!self.in_check() || self.has_legal_moves())
+        self.state.fmrmove_clock >= 100 && (!self.in_check() || self.has_legal_moves())
     }
 
     /// Checks if the current position has a move that leads to a draw by repetition.
@@ -259,7 +254,7 @@ impl Board {
     ///
     /// <http://web.archive.org/web/20201107002606/https://marcelk.net/2013-04-06/paper/upcoming-rep-v2.pdf>
     pub fn upcoming_repetition(&self, ply: usize) -> bool {
-        let hm = self.state.plies_from_null.min(self.state.halfmove_clock as usize);
+        let hm = self.state.plies_from_null.min(self.state.fmrmove_clock as usize);
         if hm < 3 {
             return false;
         }
