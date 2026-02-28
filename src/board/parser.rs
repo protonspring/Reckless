@@ -59,6 +59,10 @@ impl Board {
         board.halfmove_number = parts.next().unwrap_or_default().parse().unwrap_or_default();
         board.halfmove_number *= 2;
 
+        if board.side_to_move == Color::Black {
+            board.halfmove_number += 1;
+        }
+
         board.update_threats();
         board.update_king_threats();
         board.update_hash_keys();

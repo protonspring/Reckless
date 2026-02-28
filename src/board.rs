@@ -64,9 +64,18 @@ impl Board {
         self.frc
     }
 
-    pub const fn side_to_move(&self) -> Color {
-        self.side_to_move
-        //Color::new(self.halfmove_number as u8 & 1)
+    pub fn side_to_move(&self) -> Color {
+        //let c = Color::new((self.halfmove_number & 1 as usize) as u8);
+        Color::new((self.halfmove_number & 1 as usize) as u8)
+
+        //if c != self.side_to_move {
+            //println!("Error: {},{},{}", self.halfmove_number, c, self.side_to_move);
+        //}
+        //else {
+            //println!("Correct: {},{},{}", self.halfmove_number, c, self.side_to_move);
+        //}
+
+        //self.side_to_move
     }
 
     pub const fn fullmove_number(&self) -> usize {
