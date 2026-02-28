@@ -75,7 +75,7 @@ impl Board {
         // To mitigate Graph History Interaction (GHI) problems, the hash key is changed
         // every 8 plies to distinguish between positions that would otherwise appear
         // identical to the transposition table.
-        self.state.key ^ ZOBRIST.fmrmove_clock[(self.state.fmrmove_clock.saturating_sub(8) as usize / 8).min(15)]
+        self.state.key ^ ZOBRIST.fmrmove_clock[(self.fmrmove_clock().saturating_sub(8) as usize / 8).min(15)]
     }
 
     pub const fn pawn_key(&self) -> u64 {
@@ -242,7 +242,7 @@ impl Board {
     }
 
     pub fn draw_by_fifty_move_rule(&self) -> bool {
-        self.state.fmrmove_clock >= 100 && (!self.in_check() || self.has_legal_moves())
+        self.fmrmove_clock() >= 100 && (!self.in_check() || self.has_legal_moves())
     }
 
     /// Checks if the current position has a move that leads to a draw by repetition.
@@ -252,7 +252,7 @@ impl Board {
     ///
     /// <http://web.archive.org/web/20201107002606/https://marcelk.net/2013-04-06/paper/upcoming-rep-v2.pdf>
     pub fn upcoming_repetition(&self, ply: usize) -> bool {
-        let hm = self.state.plies_from_null.min(self.state.fmrmove_clock as usize);
+        let hm = self.state.plies_from_null.min(self.fmrmove_clock() as usize);
         if hm < 3 {
             return false;
         }
