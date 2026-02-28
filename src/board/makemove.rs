@@ -3,7 +3,6 @@ use crate::types::{Bitboard, Move, MoveKind, Piece, PieceType, Square, ZOBRIST};
 
 impl Board {
     pub fn make_null_move(&mut self) {
-        self.side_to_move = !self.side_to_move;
         self.halfmove_number += 1;
         self.state_stack.push(self.state);
 
@@ -25,7 +24,6 @@ impl Board {
     }
 
     pub fn undo_null_move(&mut self) {
-        self.side_to_move = !self.side_to_move;
         self.halfmove_number -= 1;
         self.state = self.state_stack.pop().unwrap();
     }
@@ -39,7 +37,7 @@ impl Board {
         let to = mv.to();
         let piece = self.piece_on(from);
         let pt = piece.piece_type();
-        let stm = self.side_to_move;
+        let stm = self.side_to_move();
 
         self.state_stack.push(self.state);
 
@@ -135,7 +133,6 @@ impl Board {
             _ => (),
         }
 
-        self.side_to_move = !self.side_to_move;
         self.halfmove_number += 1;
 
         self.state.castling.raw &= self.castling_rights[from] & self.castling_rights[to];
@@ -168,13 +165,12 @@ impl Board {
     }
 
     pub fn undo_move(&mut self, mv: Move) {
-        self.side_to_move = !self.side_to_move;
         self.halfmove_number -= 1;
 
         let from = mv.from();
         let to = mv.to();
         let piece = self.piece_on(to);
-        let stm = self.side_to_move;
+        let stm = self.side_to_move();
 
         if !mv.is_castling() {
             self.add_piece(piece, from);

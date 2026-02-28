@@ -41,7 +41,6 @@ struct InternalState {
 
 #[derive(Clone)]
 pub struct Board {
-    side_to_move: Color,
     pieces: [Bitboard; PieceType::NUM],
     colors: [Bitboard; Color::NUM],
     mailbox: [Piece; Square::NUM],
@@ -65,17 +64,7 @@ impl Board {
     }
 
     pub fn side_to_move(&self) -> Color {
-        //let c = Color::new((self.halfmove_number & 1 as usize) as u8);
         Color::new((self.halfmove_number & 1 as usize) as u8)
-
-        //if c != self.side_to_move {
-            //println!("Error: {},{},{}", self.halfmove_number, c, self.side_to_move);
-        //}
-        //else {
-            //println!("Correct: {},{},{}", self.halfmove_number, c, self.side_to_move);
-        //}
-
-        //self.side_to_move
     }
 
     pub const fn fullmove_number(&self) -> usize {
@@ -178,11 +167,11 @@ impl Board {
     }
 
     pub fn us(&self) -> Bitboard {
-        self.colors(self.side_to_move)
+        self.colors(self.side_to_move())
     }
 
     pub fn them(&self) -> Bitboard {
-        self.colors(!self.side_to_move)
+        self.colors(!self.side_to_move())
     }
 
     pub fn our(&self, piece_type: PieceType) -> Bitboard {
@@ -345,14 +334,14 @@ impl Board {
                 _ => unreachable!(),
             };
 
-            return !self.threats().contains(to) && !self.pinned(self.side_to_move).contains(self.castling_rooks[kind]);
+            return !self.threats().contains(to) && !self.pinned(self.side_to_move()).contains(self.castling_rooks[kind]);
         }
 
         if self.piece_on(from).piece_type() == PieceType::King {
             return !self.threats().contains(to);
         }
 
-        if self.pinned(self.side_to_move).contains(from) {
+        if self.pinned(self.side_to_move()).contains(from) {
             let along_pin = between(king, from).contains(to) || between(king, to).contains(from);
             return self.checkers().is_empty() && along_pin;
         }
@@ -419,22 +408,22 @@ impl Board {
 
         if piece == PieceType::Pawn {
             if mv.is_en_passant() {
-                return to == self.state.en_passant && pawn_attacks(from, self.side_to_move).contains(to);
+                return to == self.state.en_passant && pawn_attacks(from, self.side_to_move()).contains(to);
             }
 
-            let offset = if self.side_to_move == Color::White { 8 } else { -8 };
-            let promotion_rank = if self.side_to_move == Color::White { 7 } else { 0 };
+            let offset = if self.side_to_move() == Color::White { 8 } else { -8 };
+            let promotion_rank = if self.side_to_move() == Color::White { 7 } else { 0 };
 
             if mv.is_promotion() != (mv.to().rank() == promotion_rank) {
                 return false;
             }
 
             if mv.is_capture() {
-                return pawn_attacks(from, self.side_to_move).contains(to) && self.them().contains(to);
+                return pawn_attacks(from, self.side_to_move()).contains(to) && self.them().contains(to);
             }
 
             if mv.is_double_push() {
-                return from.rank() == (if self.side_to_move == Color::White { 1 } else { 6 })
+                return from.rank() == (if self.side_to_move() == Color::White { 1 } else { 6 })
                     && from.shift(2 * offset) == to
                     && !self.occupancies().contains(from.shift(offset))
                     && !self.occupancies().contains(to);
@@ -476,7 +465,7 @@ impl Board {
 
         let mut threats = Bitboard::default();
 
-        threats |= pawn_attacks_setwise(self.their(PieceType::Pawn), !self.side_to_move);
+        threats |= pawn_attacks_setwise(self.their(PieceType::Pawn), !self.side_to_move());
 
         for square in self.their(PieceType::Knight) {
             threats |= knight_attacks(square);
@@ -510,13 +499,13 @@ impl Board {
     /// Updates the checkers bitboard to mark opponent pieces currently threatening our king,
     /// and our pinned pieces that cannot move without leaving the king in check.
     pub fn update_king_threats(&mut self) {
-        let our_king = self.king_square(self.side_to_move);
+        let our_king = self.king_square(self.side_to_move());
 
         self.state.pinned = [Bitboard::default(); 2];
         self.state.pinners = [Bitboard::default(); 2];
         self.state.checkers = Bitboard::default();
 
-        self.state.checkers |= pawn_attacks(our_king, self.side_to_move) & self.their(PieceType::Pawn);
+        self.state.checkers |= pawn_attacks(our_king, self.side_to_move()) & self.their(PieceType::Pawn);
         self.state.checkers |= knight_attacks(our_king) & self.their(PieceType::Knight);
 
         let diagonal = self.pieces(PieceType::Bishop) | self.pieces(PieceType::Queen);
@@ -532,7 +521,7 @@ impl Board {
                 let blockers = between(king, square) & self.colors(color);
                 match blockers.popcount() {
                     0 => {
-                        debug_assert_eq!(color, self.side_to_move);
+                        debug_assert_eq!(color, self.side_to_move());
                         self.state.checkers.set(square);
                     }
                     1 => {
@@ -544,8 +533,8 @@ impl Board {
             }
         }
 
-        let their_king = self.king_square(!self.side_to_move);
-        self.state.checking_squares[PieceType::Pawn] = pawn_attacks(their_king, !self.side_to_move);
+        let their_king = self.king_square(!self.side_to_move());
+        self.state.checking_squares[PieceType::Pawn] = pawn_attacks(their_king, !self.side_to_move());
         self.state.checking_squares[PieceType::Knight] = knight_attacks(their_king);
         self.state.checking_squares[PieceType::Bishop] = bishop_attacks(their_king, self.occupancies());
         self.state.checking_squares[PieceType::Rook] = rook_attacks(their_king, self.occupancies());
@@ -571,7 +560,7 @@ impl Board {
             self.state.key ^= ZOBRIST.en_passant[self.state.en_passant];
         }
 
-        if self.side_to_move == Color::White {
+        if self.side_to_move() == Color::White {
             self.state.key ^= ZOBRIST.side;
         }
 
@@ -604,7 +593,6 @@ impl Board {
 impl Default for Board {
     fn default() -> Self {
         Self {
-            side_to_move: Color::White,
             state: InternalState::default(),
             pieces: [Bitboard::default(); PieceType::NUM],
             colors: [Bitboard::default(); Color::NUM],
