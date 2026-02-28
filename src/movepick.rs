@@ -237,20 +237,20 @@ impl MovePicker {
             else {
                 if pt == PieceType::Queen {
                     if rook_threats.contains(mv.to()) {
-                        entry.score -= 20000;
+                        entry.score -= 10000;
                     }
                     if minor_threats.contains(mv.to()) {
-                        entry.score -= 10000;
+                        entry.score -= 5000;
                     }
                 }
                 else if pt == PieceType::Rook {
                     if minor_threats.contains(mv.to()) {
-                        entry.score -= 18000;
+                        entry.score -= 9000;
                     }
                 }
                 else if pt != PieceType::Pawn {
                     if pawn_threats.contains(mv.to()) {
-                        entry.score -= 8000;
+                        entry.score -= 4000;
                     }
                 }
             }
