@@ -191,13 +191,13 @@ impl MovePicker {
             minor_threats |= knight_attacks(square);
         }
         for square in td.board.their(PieceType::Bishop) {
-            minor_threats |= bishop_attacks(square, occ);
+            minor_threats |= bishop_attacks(square, occ ^ td.board.our(PieceType::Queen));
         }
         minor_threats |= pawn_threats;
 
         let mut rook_threats = Bitboard(0);
         for square in td.board.their(PieceType::Rook) {
-            rook_threats |= rook_attacks(square, occ);
+            rook_threats |= rook_attacks(square, occ ^ td.board.our(PieceType::Queen));
         }
         rook_threats |= minor_threats;
 
@@ -239,8 +239,7 @@ impl MovePicker {
 
             // Malus for moving into danger
             if pt == PieceType::Queen && minor_threats.contains(mv.to()) {
-
-                entry.score -= 25000;
+                entry.score -= 5000;
             }
         }
     }
