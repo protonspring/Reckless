@@ -236,7 +236,6 @@ impl MovePicker {
             if td.board.checking_squares(td.board.moved_piece(mv).piece_type()).contains(mv.to()) {
                 entry.score += 10000;
             }
-
             // Malus for moving into danger
             else if pt == PieceType::Queen && minor_threats.contains(mv.to()) {
                 entry.score -= 10000;
