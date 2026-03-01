@@ -208,6 +208,7 @@ impl MovePicker {
 
         for entry in self.list.iter_mut() {
             let mv = entry.mv;
+            let pt = td.board.piece_on(mv.from()).piece_type();
 
             if mv == self.tt_move {
                 entry.score = i32::MIN;
@@ -222,7 +223,6 @@ impl MovePicker {
 
             // bonus for escaping capture
             if threatened.contains(mv.from()) {
-                let pt = td.board.piece_on(mv.from()).piece_type();
                 if pt == PieceType::Queen {
                     entry.score += 20000;
                 } else if pt == PieceType::Rook {
@@ -235,6 +235,12 @@ impl MovePicker {
             // Bonus for checking moves
             if td.board.checking_squares(td.board.moved_piece(mv).piece_type()).contains(mv.to()) {
                 entry.score += 10000;
+            }
+
+            // Malus for moving into danger
+            if pt == PieceType::Queen && minor_threats.contains(mv.to()) {
+
+                entry.score -= 5000;
             }
         }
     }
