@@ -238,7 +238,7 @@ impl MovePicker {
             }
 
             // Malus for moving into danger
-            if pt == PieceType::Queen && minor_threats.contains(mv.to()) {
+            else if pt == PieceType::Queen && minor_threats.contains(mv.to()) {
                 entry.score -= 5000;
             }
         }
