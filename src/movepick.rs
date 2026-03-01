@@ -223,13 +223,7 @@ impl MovePicker {
             // bonus for escaping capture
             if threatened.contains(mv.from()) {
                 let pt = td.board.piece_on(mv.from()).piece_type();
-                if pt == PieceType::Queen {
-                    entry.score += 20000;
-                } else if pt == PieceType::Rook {
-                    entry.score += 10000;
-                } else if pt != PieceType::Pawn {
-                    entry.score += 4000;
-                }
+                entry.score += 4000 * pt as i32;
             }
 
             // Bonus for checking moves
