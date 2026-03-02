@@ -86,7 +86,9 @@ impl MovePicker {
                 }
 
                 let threshold = self.threshold.unwrap_or_else(|| -entry.score / 46 + 109);
-                if !td.board.see(entry.mv, threshold) {
+
+                // Don't see moves when in evasions
+                if !td.board.in_check() && !td.board.see(entry.mv, threshold) {
                     self.bad_noisy.push(entry.mv);
                     continue;
                 }
