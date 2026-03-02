@@ -25,11 +25,13 @@ unsafe fn init_luts() {
             if rook_attacks(a, Bitboard(0)).contains(b) {
                 BETWEEN[a][b] = rook_attacks(a, b.to_bb()) & rook_attacks(b, a.to_bb());
                 RAY_PASS[a][b] = rook_attacks(a, Bitboard(0)) & rook_attacks(b, a.to_bb());
+                RAY_PASS[a][b].set(b);
             }
 
             if bishop_attacks(a, Bitboard(0)).contains(b) {
                 BETWEEN[a][b] = bishop_attacks(a, b.to_bb()) & bishop_attacks(b, a.to_bb());
                 RAY_PASS[a][b] = bishop_attacks(a, Bitboard(0)) & bishop_attacks(b, a.to_bb());
+                RAY_PASS[a][b].set(b);
             }
         }
     }
