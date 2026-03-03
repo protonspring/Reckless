@@ -156,6 +156,10 @@ impl Board {
         self.pieces[piece_type]
     }
 
+    pub fn color_piece(&self, color: Color, piece_type: PieceType) -> Bitboard {
+        self.colors[color] & self.pieces[piece_type]
+    }
+
     pub const fn colors_bbs(&self) -> [Bitboard; Color::NUM] {
         self.colors
     }
@@ -168,28 +172,28 @@ impl Board {
         self.colors(Color::White) | self.colors(Color::Black)
     }
 
-    pub fn of(&self, piece_type: PieceType, color: Color) -> Bitboard {
-        self.pieces(piece_type) & self.colors(color)
-    }
+    //pub fn of(&self, piece_type: PieceType, color: Color) -> Bitboard {
+        //self.pieces(piece_type) & self.colors(color)
+    //}
 
-    pub fn us(&self) -> Bitboard {
-        self.colors(self.side_to_move)
-    }
+    //pub fn us(&self) -> Bitboard {
+        //self.colors(self.side_to_move)
+    //}
 
-    pub fn them(&self) -> Bitboard {
-        self.colors(!self.side_to_move)
-    }
+    //pub fn them(&self) -> Bitboard {
+        //self.colors(!self.side_to_move)
+    //}
 
-    pub fn our(&self, piece_type: PieceType) -> Bitboard {
-        self.pieces(piece_type) & self.us()
-    }
+    //pub fn our(&self, piece_type: PieceType) -> Bitboard {
+        //self.pieces(piece_type) & self.us()
+    //}
 
-    pub fn their(&self, piece_type: PieceType) -> Bitboard {
-        self.pieces(piece_type) & self.them()
-    }
+    //pub fn their(&self, piece_type: PieceType) -> Bitboard {
+        //self.pieces(piece_type) & self.them()
+    //}
 
     pub fn king_square(&self, color: Color) -> Square {
-        self.of(PieceType::King, color).lsb()
+        self.color_piece(color, PieceType::King).lsb()
     }
 
     pub fn piece_on(&self, square: Square) -> Piece {
@@ -201,7 +205,8 @@ impl Board {
     }
 
     pub fn has_non_pawns(&self) -> bool {
-        self.our(PieceType::Pawn) | self.our(PieceType::King) != self.us()
+        let stm = self.side_to_move();
+        self.color_piece(stm, PieceType::Pawn) | self.color_piece(stm, PieceType::King) != self.colors(stm)
     }
 
     pub fn advance_fullmove_counter(&mut self) {
@@ -309,8 +314,8 @@ impl Board {
     pub fn attackers_to(&self, square: Square, occupancies: Bitboard) -> Bitboard {
         rook_attacks(square, occupancies) & (self.pieces(PieceType::Rook) | self.pieces(PieceType::Queen))
             | bishop_attacks(square, occupancies) & (self.pieces(PieceType::Bishop) | self.pieces(PieceType::Queen))
-            | pawn_attacks(square, Color::White) & self.of(PieceType::Pawn, Color::Black)
-            | pawn_attacks(square, Color::Black) & self.of(PieceType::Pawn, Color::White)
+            | pawn_attacks(square, Color::White) & self.color_piece(Color::Black, PieceType::Pawn)
+            | pawn_attacks(square, Color::Black) & self.color_piece(Color::White, PieceType::Pawn)
             | knight_attacks(square) & self.pieces(PieceType::Knight)
             | king_attacks(square) & self.pieces(PieceType::King)
     }
@@ -322,14 +327,15 @@ impl Board {
     pub fn is_legal(&self, mv: Move) -> bool {
         let from = mv.from();
         let to = mv.to();
+        let stm = self.side_to_move();
 
-        let king = self.our(PieceType::King).lsb();
+        let king = self.color_piece(stm, PieceType::King).lsb();
 
         if mv.is_en_passant() {
             let occupancies = self.occupancies() ^ from.to_bb() ^ to.to_bb() ^ (to ^ 8).to_bb();
 
-            let diagonal = self.their(PieceType::Bishop) | self.their(PieceType::Queen);
-            let orthogonal = self.their(PieceType::Rook) | self.their(PieceType::Queen);
+            let diagonal = self.color_piece(!stm, PieceType::Bishop) | self.color_piece(!stm, PieceType::Queen);
+            let orthogonal = self.color_piece(!stm, PieceType::Rook) | self.color_piece(!stm, PieceType::Queen);
 
             let diagonal = bishop_attacks(king, occupancies) & diagonal;
             let orthogonal = rook_attacks(king, occupancies) & orthogonal;
@@ -384,9 +390,10 @@ impl Board {
 
         let piece = self.piece_on(from).piece_type();
         let captured = self.piece_on(to).piece_type();
+        let stm = self.side_to_move;
 
         if mv.is_castling() {
-            if !self.us().contains(from) || piece != PieceType::King {
+            if !self.colors(stm).contains(from) || piece != PieceType::King {
                 return false;
             }
 
@@ -403,7 +410,7 @@ impl Board {
                 && (self.castling_threat[kind] & self.all_threats()).is_empty();
         }
 
-        if piece == PieceType::None || !self.us().contains(from) || self.us().contains(to) {
+        if piece == PieceType::None || !self.colors(stm).contains(from) || self.colors(stm).contains(to) {
             return false;
         }
 
@@ -415,7 +422,7 @@ impl Board {
             return false;
         }
 
-        if mv.is_capture() && !mv.is_en_passant() && !self.them().contains(to) {
+        if mv.is_capture() && !mv.is_en_passant() && !self.colors(!stm).contains(to) {
             return false;
         }
 
@@ -432,7 +439,7 @@ impl Board {
             }
 
             if mv.is_capture() {
-                return pawn_attacks(from, self.side_to_move).contains(to) && self.them().contains(to);
+                return pawn_attacks(from, self.side_to_move).contains(to) && self.colors(!stm).contains(to);
             }
 
             if mv.is_double_push() {
@@ -474,36 +481,36 @@ impl Board {
         // history remains unaffected by this change.
         //
         // This "hack" is used to speed up the implementation of `Board::is_legal`.
-        let occupancies = self.occupancies() ^ self.our(PieceType::King);
-
-        let mut threats = pawn_attacks_setwise(self.their(PieceType::Pawn), !self.side_to_move);
+        let stm = self.side_to_move;
+        let occupancies = self.occupancies() ^ self.color_piece(stm, PieceType::King);
+        let mut threats = pawn_attacks_setwise(self.color_piece(!stm, PieceType::Pawn), !stm);
         self.state.piece_threats[PieceType::Pawn] = threats;
 
         threats = Bitboard(0);
-        for square in self.their(PieceType::Knight) {
+        for square in self.color_piece(!stm, PieceType::Knight) {
             threats |= knight_attacks(square);
         }
         self.state.piece_threats[PieceType::Knight] = threats;
 
         threats = Bitboard(0);
-        for square in self.their(PieceType::Bishop) {
+        for square in self.color_piece(!stm, PieceType::Bishop) {
             threats |= bishop_attacks(square, occupancies);
         }
         self.state.piece_threats[PieceType::Bishop] = threats;
 
         threats = Bitboard(0);
-        for square in self.their(PieceType::Rook) {
+        for square in self.color_piece(!stm, PieceType::Rook) {
             threats |= rook_attacks(square, occupancies);
         }
         self.state.piece_threats[PieceType::Rook] = threats;
 
         threats = Bitboard(0);
-        for square in self.their(PieceType::Queen) {
+        for square in self.color_piece(!stm, PieceType::Queen) {
             threats |= queen_attacks(square, occupancies);
         }
         self.state.piece_threats[PieceType::Queen] = threats;
 
-        self.state.piece_threats[PieceType::King] = king_attacks(self.their(PieceType::King).lsb());
+        self.state.piece_threats[PieceType::King] = king_attacks(self.color_piece(!stm, PieceType::King).lsb());
 
         self.state.all_threats = self.state.piece_threats[PieceType::Pawn]
             | self.state.piece_threats[PieceType::Knight]
@@ -516,14 +523,15 @@ impl Board {
     /// Updates the checkers bitboard to mark opponent pieces currently threatening our king,
     /// and our pinned pieces that cannot move without leaving the king in check.
     pub fn update_king_threats(&mut self) {
-        let our_king = self.king_square(self.side_to_move);
+        let stm = self.side_to_move;
+        let our_king = self.king_square(stm);
 
         self.state.pinned = [Bitboard::default(); 2];
         self.state.pinners = [Bitboard::default(); 2];
         self.state.checkers = Bitboard::default();
 
-        self.state.checkers |= pawn_attacks(our_king, self.side_to_move) & self.their(PieceType::Pawn);
-        self.state.checkers |= knight_attacks(our_king) & self.their(PieceType::Knight);
+        self.state.checkers |= pawn_attacks(our_king, stm) & self.color_piece(!stm, PieceType::Pawn);
+        self.state.checkers |= knight_attacks(our_king) & self.color_piece(!stm, PieceType::Knight);
 
         let diagonal = self.pieces(PieceType::Bishop) | self.pieces(PieceType::Queen);
         let orthogonal = self.pieces(PieceType::Rook) | self.pieces(PieceType::Queen);
@@ -568,7 +576,7 @@ impl Board {
         for piece in 0..Piece::NUM {
             let piece = Piece::from_index(piece);
 
-            for square in self.of(piece.piece_type(), piece.piece_color()) {
+            for square in self.color_piece(piece.piece_color(), piece.piece_type()) {
                 self.update_hash(piece, square);
             }
         }
