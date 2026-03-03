@@ -86,8 +86,7 @@ impl MovePicker {
 
                 let threshold = self.threshold.unwrap_or_else(|| -entry.score / 46 + 109);
 
-                // Don't see moves when in evasions
-                if !td.board.in_check() && !td.board.see(entry.mv, threshold) {
+                if !td.board.see(entry.mv, threshold) {
                     self.bad_noisy.push(entry.mv);
                     continue;
                 }
@@ -165,7 +164,7 @@ impl MovePicker {
 
         if td.board.checkers().is_empty() {
 
-            let threats = td.board.threats();
+            let threats = td.board.all_threats();
 
             for entry in self.list.iter_mut() {
                 let mv = entry.mv;

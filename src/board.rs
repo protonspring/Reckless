@@ -254,18 +254,24 @@ impl Board {
             return piece_count < 4;
         }
 
+        // Here, there are exactly 4 pieces and 2 non-kings
+        // Drawn if each side has one
         if (self.our(PieceType::Bishop) | self.our(PieceType::Knight)).popcount() == 1 {
             return true;
         }
 
+        // Here, one side has both pieces
+        // Drawn if there are 2 knights (requires willing opponent)
         if self.pieces(PieceType::Bishop).is_empty() {
             return true;
         }
 
+        // One side has both pieces and at least one bishop.  If KBNvK, then not drawn.
         if self.pieces(PieceType::Knight) != Bitboard(0) {
             return false;
         }
 
+        // Last case: One side has 2 bishops, Drawn if not on opposite colors
         (self.pieces(PieceType::Bishop) & Bitboard::LIGHT_SQUARES).is_empty()
     }
 
