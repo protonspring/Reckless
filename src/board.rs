@@ -472,7 +472,8 @@ impl Board {
         // Although this changes the resulting threat bitboard, it has no impact on
         // engine behavior, since such squares are not legal move targets, so threat
         // history remains unaffected by this change.
-        self.state.piece_threats[PieceType::Pawn] = pawn_attacks_setwise(self.their(PieceType::Pawn), !self.side_to_move);
+        self.state.piece_threats[PieceType::Pawn] =
+            pawn_attacks_setwise(self.their(PieceType::Pawn), !self.side_to_move);
 
         self.state.piece_threats[PieceType::Knight] = Bitboard(0);
         for square in self.their(PieceType::Knight) {
@@ -512,15 +513,12 @@ impl Board {
         self.state.pinners = [Bitboard::default(); 2];
 
         for color in [Color::White, Color::Black] {
-
             let king = self.king_square(color);
 
             if color == self.side_to_move() {
-
-                self.state.checkers  = pawn_attacks(king, self.side_to_move) & self.their(PieceType::Pawn);
+                self.state.checkers = pawn_attacks(king, self.side_to_move) & self.their(PieceType::Pawn);
                 self.state.checkers |= knight_attacks(king) & self.their(PieceType::Knight);
             } else {
-
                 self.state.checking_squares[PieceType::Pawn] = pawn_attacks(king, !self.side_to_move);
                 self.state.checking_squares[PieceType::Knight] = knight_attacks(king);
                 self.state.checking_squares[PieceType::Bishop] = bishop_attacks(king, self.occupancies());
