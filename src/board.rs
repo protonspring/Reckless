@@ -472,36 +472,29 @@ impl Board {
         // Although this changes the resulting threat bitboard, it has no impact on
         // engine behavior, since such squares are not legal move targets, so threat
         // history remains unaffected by this change.
-        //
-        // This "hack" is used to speed up the implementation of `Board::is_legal`.
+        self.state.piece_threats[PieceType::Pawn] = pawn_attacks_setwise(self.their(PieceType::Pawn), !self.side_to_move);
+
+        self.state.piece_threats[PieceType::Knight] = Bitboard(0);
+        for square in self.their(PieceType::Knight) {
+            self.state.piece_threats[PieceType::Knight] |= knight_attacks(square);
+        }
+
         let occupancies = self.occupancies() ^ self.our(PieceType::King);
 
-        let mut threats = pawn_attacks_setwise(self.their(PieceType::Pawn), !self.side_to_move);
-        self.state.piece_threats[PieceType::Pawn] = threats;
-
-        threats = Bitboard(0);
-        for square in self.their(PieceType::Knight) {
-            threats |= knight_attacks(square);
-        }
-        self.state.piece_threats[PieceType::Knight] = threats;
-
-        threats = Bitboard(0);
+        self.state.piece_threats[PieceType::Bishop] = Bitboard(0);
         for square in self.their(PieceType::Bishop) {
-            threats |= bishop_attacks(square, occupancies);
+            self.state.piece_threats[PieceType::Bishop] |= bishop_attacks(square, occupancies);
         }
-        self.state.piece_threats[PieceType::Bishop] = threats;
 
-        threats = Bitboard(0);
+        self.state.piece_threats[PieceType::Rook] = Bitboard(0);
         for square in self.their(PieceType::Rook) {
-            threats |= rook_attacks(square, occupancies);
+            self.state.piece_threats[PieceType::Rook] |= rook_attacks(square, occupancies);
         }
-        self.state.piece_threats[PieceType::Rook] = threats;
 
-        threats = Bitboard(0);
+        self.state.piece_threats[PieceType::Queen] = Bitboard(0);
         for square in self.their(PieceType::Queen) {
-            threats |= queen_attacks(square, occupancies);
+            self.state.piece_threats[PieceType::Queen] |= queen_attacks(square, occupancies);
         }
-        self.state.piece_threats[PieceType::Queen] = threats;
 
         self.state.piece_threats[PieceType::King] = king_attacks(self.their(PieceType::King).lsb());
 
@@ -511,25 +504,30 @@ impl Board {
             | self.state.piece_threats[PieceType::Rook]
             | self.state.piece_threats[PieceType::Queen]
             | self.state.piece_threats[PieceType::King];
-    }
-
-    /// Updates the checkers bitboard to mark opponent pieces currently threatening our king,
-    /// and our pinned pieces that cannot move without leaving the king in check.
-    pub fn update_king_threats(&mut self) {
-        let our_king = self.king_square(self.side_to_move);
-
-        self.state.pinned = [Bitboard::default(); 2];
-        self.state.pinners = [Bitboard::default(); 2];
-        self.state.checkers = Bitboard::default();
-
-        self.state.checkers |= pawn_attacks(our_king, self.side_to_move) & self.their(PieceType::Pawn);
-        self.state.checkers |= knight_attacks(our_king) & self.their(PieceType::Knight);
 
         let diagonal = self.pieces(PieceType::Bishop) | self.pieces(PieceType::Queen);
         let orthogonal = self.pieces(PieceType::Rook) | self.pieces(PieceType::Queen);
 
+        self.state.pinned = [Bitboard::default(); 2];
+        self.state.pinners = [Bitboard::default(); 2];
+
         for color in [Color::White, Color::Black] {
+
             let king = self.king_square(color);
+
+            if color == self.side_to_move() {
+
+                self.state.checkers  = pawn_attacks(king, self.side_to_move) & self.their(PieceType::Pawn);
+                self.state.checkers |= knight_attacks(king) & self.their(PieceType::Knight);
+            } else {
+
+                self.state.checking_squares[PieceType::Pawn] = pawn_attacks(king, !self.side_to_move);
+                self.state.checking_squares[PieceType::Knight] = knight_attacks(king);
+                self.state.checking_squares[PieceType::Bishop] = bishop_attacks(king, self.occupancies());
+                self.state.checking_squares[PieceType::Rook] = rook_attacks(king, self.occupancies());
+                self.state.checking_squares[PieceType::Queen] =
+                    self.checking_squares(PieceType::Bishop) | self.checking_squares(PieceType::Rook);
+            }
 
             let diagonal = diagonal & bishop_attacks(king, self.colors(!color)) & self.colors(!color);
             let orthogonal = orthogonal & rook_attacks(king, self.colors(!color)) & self.colors(!color);
@@ -549,14 +547,6 @@ impl Board {
                 }
             }
         }
-
-        let their_king = self.king_square(!self.side_to_move);
-        self.state.checking_squares[PieceType::Pawn] = pawn_attacks(their_king, !self.side_to_move);
-        self.state.checking_squares[PieceType::Knight] = knight_attacks(their_king);
-        self.state.checking_squares[PieceType::Bishop] = bishop_attacks(their_king, self.occupancies());
-        self.state.checking_squares[PieceType::Rook] = rook_attacks(their_king, self.occupancies());
-        self.state.checking_squares[PieceType::Queen] =
-            self.checking_squares(PieceType::Bishop) | self.checking_squares(PieceType::Rook);
     }
 
     pub fn update_hash_keys(&mut self) {
