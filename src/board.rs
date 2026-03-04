@@ -435,19 +435,8 @@ impl Board {
                 && (self.castling_threat[kind] & self.all_threats()).is_empty();
         }
 
-        if piece == PieceType::None || !self.us().contains(from) || self.us().contains(to) {
-            return false;
-        }
-
-        if piece != PieceType::Pawn && (mv.is_double_push() || mv.is_promotion() || mv.is_en_passant()) {
-            return false;
-        }
-
-        if captured != PieceType::None && (!mv.is_capture() || captured == PieceType::King) {
-            return false;
-        }
-
-        if mv.is_capture() && !mv.is_en_passant() && !self.them().contains(to) {
+        if (piece == PieceType::None || !self.us().contains(from) || self.us().contains(to))
+        || (captured != PieceType::None && (!mv.is_capture() || captured == PieceType::King)) {
             return false;
         }
 
@@ -464,7 +453,7 @@ impl Board {
             }
 
             if mv.is_capture() {
-                return pawn_attacks(from, self.side_to_move).contains(to) && self.them().contains(to);
+                return !self.them().contains(to) || (pawn_attacks(from, self.side_to_move).contains(to) && self.them().contains(to));
             }
 
             if mv.is_double_push() {
@@ -475,6 +464,8 @@ impl Board {
             }
 
             return from.shift(offset) == to && !self.occupancies().contains(to);
+        } else if mv.is_double_push() || mv.is_promotion() || mv.is_en_passant() {
+            return false;
         }
 
         let attacks = match piece {
