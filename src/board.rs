@@ -1,7 +1,7 @@
 use crate::{
     lookup::{
         between, bishop_attacks, cuckoo, cuckoo_a, cuckoo_b, h1, h2, king_attacks, knight_attacks, pawn_attacks,
-        pawn_attacks_setwise, queen_attacks, rook_attacks,
+        attacks_non_pawn_setwise, pawn_attacks_setwise, queen_attacks, rook_attacks,
     },
     types::{ArrayVec, Bitboard, Castling, CastlingKind, Color, Move, Piece, PieceType, Square, ZOBRIST},
 };
@@ -508,33 +508,11 @@ impl Board {
         // This "hack" is used to speed up the implementation of `Board::is_legal`.
         let occupancies = self.occupancies() ^ self.our(PieceType::King);
 
-        let mut threats = pawn_attacks_setwise(self.their(PieceType::Pawn), !self.side_to_move);
-        self.state.piece_threats[PieceType::Pawn] = threats;
-
-        threats = Bitboard(0);
-        for square in self.their(PieceType::Knight) {
-            threats |= knight_attacks(square);
-        }
-        self.state.piece_threats[PieceType::Knight] = threats;
-
-        threats = Bitboard(0);
-        for square in self.their(PieceType::Bishop) {
-            threats |= bishop_attacks(square, occupancies);
-        }
-        self.state.piece_threats[PieceType::Bishop] = threats;
-
-        threats = Bitboard(0);
-        for square in self.their(PieceType::Rook) {
-            threats |= rook_attacks(square, occupancies);
-        }
-        self.state.piece_threats[PieceType::Rook] = threats;
-
-        threats = Bitboard(0);
-        for square in self.their(PieceType::Queen) {
-            threats |= queen_attacks(square, occupancies);
-        }
-        self.state.piece_threats[PieceType::Queen] = threats;
-
+        self.state.piece_threats[PieceType::Pawn] = pawn_attacks_setwise(self.their(PieceType::Pawn), !self.side_to_move);
+        self.state.piece_threats[PieceType::Knight] = attacks_non_pawn_setwise(PieceType::Knight, self.their(PieceType::Knight), occupancies);
+        self.state.piece_threats[PieceType::Bishop] = attacks_non_pawn_setwise(PieceType::Bishop, self.their(PieceType::Bishop), occupancies);
+        self.state.piece_threats[PieceType::Rook] = attacks_non_pawn_setwise(PieceType::Rook, self.their(PieceType::Rook), occupancies);
+        self.state.piece_threats[PieceType::Queen] = attacks_non_pawn_setwise(PieceType::Queen, self.their(PieceType::Queen), occupancies);
         self.state.piece_threats[PieceType::King] = king_attacks(self.their(PieceType::King).lsb());
 
         self.state.all_threats = self.state.piece_threats[PieceType::Pawn]
