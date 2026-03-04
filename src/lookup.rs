@@ -123,9 +123,8 @@ pub fn attacks(piece: Piece, square: Square, occupancies: Bitboard) -> Bitboard 
     }
 }
 
-pub fn attacks_non_pawn(piece: Piece, square: Square, occupancies: Bitboard) -> Bitboard {
-    match piece.piece_type() {
-        //PieceType::Pawn => pawn_attacks(square, piece.piece_color()),
+pub fn attacks_non_pawn(piece_type: PieceType, square: Square, occupancies: Bitboard) -> Bitboard {
+    match piece_type {
         PieceType::Knight => knight_attacks(square),
         PieceType::Bishop => bishop_attacks(square, occupancies),
         PieceType::Rook => rook_attacks(square, occupancies),
@@ -139,7 +138,7 @@ pub fn attacks_non_pawn_setwise(piece_type: PieceType, pieces: Bitboard, occ: Bi
     debug_assert!(piece_type != PieceType::Pawn);
     let mut attacks = Bitboard(0);
     for square in pieces {
-        attacks |= attacks_non_pawn(Piece::new(Color::White, piece_type), square, occ);
+        attacks |= attacks_non_pawn(piece_type, square, occ);
     };
     attacks
 }
