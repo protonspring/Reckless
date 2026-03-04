@@ -259,7 +259,7 @@ impl Board {
         }
 
         // Here on, there are exactly 2 non-king minors
-        if (self.our(PieceType::Bishop) | self.our(PieceType::Knight)).popcount() == 1 {
+        if (self.our(PieceType::Bishop) | self.our(PieceType::Knight)).has_one_bit() {
             return true;
         }
 
@@ -271,7 +271,7 @@ impl Board {
             return false;
         }
 
-        (self.pieces(PieceType::Bishop) & Bitboard::LIGHT_SQUARES).popcount() != 1
+        !(self.pieces(PieceType::Bishop) & Bitboard::LIGHT_SQUARES).has_one_bit()
     }
 
     /// Checks if the position has repeated once earlier but strictly

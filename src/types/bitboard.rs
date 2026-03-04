@@ -26,8 +26,16 @@ impl Bitboard {
         self.0 == 0
     }
 
+    pub const fn more_than_one(self) -> bool {
+        self.0 & (self.0 - 1) != 0
+    }
+
     pub const fn is_multiple(self) -> bool {
-        self.0 != 0 && self.0 & (self.0 - 1) != 0
+        !self.is_empty() && self.more_than_one()
+    }
+
+    pub const fn has_one_bit(self) -> bool {
+        !self.is_empty() && !self.more_than_one()
     }
 
     pub const fn contains(self, square: Square) -> bool {
