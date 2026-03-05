@@ -26,24 +26,24 @@ impl Bitboard {
         self.0 == 0
     }
 
+    pub const fn popcount(self) -> usize {
+        self.0.count_ones() as usize
+    }
+
     pub const fn more_than_one(self) -> bool {
-        self.0 & (self.0 - 1) != 0
+        self.popcount() > 0
     }
 
     pub const fn is_multiple(self) -> bool {
-        !self.is_empty() && self.more_than_one()
+        self.popcount() > 1
     }
 
     pub const fn has_one_bit(self) -> bool {
-        !self.is_empty() && !self.more_than_one()
+        self.popcount() == 1
     }
 
     pub const fn contains(self, square: Square) -> bool {
         self.0 & (1 << square as u64) != 0
-    }
-
-    pub const fn popcount(self) -> usize {
-        self.0.count_ones() as usize
     }
 
     pub const fn lsb(self) -> Square {
