@@ -193,7 +193,7 @@ impl Board {
         }
 
         fen.push(' ');
-        fen.push_str(&self.side_to_move.to_string());
+        fen.push_str(&self.side_to_move().to_string());
         fen.push(' ');
         fen.push_str(&self.state.castling.to_string(self));
         fen.push(' ');
