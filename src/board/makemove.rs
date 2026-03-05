@@ -59,13 +59,11 @@ impl Board {
             observer.on_piece_change(self, rook, rook_from, false);
 
             self.remove_piece(piece, from);
-            observer.on_piece_change(self, piece, from, false);
+            self.add_piece(piece, to);
+            observer.on_piece_move(self, piece, from, to);
 
             self.add_piece(rook, rook_to);
             observer.on_piece_change(self, rook, rook_to, true);
-
-            self.add_piece(piece, to);
-            observer.on_piece_change(self, piece, to, true);
 
             self.update_hash(rook, rook_from);
             self.update_hash(rook, rook_to);
@@ -78,11 +76,11 @@ impl Board {
 
             if captured != Piece::None {
                 self.state.halfmove_clock = 0;
+
                 self.remove_piece(captured, to);
                 observer.on_piece_change(self, captured, to, false);
 
                 self.update_hash(captured, to);
-
                 self.state.material -= captured.value();
                 self.state.captured = Some(captured);
                 self.state.recapture_square = to;
@@ -106,11 +104,11 @@ impl Board {
                     let captured = Piece::new(!stm, PieceType::Pawn);
                     self.remove_piece(captured, to ^ 8);
                     observer.on_piece_change(self, captured, to ^ 8, false);
+
                     self.update_hash(captured, to ^ 8);
                     self.state.material -= captured.value();
                 } else if mv .is_promotion() {
                     let promotion = Piece::new(stm, mv.promotion_piece().unwrap());
-
                     self.remove_piece(piece, to);
                     observer.on_piece_change(self, piece, to, false);
 
@@ -119,7 +117,6 @@ impl Board {
 
                     self.update_hash(piece, to);
                     self.update_hash(promotion, to);
-
                     self.state.material += promotion.value() - PieceType::Pawn.value();
                 }
             }
