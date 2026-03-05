@@ -78,13 +78,7 @@ impl Board {
 
             if captured != Piece::None {
                 self.state.halfmove_clock = 0;
-
-                //self.remove_piece(piece, from);
-                //observer.on_piece_change(self, piece, from, false);
-
                 self.remove_piece(captured, to);
-                //self.add_piece(piece, to);
-                //observer.on_piece_mutate(self, captured, piece, to);
                 observer.on_piece_change(self, captured, to, false);
 
                 self.update_hash(captured, to);
@@ -94,9 +88,9 @@ impl Board {
                 self.state.recapture_square = to;
             } 
 
-                self.remove_piece(piece, from);
-                self.add_piece(piece, to);
-                observer.on_piece_move(self, piece, from, to);
+            self.remove_piece(piece, from);
+            self.add_piece(piece, to);
+            observer.on_piece_move(self, piece, from, to);
 
             self.update_hash(piece, from);
             self.update_hash(piece, to);
@@ -105,22 +99,16 @@ impl Board {
 
                 self.state.halfmove_clock = 0;
 
-            match mv.kind() {
-                MoveKind::DoublePush => {
+                if mv.is_double_push() {
                     self.state.en_passant = Square::new((from as u8 + to as u8) / 2);
                     self.state.key ^= ZOBRIST.en_passant[self.state.en_passant];
-                }
-                MoveKind::EnPassant => {
+                } else if mv.is_en_passant() {
                     let captured = Piece::new(!stm, PieceType::Pawn);
-
                     self.remove_piece(captured, to ^ 8);
                     observer.on_piece_change(self, captured, to ^ 8, false);
-
                     self.update_hash(captured, to ^ 8);
-
                     self.state.material -= captured.value();
-                }
-                _ if mv.is_promotion() => {
+                } else if mv .is_promotion() {
                     let promotion = Piece::new(stm, mv.promotion_piece().unwrap());
 
                     self.remove_piece(piece, to);
@@ -134,8 +122,6 @@ impl Board {
 
                     self.state.material += promotion.value() - PieceType::Pawn.value();
                 }
-                _ => (),
-            }
             }
         }
 
