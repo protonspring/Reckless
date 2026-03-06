@@ -194,10 +194,10 @@ impl MovePicker {
 
         let rook_threats = minor_threats | td.board.piece_threats(PieceType::Rook);
 
-        let threatened = (td.board.our(PieceType::Queen) & rook_threats)
-            | (td.board.our(PieceType::Rook) & minor_threats)
-            | (td.board.our(PieceType::Knight) & pawn_threats)
-            | (td.board.our(PieceType::Bishop) & pawn_threats);
+        let threatened = (td.board.color_piecetype(side, PieceType::Queen) & rook_threats)
+            | (td.board.color_piecetype(side, PieceType::Rook) & minor_threats)
+            | (td.board.color_piecetype(side, PieceType::Knight) & pawn_threats)
+            | (td.board.color_piecetype(side, PieceType::Bishop) & pawn_threats);
 
         for entry in self.list.iter_mut() {
             let mv = entry.mv;

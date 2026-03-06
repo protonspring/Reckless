@@ -79,7 +79,7 @@ impl super::Board {
         &self, list: &mut MoveList, target: Bitboard, piece: PieceType, attacks: F,
     ) {
         let stm = self.side_to_move();
-        for from in self.our(piece) {
+        for from in self.color_piecetype(stm, piece) {
             if T::KIND == Kind::Noisy {
                 list.push_setwise(from, attacks(from) & target & self.colors(!stm), MoveKind::Capture);
             }
@@ -114,7 +114,8 @@ impl super::Board {
     }
 
     fn collect_pawn_moves<T: MoveGenerator>(&self, list: &mut MoveList) {
-        let pawns = self.our(PieceType::Pawn);
+        let stm = self.side_to_move();
+        let pawns = self.color_piecetype(stm, PieceType::Pawn);
         let seventh_rank = match self.side_to_move {
             Color::White => Bitboard::rank(Rank::R7),
             Color::Black => Bitboard::rank(Rank::R2),

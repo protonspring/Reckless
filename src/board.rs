@@ -176,10 +176,6 @@ impl Board {
         self.colors(color) & self.pieces(piece_type)
     }
 
-    pub fn our(&self, piece_type: PieceType) -> Bitboard {
-        self.pieces(piece_type) & self.colors(self.side_to_move())
-    }
-
     pub fn their(&self, piece_type: PieceType) -> Bitboard {
         self.pieces(piece_type) & self.colors(!self.side_to_move())
     }
@@ -240,6 +236,7 @@ impl Board {
 
     /// Checks for a material draw
     pub fn draw_by_material(&self) -> bool {
+        let stm = self.side_to_move();
         if (self.pieces(PieceType::Pawn) | self.pieces(PieceType::Rook) | self.pieces(PieceType::Queen)) != Bitboard(0)
         {
             return false;
@@ -251,7 +248,7 @@ impl Board {
         }
 
         // Here on, there are exactly 2 non-king minors
-        if (self.our(PieceType::Bishop) | self.our(PieceType::Knight)).popcount() == 1 {
+        if (self.color_piecetype(stm, PieceType::Bishop) | self.color_piecetype(stm, PieceType::Knight)).popcount() == 1 {
             return true;
         }
 
@@ -344,10 +341,11 @@ impl Board {
     /// This method assumes the move has been validated as pseudo-legal
     /// per `Board::is_pseudo_legal`.
     pub fn is_legal(&self, mv: Move) -> bool {
+        let stm = self.side_to_move();
         let from = mv.from();
         let to = mv.to();
 
-        let king = self.our(PieceType::King).lsb();
+        let king = self.king_square(stm);
 
         if mv.is_en_passant() {
             let occupancies = self.occupancies() ^ from.to_bb() ^ to.to_bb() ^ (to ^ 8).to_bb();
@@ -498,7 +496,8 @@ impl Board {
         // history remains unaffected by this change.
         //
         // This "hack" is used to speed up the implementation of `Board::is_legal`.
-        let occupancies = self.occupancies() ^ self.our(PieceType::King);
+        let stm = self.side_to_move();
+        let occupancies = self.occupancies() ^ self.color_piecetype(stm, PieceType::King);
 
         let mut threats = pawn_attacks_setwise(self.their(PieceType::Pawn), !self.side_to_move);
         self.state.piece_threats[PieceType::Pawn] = threats;
