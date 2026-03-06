@@ -225,7 +225,7 @@ impl MovePicker {
 
             // Bonus for checking moves
             if td.board.checking_squares(td.board.moved_piece(mv).piece_type()).contains(mv.to()) {
-                entry.score += 10000;
+                entry.score += 20000 - 10000 * threats.contains(mv.to()) as i32;
             }
             // Malus for moving into danger
             else if pt == PieceType::Queen && minor_threats.contains(mv.to()) {
