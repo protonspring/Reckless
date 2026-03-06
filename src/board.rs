@@ -176,16 +176,12 @@ impl Board {
         self.colors(color) & self.pieces(piece_type)
     }
 
-    pub fn us(&self) -> Bitboard {
-        self.colors(self.side_to_move)
-    }
-
     pub fn them(&self) -> Bitboard {
         self.colors(!self.side_to_move)
     }
 
     pub fn our(&self, piece_type: PieceType) -> Bitboard {
-        self.pieces(piece_type) & self.us()
+        self.pieces(piece_type) & self.colors(self.side_to_move())
     }
 
     pub fn their(&self, piece_type: PieceType) -> Bitboard {
@@ -418,7 +414,7 @@ impl Board {
         let captured = self.piece_on(to).piece_type();
 
         if mv.is_castling() {
-            if !self.us().contains(from) || piece != PieceType::King {
+            if !self.colors(self.side_to_move()).contains(from) || piece != PieceType::King {
                 return false;
             }
 
@@ -435,7 +431,7 @@ impl Board {
                 && (self.castling_threat[kind] & self.all_threats()).is_empty();
         }
 
-        if piece == PieceType::None || !self.us().contains(from) || self.us().contains(to) {
+        if piece == PieceType::None || !self.colors(self.side_to_move()).contains(from) || self.colors(self.side_to_move()).contains(to) {
             return false;
         }
 
