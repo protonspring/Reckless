@@ -345,7 +345,6 @@ impl Board {
 
         if mv.is_en_passant() {
             let occupancies = self.occupancies() ^ from.to_bb() ^ to.to_bb() ^ (to ^ 8).to_bb();
-
             let diagonal = self.color_piecetype(!stm, PieceType::Bishop) | self.color_piecetype(!stm, PieceType::Queen);
             let orthogonal = self.color_piecetype(!stm, PieceType::Rook) | self.color_piecetype(!stm, PieceType::Queen);
 
@@ -494,7 +493,6 @@ impl Board {
         // This "hack" is used to speed up the implementation of `Board::is_legal`.
         let stm = self.side_to_move();
         let occupancies = self.occupancies() ^ self.color_piecetype(stm, PieceType::King);
-
         let mut threats = pawn_attacks_setwise(self.color_piecetype(!stm, PieceType::Pawn), !self.side_to_move);
         self.state.piece_threats[PieceType::Pawn] = threats;
 
