@@ -215,7 +215,7 @@ impl MovePicker {
                 + td.conthist(ply, 6, mv);
 
             // bonus for escaping capture
-            if threatened.contains(mv.from()) {
+            if threatened.contains(mv.from()) && pt != PieceType::Pawn {
                 entry.score += 6000 + 3000 * pt as i32;
             }
 
