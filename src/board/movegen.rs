@@ -78,9 +78,10 @@ impl super::Board {
     fn collect_for<T: MoveGenerator, F: Fn(Square) -> Bitboard>(
         &self, list: &mut MoveList, target: Bitboard, piece: PieceType, attacks: F,
     ) {
+        let stm = self.side_to_move();
         for from in self.our(piece) {
             if T::KIND == Kind::Noisy {
-                list.push_setwise(from, attacks(from) & target & self.them(), MoveKind::Capture);
+                list.push_setwise(from, attacks(from) & target & self.colors(!stm), MoveKind::Capture);
             }
 
             if T::KIND == Kind::Quiet {
@@ -162,15 +163,15 @@ impl super::Board {
         };
 
         let promotions = pawns & seventh_rank;
-        let right = (promotions & !Bitboard::file(File::H)).shift(up_right) & self.them();
-        let left = (promotions & !Bitboard::file(File::A)).shift(up_left) & self.them();
+        let right = (promotions & !Bitboard::file(File::H)).shift(up_right) & self.colors(!self.side_to_move);
+        let left = (promotions & !Bitboard::file(File::A)).shift(up_left) & self.colors(!self.side_to_move);
 
         list.push_promotion_capture_setwise(up_right, right);
         list.push_promotion_capture_setwise(up_left, left);
 
         let non_promotions = pawns & !seventh_rank;
-        let right_captures = (non_promotions & !Bitboard::file(File::H)).shift(up_right) & self.them();
-        let left_captures = (non_promotions & !Bitboard::file(File::A)).shift(up_left) & self.them();
+        let right_captures = (non_promotions & !Bitboard::file(File::H)).shift(up_right) & self.colors(!self.side_to_move);
+        let left_captures = (non_promotions & !Bitboard::file(File::A)).shift(up_left) & self.colors(!self.side_to_move);
 
         list.push_pawns_setwise(up_right, right_captures, MoveKind::Capture);
         list.push_pawns_setwise(up_left, left_captures, MoveKind::Capture);
