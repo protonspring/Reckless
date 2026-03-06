@@ -172,8 +172,8 @@ impl Board {
         self.colors(Color::White) | self.colors(Color::Black)
     }
 
-    pub fn of(&self, piece_type: PieceType, color: Color) -> Bitboard {
-        self.pieces(piece_type) & self.colors(color)
+    pub fn color_piecetype(&self, color: Color, piece_type: PieceType) -> Bitboard {
+        self.colors(color) & self.pieces(piece_type)
     }
 
     pub fn us(&self) -> Bitboard {
@@ -193,7 +193,7 @@ impl Board {
     }
 
     pub fn king_square(&self, color: Color) -> Square {
-        self.of(PieceType::King, color).lsb()
+        self.color_piecetype(color, PieceType::King).lsb()
     }
 
     pub fn piece_on(&self, square: Square) -> Piece {
@@ -341,8 +341,8 @@ impl Board {
     pub fn attackers_to(&self, square: Square, occupancies: Bitboard) -> Bitboard {
         (rook_attacks(square, occupancies) & self.pieces2(PieceType::Rook, PieceType::Queen))
             | (bishop_attacks(square, occupancies) & self.pieces2(PieceType::Bishop, PieceType::Queen))
-            | (pawn_attacks(square, Color::White) & self.of(PieceType::Pawn, Color::Black))
-            | (pawn_attacks(square, Color::Black) & self.of(PieceType::Pawn, Color::White))
+            | (pawn_attacks(square, Color::White) & self.color_piecetype(Color::Black, PieceType::Pawn))
+            | (pawn_attacks(square, Color::Black) & self.color_piecetype(Color::White, PieceType::Pawn))
             | (knight_attacks(square) & self.pieces(PieceType::Knight))
             | (king_attacks(square) & self.pieces(PieceType::King))
     }
@@ -600,7 +600,7 @@ impl Board {
         for piece in 0..Piece::NUM {
             let piece = Piece::from_index(piece);
 
-            for square in self.of(piece.piece_type(), piece.piece_color()) {
+            for square in self.color_piecetype(piece.piece_color(), piece.piece_type()) {
                 self.update_hash(piece, square);
             }
         }
