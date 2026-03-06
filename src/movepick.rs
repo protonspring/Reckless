@@ -216,13 +216,23 @@ impl MovePicker {
 
             // bonus for escaping capture
             if threatened.contains(mv.from()) {
-                if pt == PieceType::Queen {
-                    entry.score += 20000;
-                } else if pt != PieceType::Pawn {
-                    entry.score += 8000;
+                match pt {
+                    PieceType::Queen => {
+                        entry.score += 20000 - 10000 * rook_threats.contains(mv.to()) as i32;
+                    }
+                    PieceType::Rook => {
+                        entry.score += 8000 - 4000 * minor_threats.contains(mv.to()) as i32;
+                    }
+                    PieceType::Bishop => {
+                        entry.score += 4000 - 2000 * pawn_threats.contains(mv.to()) as i32;
+                    }
+                    PieceType::Knight => {
+                        entry.score += 4000 - 2000 * pawn_threats.contains(mv.to()) as i32;
+                    }
+                    _ => (),
                 }
             }
-
+                
             // Bonus for checking moves
             if td.board.checking_squares(td.board.moved_piece(mv).piece_type()).contains(mv.to()) {
                 entry.score += 10000;
