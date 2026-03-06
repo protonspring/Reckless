@@ -176,10 +176,6 @@ impl Board {
         self.colors(color) & self.pieces(piece_type)
     }
 
-    pub fn their(&self, piece_type: PieceType) -> Bitboard {
-        self.pieces(piece_type) & self.colors(!self.side_to_move())
-    }
-
     pub fn king_square(&self, color: Color) -> Square {
         self.color_piecetype(color, PieceType::King).lsb()
     }
@@ -350,8 +346,8 @@ impl Board {
         if mv.is_en_passant() {
             let occupancies = self.occupancies() ^ from.to_bb() ^ to.to_bb() ^ (to ^ 8).to_bb();
 
-            let diagonal = self.their(PieceType::Bishop) | self.their(PieceType::Queen);
-            let orthogonal = self.their(PieceType::Rook) | self.their(PieceType::Queen);
+            let diagonal = self.color_piecetype(!stm, PieceType::Bishop) | self.color_piecetype(!stm, PieceType::Queen);
+            let orthogonal = self.color_piecetype(!stm, PieceType::Rook) | self.color_piecetype(!stm, PieceType::Queen);
 
             let diagonal = bishop_attacks(king, occupancies) & diagonal;
             let orthogonal = rook_attacks(king, occupancies) & orthogonal;
@@ -499,34 +495,34 @@ impl Board {
         let stm = self.side_to_move();
         let occupancies = self.occupancies() ^ self.color_piecetype(stm, PieceType::King);
 
-        let mut threats = pawn_attacks_setwise(self.their(PieceType::Pawn), !self.side_to_move);
+        let mut threats = pawn_attacks_setwise(self.color_piecetype(!stm, PieceType::Pawn), !self.side_to_move);
         self.state.piece_threats[PieceType::Pawn] = threats;
 
         threats = Bitboard(0);
-        for square in self.their(PieceType::Knight) {
+        for square in self.color_piecetype(!stm, PieceType::Knight) {
             threats |= knight_attacks(square);
         }
         self.state.piece_threats[PieceType::Knight] = threats;
 
         threats = Bitboard(0);
-        for square in self.their(PieceType::Bishop) {
+        for square in self.color_piecetype(!stm, PieceType::Bishop) {
             threats |= bishop_attacks(square, occupancies);
         }
         self.state.piece_threats[PieceType::Bishop] = threats;
 
         threats = Bitboard(0);
-        for square in self.their(PieceType::Rook) {
+        for square in self.color_piecetype(!stm, PieceType::Rook) {
             threats |= rook_attacks(square, occupancies);
         }
         self.state.piece_threats[PieceType::Rook] = threats;
 
         threats = Bitboard(0);
-        for square in self.their(PieceType::Queen) {
+        for square in self.color_piecetype(!stm, PieceType::Queen) {
             threats |= queen_attacks(square, occupancies);
         }
         self.state.piece_threats[PieceType::Queen] = threats;
 
-        self.state.piece_threats[PieceType::King] = king_attacks(self.their(PieceType::King).lsb());
+        self.state.piece_threats[PieceType::King] = king_attacks(self.king_square(!stm));
 
         self.state.all_threats = self.state.piece_threats[PieceType::Pawn]
             | self.state.piece_threats[PieceType::Knight]
@@ -539,14 +535,15 @@ impl Board {
     /// Updates the checkers bitboard to mark opponent pieces currently threatening our king,
     /// and our pinned pieces that cannot move without leaving the king in check.
     pub fn update_king_threats(&mut self) {
-        let our_king = self.king_square(self.side_to_move);
+        let stm = self.side_to_move();
+        let our_king = self.king_square(stm);
 
         self.state.pinned = [Bitboard::default(); 2];
         self.state.pinners = [Bitboard::default(); 2];
         self.state.checkers = Bitboard::default();
 
-        self.state.checkers |= pawn_attacks(our_king, self.side_to_move) & self.their(PieceType::Pawn);
-        self.state.checkers |= knight_attacks(our_king) & self.their(PieceType::Knight);
+        self.state.checkers |= pawn_attacks(our_king, stm) & self.color_piecetype(!stm, PieceType::Pawn);
+        self.state.checkers |= knight_attacks(our_king) & self.color_piecetype(!stm, PieceType::Knight);
 
         let diagonal = self.pieces2(PieceType::Bishop, PieceType::Queen);
         let orthogonal = self.pieces2(PieceType::Rook, PieceType::Queen);
