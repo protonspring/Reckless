@@ -215,14 +215,9 @@ impl MovePicker {
                 + td.conthist(ply, 6, mv);
 
             // bonus for escaping capture
+            let escapes = [0, 10000, 10000, 14000, 20000, 0];
             if threatened.contains(mv.from()) {
-                if pt == PieceType::Queen {
-                    entry.score += 20000;
-                } else if pt == PieceType::Rook {
-                    entry.score += 14000;
-                } else if pt != PieceType::Pawn {
-                    entry.score += 8000;
-                }
+                entry.score += escapes[pt];
             }
 
             // Bonus for checking moves
@@ -232,9 +227,6 @@ impl MovePicker {
             // Malus for moving into danger
             else if pt == PieceType::Queen && minor_threats.contains(mv.to()) {
                 entry.score -= 10000;
-            }
-            else if pt == PieceType::Rook && minor_threats.contains(mv.to()) {
-                entry.score -= 7000;
             }
         }
     }
