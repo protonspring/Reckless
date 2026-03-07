@@ -12,6 +12,7 @@ pub struct Bitboard(pub u64);
 impl Bitboard {
     pub const ALL: Self = Self(0xFFFFFFFFFFFFFFFF);
     pub const LIGHT_SQUARES: Self = Self(0x55AA55AA55AA55AA);
+    pub const HOME_ROWS: Self = Self(0xFF000000000000FF); 
 
     /// Creates a bitboard with all bits set in the specified rank.
     pub const fn rank(rank: Rank) -> Self {

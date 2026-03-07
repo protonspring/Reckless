@@ -1,7 +1,7 @@
 use crate::{
     search::NodeType,
     thread::ThreadData,
-    types::{ArrayVec, MAX_MOVES, Move, MoveList, PieceType},
+    types::{ArrayVec, Bitboard, MAX_MOVES, Move, MoveList, PieceType},
     lookup::pawn_attacks_setwise,
 };
 
@@ -201,8 +201,8 @@ impl MovePicker {
             | (td.board.our(PieceType::Bishop) & pawn_threats);
 
         //offensive and attacking
-        let enemy_nonpawns = td.board.colors(!side) & !td.board.pieces(PieceType::Pawn);
-        let pawn_offense = pawn_attacks_setwise(enemy_nonpawns, !side);
+        let pawn_offense = Bitboard::HOME_ROWS |
+            (pawn_attacks_setwise(td.board.colors(!side), !side) & !td.board.piece_threats(PieceType::Pawn));
 
         for entry in self.list.iter_mut() {
             let mv = entry.mv;
@@ -241,7 +241,7 @@ impl MovePicker {
 
             // Bonus for offensive attacking
             if pt == PieceType::Pawn {
-                entry.score += 8000 * pawn_offense.contains(mv.to()) as i32;
+                entry.score += 4000 * pawn_offense.contains(mv.to()) as i32;
             }
         }
     }
