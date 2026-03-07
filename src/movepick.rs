@@ -2,6 +2,7 @@ use crate::{
     search::NodeType,
     thread::ThreadData,
     types::{ArrayVec, MAX_MOVES, Move, MoveList, PieceType},
+    lookup::pawn_attacks_setwise,
 };
 
 #[derive(Copy, Clone, Eq, PartialEq, PartialOrd)]
@@ -199,6 +200,10 @@ impl MovePicker {
             | (td.board.our(PieceType::Knight) & pawn_threats)
             | (td.board.our(PieceType::Bishop) & pawn_threats);
 
+        //offensive and attacking
+        let enemy_nonpawns = td.board.colors(!side) & !td.board.pieces(PieceType::Pawn);
+        let pawn_offense = pawn_attacks_setwise(enemy_nonpawns, !side);
+
         for entry in self.list.iter_mut() {
             let mv = entry.mv;
             let pt = td.board.piece_on(mv.from()).piece_type();
@@ -232,6 +237,11 @@ impl MovePicker {
             // Malus for moving into danger
             else if pt == PieceType::Queen && minor_threats.contains(mv.to()) {
                 entry.score -= 10000;
+            }
+
+            // Bonus for offensive attacking
+            if pt == PieceType::Pawn {
+                entry.score += 4000 * pawn_offense.contains(mv.to()) as i32;
             }
         }
     }
