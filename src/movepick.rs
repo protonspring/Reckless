@@ -241,7 +241,7 @@ impl MovePicker {
 
             // Bonus for offensive attacking
             if pt == PieceType::Pawn {
-                entry.score += 4000 * pawn_offense.contains(mv.to()) as i32;
+                entry.score += 8000 * pawn_offense.contains(mv.to()) as i32;
             }
         }
     }
