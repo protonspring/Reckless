@@ -183,6 +183,19 @@ impl MovePicker {
     }
 
     fn score_quiet(&mut self, td: &ThreadData, ply: isize) {
+
+        if td.board.in_check() {
+
+            // Score by least valuable mover
+            for entry in self.list.iter_mut() {
+
+                let mv = entry.mv;
+                let pt = td.board.piece_on(mv.from()).piece_type();
+
+                entry.score = 10000 - 1000 * pt as i32;
+            }
+        } else {
+
         let threats = td.board.all_threats();
 
         let side = td.board.side_to_move();
@@ -233,6 +246,7 @@ impl MovePicker {
             else if pt == PieceType::Queen && minor_threats.contains(mv.to()) {
                 entry.score -= 10000;
             }
+        }
         }
     }
 }
