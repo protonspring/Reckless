@@ -234,7 +234,7 @@ impl MovePicker {
                 entry.score -= 10000;
             }
             else if pt == PieceType::Rook && minor_threats.contains(mv.to()) {
-                entry.score -= 4000;
+                entry.score -= 10000;
             }
         }
     }
