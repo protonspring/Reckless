@@ -231,15 +231,12 @@ impl MovePicker {
             }
             // Malus for moving into danger
             else if pt == PieceType::Queen {
-
-                if rook_threats.contains(mv.to()) {
-                    entry.score -= 8000;
-                }
-                else if minor_threats.contains(mv.to()) {
-                    entry.score -= 12000;
-                }
-                else if pawn_threats.contains(mv.to()) {
+                if pawn_threats.contains(mv.to()) {
                     entry.score -= 16000;
+                } else if minor_threats.contains(mv.to()) {
+                    entry.score -= 12000;
+                } else if rook_threats.contains(mv.to()) {
+                    entry.score -= 8000;
                 }
             }
         }
