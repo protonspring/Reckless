@@ -221,7 +221,7 @@ impl MovePicker {
                         entry.score += 20000;
                      } else if minor_threats.contains(mv.from()) {
                         entry.score += 14000;
-                     } else if pawn_threats.contains(mv.from()) {
+                     } else if rook_threats.contains(mv.from()) {
                         entry.score += 8000;
                      }
                 } else if pt == PieceType::Rook {
