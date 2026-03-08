@@ -234,7 +234,7 @@ impl MovePicker {
                 entry.score -= 10000;
             }
             else if pt == PieceType::Queen && pawn_threats.contains(mv.to()) {
-                entry.score -= 8000;
+                entry.score -= 12000;
             }
         }
     }
