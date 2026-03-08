@@ -228,13 +228,18 @@ impl MovePicker {
             // Bonus for checking moves
             if td.board.checking_squares(td.board.moved_piece(mv).piece_type()).contains(mv.to()) {
                 entry.score += 10000;
-            }
-            // Malus for moving into danger
-            else if pt == PieceType::Queen && minor_threats.contains(mv.to()) {
-                entry.score -= 10000;
-            }
-            else if pt == PieceType::Rook && minor_threats.contains(mv.to()) {
-                entry.score -= 7000;
+            } else {
+
+                // Malus for moving into danger
+                if pt == PieceType::Queen && rook_threats.contains(mv.to()) {
+                    entry.score -= 10000;
+                }
+                else if pt == PieceType::Rook && minor_threats.contains(mv.to()) {
+                    entry.score -= 7000;
+                }
+                else if pt != PieceType::Pawn && pawn_threats.contains(mv.to()) {
+                    entry.score -= 4000;
+                }
             }
         }
     }
