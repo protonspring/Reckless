@@ -518,15 +518,16 @@ impl Board {
         }
         self.state.piece_threats[PieceType::Knight] = threats;
 
+        // Bishop threats see through our own queens
         threats = Bitboard(0);
         for square in self.their(PieceType::Bishop) {
-            threats |= bishop_attacks(square, occupancies);
+            threats |= bishop_attacks(square, occupancies & !self.of(PieceType::Queen, stm));
         }
         self.state.piece_threats[PieceType::Bishop] = threats;
 
         threats = Bitboard(0);
         for square in self.their(PieceType::Rook) {
-            threats |= rook_attacks(square, occupancies);
+            threats |= rook_attacks(square, occupancies & !self.of(PieceType::Queen, stm));
         }
         self.state.piece_threats[PieceType::Rook] = threats;
 
