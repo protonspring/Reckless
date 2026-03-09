@@ -1,7 +1,8 @@
 use crate::{
     search::NodeType,
     thread::ThreadData,
-    types::{ArrayVec, MAX_MOVES, Move, MoveList, PieceType},
+    types::{ArrayVec, Bitboard, MAX_MOVES, Move, MoveList, PieceType},
+    lookup::{knight_attacks}
 };
 
 #[derive(Copy, Clone, Eq, PartialEq, PartialOrd)]
@@ -199,6 +200,11 @@ impl MovePicker {
             | (td.board.our(PieceType::Knight) & pawn_threats)
             | (td.board.our(PieceType::Bishop) & pawn_threats);
 
+        let mut knight_offense = Bitboard(0);
+        for square in td.board.their(PieceType::Queen) | td.board.their(PieceType::Rook) {
+            knight_offense |= knight_attacks(square);
+        }
+
         for entry in self.list.iter_mut() {
             let mv = entry.mv;
             let pt = td.board.piece_on(mv.from()).piece_type();
@@ -232,6 +238,11 @@ impl MovePicker {
             // Malus for moving into danger
             else if pt == PieceType::Queen && minor_threats.contains(mv.to()) {
                 entry.score -= 10000;
+            }
+
+            // Offensive attacking
+            if pt == PieceType::Knight && knight_offense.contains(mv.to()) {
+                entry.score += 4000;
             }
         }
     }
