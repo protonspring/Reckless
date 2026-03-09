@@ -352,54 +352,31 @@ impl Board {
     /// This method assumes the move has been validated as pseudo-legal
     /// per `Board::is_pseudo_legal`.
     pub fn is_legal(&self, mv: Move) -> bool {
-        let from = mv.from();
-        let to = mv.to();
 
-        let king = self.king_square(self.side_to_move());
+        //Just udpate the occupancy and check for king under attack
+        let mut occ = self.occupancies();
+        let mut king_sq = self.king_square(self.side_to_move());
 
-        if mv.is_en_passant() {
-            let occupancies = self.occupancies() ^ from.to_bb() ^ to.to_bb() ^ (to ^ 8).to_bb();
+        occ.clear(mv.from());
+        occ.set(mv.to());
 
-            let diagonal = self.their(PieceType::Bishop) | self.their(PieceType::Queen);
-            let orthogonal = self.their(PieceType::Rook) | self.their(PieceType::Queen);
-
-            let diagonal = bishop_attacks(king, occupancies) & diagonal;
-            let orthogonal = rook_attacks(king, occupancies) & orthogonal;
-
-            return (orthogonal | diagonal).is_empty();
+        if king_sq == mv.from() {
+            king_sq = mv.to();
         }
 
-        if mv.is_castling() {
-            let kind = match to {
-                Square::G1 => CastlingKind::WhiteKingside,
-                Square::C1 => CastlingKind::WhiteQueenside,
-                Square::G8 => CastlingKind::BlackKingside,
-                Square::C8 => CastlingKind::BlackQueenside,
-                _ => unreachable!(),
-            };
+        if mv.is_en_passant() { //also remove the captured pawn
+            occ.clear(mv.to() ^ 8);
+        } else if mv.is_castling() {
 
-            return !self.all_threats().contains(to)
-                && !self.pinned(self.side_to_move).contains(self.castling_rooks[kind]);
+            let (rook_from, rook_to) = self.get_castling_rook(mv.to());
+            occ.clear(rook_from);
+            occ.set(rook_to);
+            occ.set(mv.to());
         }
 
-        if self.piece_on(from).piece_type() == PieceType::King {
-            return !self.all_threats().contains(to);
-        }
-
-        if self.pinned(self.side_to_move).contains(from) {
-            let along_pin = between(king, from).contains(to) || between(king, to).contains(from);
-            return self.checkers().is_empty() && along_pin;
-        }
-
-        if self.checkers().is_multiple() {
-            return false;
-        }
-
-        if self.checkers().is_empty() {
-            return true;
-        }
-
-        (self.checkers() | between(king, self.checkers().lsb())).contains(to)
+        let mut attackers = self.attackers_to(king_sq, occ) & occ & self.colors(!self.side_to_move());
+        attackers.clear(mv.to());
+        attackers.is_empty()
     }
 
     /// Checks if a move is pseudo-legal in the current position.
