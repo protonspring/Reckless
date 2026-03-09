@@ -242,7 +242,7 @@ impl MovePicker {
 
             // Offensive attacking
             if pt == PieceType::Knight && knight_offense.contains(mv.to()) {
-                entry.score += 4000;
+                entry.score += 8000;
             }
         }
     }
