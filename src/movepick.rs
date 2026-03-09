@@ -203,11 +203,6 @@ impl MovePicker {
             let mv = entry.mv;
             let pt = td.board.piece_on(mv.from()).piece_type();
 
-            if mv == self.tt_move {
-                entry.score = i32::MIN;
-                continue;
-            }
-
             entry.score = td.quiet_history.get(threats, side, mv)
                 + td.conthist(ply, 1, mv)
                 + td.conthist(ply, 2, mv)
@@ -216,13 +211,7 @@ impl MovePicker {
 
             // bonus for escaping capture
             if threatened.contains(mv.from()) {
-                if pt == PieceType::Queen {
-                    entry.score += 20000;
-                } else if pt == PieceType::Rook {
-                    entry.score += 14000;
-                } else if pt != PieceType::Pawn {
-                    entry.score += 8000;
-                }
+                entry.score += 4000 + 4000 * pt as i32;
             }
 
             // Bonus for checking moves
