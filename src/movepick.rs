@@ -216,7 +216,9 @@ impl MovePicker {
 
             // bonus for escaping capture
             if threatened.contains(mv.from()) {
-                if pt == PieceType::Queen {
+                if pt == PieceType::Queen && !threats.contains(mv.to()) {
+                    //println!("{}", td.board);
+                    //println!("Move: {}-{}", mv.from(), mv.to());
                     entry.score += 20000;
                 } else if pt == PieceType::Rook {
                     entry.score += 14000;
