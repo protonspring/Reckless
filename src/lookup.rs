@@ -111,6 +111,14 @@ pub fn ray_pass(a: Square, b: Square) -> Bitboard {
     unsafe { RAY_PASS[a as usize][b as usize] }
 }
 
+pub fn attacks_setwise(piece: Piece, pieces: Bitboard, occupancies: Bitboard) -> Bitboard {
+    let mut ret = Bitboard(0);
+    for square in pieces {
+        ret |= attacks(piece, square, occupancies);
+    }
+    ret
+}
+        
 pub fn attacks(piece: Piece, square: Square, occupancies: Bitboard) -> Bitboard {
     match piece.piece_type() {
         PieceType::Pawn => pawn_attacks(square, piece.piece_color()),

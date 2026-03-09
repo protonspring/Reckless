@@ -1,6 +1,6 @@
 use crate::{
     lookup::{
-        between, bishop_attacks, cuckoo, cuckoo_a, cuckoo_b, h1, h2, king_attacks, knight_attacks, pawn_attacks,
+        attacks_setwise, between, bishop_attacks, cuckoo, cuckoo_a, cuckoo_b, h1, h2, king_attacks, knight_attacks, pawn_attacks,
         pawn_attacks_setwise, queen_attacks, rook_attacks,
     },
     types::{ArrayVec, Bitboard, Castling, CastlingKind, Color, Move, Piece, PieceType, Square, ZOBRIST},
@@ -511,39 +511,14 @@ impl Board {
 
         let mut threats = pawn_attacks_setwise(self.their(PieceType::Pawn), !stm);
         self.state.piece_threats[PieceType::Pawn] = threats;
+        self.state.all_threats = threats;
 
-        threats = Bitboard(0);
-        for square in self.their(PieceType::Knight) {
-            threats |= knight_attacks(square);
+        for pc in [Piece::WhiteKnight, Piece::WhiteBishop, Piece::WhiteRook, Piece::WhiteQueen, Piece::WhiteKing] {
+            let pt = pc.piece_type();
+            threats = attacks_setwise(pc, self.their(pt), occupancies);
+            self.state.piece_threats[pt] = threats;
+            self.state.all_threats |= threats;
         }
-        self.state.piece_threats[PieceType::Knight] = threats;
-
-        threats = Bitboard(0);
-        for square in self.their(PieceType::Bishop) {
-            threats |= bishop_attacks(square, occupancies);
-        }
-        self.state.piece_threats[PieceType::Bishop] = threats;
-
-        threats = Bitboard(0);
-        for square in self.their(PieceType::Rook) {
-            threats |= rook_attacks(square, occupancies);
-        }
-        self.state.piece_threats[PieceType::Rook] = threats;
-
-        threats = Bitboard(0);
-        for square in self.their(PieceType::Queen) {
-            threats |= queen_attacks(square, occupancies);
-        }
-        self.state.piece_threats[PieceType::Queen] = threats;
-
-        self.state.piece_threats[PieceType::King] = king_attacks(self.king_square(!stm));
-
-        self.state.all_threats = self.state.piece_threats[PieceType::Pawn]
-            | self.state.piece_threats[PieceType::Knight]
-            | self.state.piece_threats[PieceType::Bishop]
-            | self.state.piece_threats[PieceType::Rook]
-            | self.state.piece_threats[PieceType::Queen]
-            | self.state.piece_threats[PieceType::King];
     }
 
     /// Updates the checkers bitboard to mark opponent pieces currently threatening our king,
