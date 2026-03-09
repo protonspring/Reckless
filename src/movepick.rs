@@ -216,11 +216,11 @@ impl MovePicker {
 
             // bonus for escaping capture
             if threatened.contains(mv.from()) {
-                if pt == PieceType::Queen {
+                if pt == PieceType::Queen && !minor_threats.contains(mv.to()) {
                     entry.score += 20000;
-                } else if pt == PieceType::Rook {
+                } else if pt == PieceType::Rook && !pawn_threats.contains(mv.to()) {
                     entry.score += 14000;
-                } else if pt != PieceType::Pawn {
+                } else if pt != PieceType::Pawn && !pawn_threats.contains(mv.to()) {
                     entry.score += 8000;
                 }
             }
