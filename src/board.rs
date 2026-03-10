@@ -357,40 +357,38 @@ impl Board {
         let stm = self.side_to_move();
         let king = self.king_square(stm);
 
-        if mv.is_en_passant() {
-            let occupancies = self.occupancies() ^ from.to_bb() ^ to.to_bb() ^ (to ^ 8).to_bb();
-
-            let diagonal = self.their(PieceType::Bishop) | self.their(PieceType::Queen);
-            let orthogonal = self.their(PieceType::Rook) | self.their(PieceType::Queen);
-
-            let diagonal = bishop_attacks(king, occupancies) & diagonal;
-            let orthogonal = rook_attacks(king, occupancies) & orthogonal;
-            return (orthogonal | diagonal).is_empty();
-        }
-
-        if mv.is_castling() {
-            let kind = match to {
-                Square::G1 => CastlingKind::WhiteKingside,
-                Square::C1 => CastlingKind::WhiteQueenside,
-                Square::G8 => CastlingKind::BlackKingside,
-                Square::C8 => CastlingKind::BlackQueenside,
-                _ => unreachable!(),
-            };
-
-            return !self.all_threats().contains(to) && !self.pinned(stm).contains(self.castling_rooks[kind]);
-        }
-
         if king == from {
-            return !self.all_threats().contains(to);
-        }
+            if mv.is_castling() {
+                let kind = match to {
+                    Square::G1 => CastlingKind::WhiteKingside,
+                    Square::C1 => CastlingKind::WhiteQueenside,
+                    Square::G8 => CastlingKind::BlackKingside,
+                    Square::C8 => CastlingKind::BlackQueenside,
+                    _ => unreachable!(),
+                };
 
-        if self.pinned(stm).contains(from) {
-            let along_pin = between(king, from).contains(to) || between(king, to).contains(from);
-            return self.checkers().is_empty() && along_pin;
-        }
+                return !self.all_threats().contains(to) && !self.pinned(stm).contains(self.castling_rooks[kind]);
+            } else {
+                return !self.all_threats().contains(to);
+            }
+        } else {
+            if mv.is_en_passant() {
+                let occupancies = self.occupancies() ^ from.to_bb() ^ to.to_bb() ^ (to ^ 8).to_bb();
+                let diagonal = self.their(PieceType::Bishop) | self.their(PieceType::Queen);
+                let orthogonal = self.their(PieceType::Rook) | self.their(PieceType::Queen);
+                let diagonal = bishop_attacks(king, occupancies) & diagonal;
+                let orthogonal = rook_attacks(king, occupancies) & orthogonal;
+                return (orthogonal | diagonal).is_empty();
+            }
 
-        if self.checkers().is_multiple() {
-            return false;
+            if self.pinned(stm).contains(from) {
+                let along_pin = between(king, from).contains(to) || between(king, to).contains(from);
+                return self.checkers().is_empty() && along_pin;
+            }
+
+            if self.checkers().is_multiple() {
+                return false;
+            }
         }
 
         if self.checkers().is_empty() {
