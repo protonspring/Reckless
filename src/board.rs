@@ -362,16 +362,17 @@ impl Board {
 
         if king_sq == mv.from() {
             king_sq = mv.to();
-        }
 
-        if mv.is_en_passant() { //also remove the captured pawn
+            if mv.is_castling() {
+                let (rook_from, rook_to) = self.get_castling_rook(mv.to());
+                occ.clear(rook_from);
+                occ.set(rook_to);
+                occ.set(mv.to());
+            } else {
+                return !self.all_threats().contains(mv.to());
+            }
+        } else if mv.is_en_passant() { //also remove the captured pawn
             occ.clear(mv.to() ^ 8);
-        } else if mv.is_castling() {
-
-            let (rook_from, rook_to) = self.get_castling_rook(mv.to());
-            occ.clear(rook_from);
-            occ.set(rook_to);
-            occ.set(mv.to());
         }
 
         let mut attackers = self.attackers_to(king_sq, occ) & occ & self.colors(!self.side_to_move());
