@@ -358,30 +358,24 @@ impl Board {
         let king = self.king_square(stm);
 
         if mv.is_en_passant() {
-            let occupancies = self.occupancies() ^ from.to_bb() ^ to.to_bb() ^ (to ^ 8).to_bb();
-
-            let diagonal = self.their(PieceType::Bishop) | self.their(PieceType::Queen);
-            let orthogonal = self.their(PieceType::Rook) | self.their(PieceType::Queen);
-
-            let diagonal = bishop_attacks(king, occupancies) & diagonal;
-            let orthogonal = rook_attacks(king, occupancies) & orthogonal;
+            let occ = self.occupancies() ^ from.to_bb() ^ to.to_bb() ^ (to ^ 8).to_bb();
+            let diagonal = bishop_attacks(king, occ) & (self.their(PieceType::Bishop) | self.their(PieceType::Queen));
+            let orthogonal = rook_attacks(king, occ) & (self.their(PieceType::Rook) | self.their(PieceType::Queen));
             return (orthogonal | diagonal).is_empty();
-        }
+        } else if king == from {
+            let mut rook_free = true;
 
-        if mv.is_castling() {
-            let kind = match to {
-                Square::G1 => CastlingKind::WhiteKingside,
-                Square::C1 => CastlingKind::WhiteQueenside,
-                Square::G8 => CastlingKind::BlackKingside,
-                Square::C8 => CastlingKind::BlackQueenside,
-                _ => unreachable!(),
-            };
-
-            return !self.all_threats().contains(to) && !self.pinned(stm).contains(self.castling_rooks[kind]);
-        }
-
-        if king == from {
-            return !self.all_threats().contains(to);
+            if mv.is_castling() {
+                let kind = match to {
+                    Square::G1 => CastlingKind::WhiteKingside,
+                    Square::C1 => CastlingKind::WhiteQueenside,
+                    Square::G8 => CastlingKind::BlackKingside,
+                    Square::C8 => CastlingKind::BlackQueenside,
+                    _ => unreachable!(),
+                };
+                rook_free = !self.pinned(stm).contains(self.castling_rooks[kind]);
+            }
+            return rook_free && !self.all_threats().contains(to);
         }
 
         if self.pinned(stm).contains(from) {
