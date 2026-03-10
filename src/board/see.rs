@@ -38,8 +38,9 @@ impl super::Board {
             occupancies.clear(mv.to() ^ 8);
         }
 
-        let mut attackers = self.attackers_to(mv.to(), occupancies) & occupancies;
         let mut stm = !self.side_to_move();
+        let mut attackers = occupancies &
+            (self.attackers_to(stm, mv.to(), occupancies) | self.attackers_to(!stm, mv.to(), occupancies));
 
         let diagonal = self.pieces2(PieceType::Bishop, PieceType::Queen);
         let orthogonal = self.pieces2(PieceType::Rook, PieceType::Queen);

@@ -338,32 +338,34 @@ impl Board {
         false
     }
 
-    pub fn attackers_to(&self, square: Square, occupancies: Bitboard) -> Bitboard {
-        (rook_attacks(square, occupancies) & self.pieces2(PieceType::Rook, PieceType::Queen))
+    pub fn attackers_to(&self, side: Color, square: Square, occupancies: Bitboard) -> Bitboard {
+        ((rook_attacks(square, occupancies) & self.pieces2(PieceType::Rook, PieceType::Queen))
             | (bishop_attacks(square, occupancies) & self.pieces2(PieceType::Bishop, PieceType::Queen))
-            | (pawn_attacks(square, Color::White) & self.of(PieceType::Pawn, Color::Black))
-            | (pawn_attacks(square, Color::Black) & self.of(PieceType::Pawn, Color::White))
+            | (pawn_attacks(square, !side) & self.pieces(PieceType::Pawn))
             | (knight_attacks(square) & self.pieces(PieceType::Knight))
-            | (king_attacks(square) & self.pieces(PieceType::King))
+            | (king_attacks(square) & self.pieces(PieceType::King)))
+            & self.colors(side)
     }
 
     /// Checks if the given move is legal in the current position.
     ///
     /// This method assumes the move has been validated as pseudo-legal
     /// per `Board::is_pseudo_legal`.
+    /// Just udpate the occupancy and check for king under attack
     pub fn is_legal(&self, mv: Move) -> bool {
 
-        //Just udpate the occupancy and check for king under attack
-        let mut occ = self.occupancies();
-        let mut king_sq = self.king_square(self.side_to_move());
-
-        occ.clear(mv.from());
-        occ.set(mv.to());
+        let stm = self.side_to_move();
+        let mut occ = (self.occupancies() ^ mv.from().to_bb()) | mv.to().to_bb();
+        let mut king_sq = self.king_square(stm);
 
         if king_sq == mv.from() {
             king_sq = mv.to();
 
             if mv.is_castling() {
+                if ((between(king_sq, mv.to()) | mv.to().to_bb()) & self.all_threats()) != Bitboard(0) {
+                    return false;
+                }
+
                 let (rook_from, rook_to) = self.get_castling_rook(mv.to());
                 occ.clear(rook_from);
                 occ.set(rook_to);
@@ -375,9 +377,12 @@ impl Board {
             occ.clear(mv.to() ^ 8);
         }
 
-        let mut attackers = self.attackers_to(king_sq, occ) & occ & self.colors(!self.side_to_move());
-        attackers.clear(mv.to());
-        attackers.is_empty()
+        if mv.is_en_passant() || self.checkers() != Bitboard(0) || self.pinned(stm).contains(mv.from()) {
+            let mut attackers = self.attackers_to(!stm, king_sq, occ) & occ;
+            attackers.clear(mv.to());
+            return attackers.is_empty();
+        }
+        true
     }
 
     /// Checks if a move is pseudo-legal in the current position.
