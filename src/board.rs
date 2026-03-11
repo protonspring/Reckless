@@ -1,9 +1,9 @@
 use crate::{
     lookup::{
-        between, bishop_attacks, cuckoo, cuckoo_a, cuckoo_b, h1, h2, king_attacks, knight_attacks, pawn_attacks,
-        pawn_attacks_setwise, queen_attacks, rook_attacks,
+        attacks, between, bishop_attacks, cuckoo, cuckoo_a, cuckoo_b, h1, h2, king_attacks, knight_attacks, pawn_attacks,
+        pawn_attacks_setwise, queen_attacks, ray_pass, rook_attacks,
     },
-    types::{ArrayVec, Bitboard, Castling, CastlingKind, Color, Move, Piece, PieceType, Square, ZOBRIST},
+    types::{ArrayVec, Bitboard, Castling, CastlingKind, Color, Move, Piece, PieceType, Rank, Square, ZOBRIST},
 };
 
 #[cfg(test)]
@@ -385,8 +385,7 @@ impl Board {
         }
 
         if self.pinned(stm).contains(from) {
-            let along_pin = between(king, from).contains(to) || between(king, to).contains(from);
-            return self.checkers().is_empty() && along_pin;
+            return self.checkers().is_empty() && ray_pass(king, from).contains(to);
         }
 
         if self.checkers().is_multiple() {
@@ -411,12 +410,13 @@ impl Board {
 
         let from = mv.from();
         let to = mv.to();
-
-        let piece = self.piece_on(from).piece_type();
+        let stm = self.side_to_move();
+        let occ = self.occupancies();
+        let piece = self.piece_on(from);
         let captured = self.piece_on(to).piece_type();
 
         if mv.is_castling() {
-            if !self.us().contains(from) || piece != PieceType::King {
+            if self.king_square(stm) != from {
                 return false;
             }
 
@@ -429,15 +429,11 @@ impl Board {
             };
 
             return self.castling().is_allowed(kind)
-                && (self.castling_path[kind] & self.occupancies()).is_empty()
+                && (self.castling_path[kind] & occ).is_empty()
                 && (self.castling_threat[kind] & self.all_threats()).is_empty();
         }
 
-        if piece == PieceType::None || !self.us().contains(from) || self.us().contains(to) {
-            return false;
-        }
-
-        if piece != PieceType::Pawn && (mv.is_double_push() || mv.is_promotion() || mv.is_en_passant()) {
+        if piece == Piece::None || !self.us().contains(from) || self.us().contains(to) {
             return false;
         }
 
@@ -449,42 +445,35 @@ impl Board {
             return false;
         }
 
-        if piece == PieceType::Pawn {
-            if mv.is_en_passant() {
-                return to == self.state.en_passant && pawn_attacks(from, self.side_to_move).contains(to);
-            }
+        if piece.piece_type() == PieceType::Pawn {
 
-            let offset = if self.side_to_move == Color::White { 8 } else { -8 };
-            let promotion_rank = if self.side_to_move == Color::White { 7 } else { 0 };
+            let offset = if stm == Color::White { 8 } else { -8 };
+            let promotion_rank = if stm == Color::White { Rank::R8 } else { Rank::R1 };
+            let dp_rank = if stm == Color::White { Rank::R4 } else { Rank::R5 };
 
-            if mv.is_promotion() != (mv.to().rank() == promotion_rank) {
-                return false;
+            let mut targets = Bitboard::ALL;
+
+            if mv.is_promotion() {
+                targets &= Bitboard::rank(promotion_rank);
             }
 
             if mv.is_capture() {
-                return pawn_attacks(from, self.side_to_move).contains(to) && self.them().contains(to);
+                if mv.is_en_passant() { targets &= self.en_passant().to_bb() & !occ; }
+                else { targets &= pawn_attacks(from, stm); }
             }
 
             if mv.is_double_push() {
-                return from.rank() == (if self.side_to_move == Color::White { 1 } else { 6 })
-                    && from.shift(2 * offset) == to
-                    && !self.occupancies().contains(from.shift(offset))
-                    && !self.occupancies().contains(to);
+                targets = from.to_bb();
+                targets = targets.shift(offset) & !occ;
+                targets = targets.shift(offset) & !occ & Bitboard::rank(dp_rank);
             }
 
-            return from.shift(offset) == to && !self.occupancies().contains(to);
+            return targets.contains(to);
+        } else if mv.is_double_push() || mv.is_promotion() || mv.is_en_passant() {
+            return false;
         }
 
-        let attacks = match piece {
-            PieceType::Knight => knight_attacks(from),
-            PieceType::Bishop => bishop_attacks(from, self.occupancies()),
-            PieceType::Rook => rook_attacks(from, self.occupancies()),
-            PieceType::Queen => queen_attacks(from, self.occupancies()),
-            PieceType::King => king_attacks(from),
-            _ => unreachable!(),
-        };
-
-        attacks.contains(to)
+        attacks(piece, from, occ).contains(to)
     }
 
     /// Quickly checks if the move *might* give check to the opponent's king.
