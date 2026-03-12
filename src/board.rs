@@ -116,6 +116,10 @@ impl Board {
         self.state.piece_threats[pt as usize]
     }
 
+    pub fn prior_pinned(&self, color: Color) -> Bitboard {
+        self.state_stack[self.state_stack.len() - 1].pinned[color]
+    }
+
     pub fn prior_threats(&self) -> Bitboard {
         self.state_stack[self.state_stack.len() - 1].all_threats
     }
@@ -358,14 +362,10 @@ impl Board {
         let king = self.king_square(stm);
 
         if mv.is_en_passant() {
-            let occupancies = self.occupancies() ^ from.to_bb() ^ to.to_bb() ^ (to ^ 8).to_bb();
-
-            let diagonal = self.their(PieceType::Bishop) | self.their(PieceType::Queen);
-            let orthogonal = self.their(PieceType::Rook) | self.their(PieceType::Queen);
-
-            let diagonal = bishop_attacks(king, occupancies) & diagonal;
-            let orthogonal = rook_attacks(king, occupancies) & orthogonal;
-            return (orthogonal | diagonal).is_empty();
+            if self.prior_pinned(stm).contains(from) {
+                return ray_pass(king, from).contains(to);
+            }
+            return ray_pass(king, from).contains(to) || !self.pinned(stm).contains(from);
         }
 
         if mv.is_castling() {
