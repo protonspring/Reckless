@@ -364,7 +364,7 @@ impl Board {
         // EP is legal if the capturing pawn is not pinned, is pinned and captures in the king
         // ray AND there are not other pieces that are checking the king.
         if mv.is_en_passant() {
-            return (self.checkers() & self.occupancies() & !(to ^ 8).to_bb()).is_empty()
+            return (self.checkers() & !(to ^ 8).to_bb()).is_empty()
                 && (!self.prior_pinned(stm).contains(from) || ray_pass(king, from).contains(to));
         }
 
