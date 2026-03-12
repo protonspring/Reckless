@@ -361,11 +361,11 @@ impl Board {
         let stm = self.side_to_move();
         let king = self.king_square(stm);
 
+        // EP is legal if the capturing pawn is not pinned, is pinned and captures in the king
+        // ray AND there are not other pieces that are checking the king.
         if mv.is_en_passant() {
-            if self.prior_pinned(stm).contains(from) {
-                return ray_pass(king, from).contains(to);
-            }
-            return ray_pass(king, from).contains(to) || !self.pinned(stm).contains(from);
+            return (self.checkers() & self.occupancies() & !(to ^ 8).to_bb()).is_empty()
+                && (!self.prior_pinned(stm).contains(from) || ray_pass(king, from).contains(to));
         }
 
         if mv.is_castling() {
