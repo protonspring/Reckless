@@ -550,11 +550,11 @@ impl Board {
         for color in [Color::White, Color::Black] {
             let king = self.king_square(color);
 
-            let diagonal = diagonal & bishop_attacks(king, self.colors(!color)) & self.colors(!color);
-            let orthogonal = orthogonal & rook_attacks(king, self.colors(!color)) & self.colors(!color);
+            let diagonal = diagonal & bishop_attacks(king, Bitboard(0)) & self.colors(!color); //enemy attackers
+            let orthogonal = orthogonal & rook_attacks(king, Bitboard(0)) & self.colors(!color); 
 
             for square in diagonal | orthogonal {
-                let blockers = between(king, square) & self.colors(color);
+                let blockers = between(king, square) & self.occupancies();
                 match blockers.popcount() {
                     0 => {
                         debug_assert_eq!(color, self.side_to_move());
