@@ -1,5 +1,5 @@
 use crate::{
-    lookup::{between, bishop_attacks, king_attacks, knight_attacks, pawn_attacks, queen_attacks, rook_attacks},
+    lookup::{between, bishop_attacks, king_attacks, knight_attacks, pawn_attacks, queen_attacks, ray_pass, rook_attacks},
     types::{Bitboard, CastlingKind, Color, File, MoveKind, MoveList, PieceType, Square},
 };
 
@@ -79,12 +79,19 @@ impl super::Board {
         &self, list: &mut MoveList, target: Bitboard, piece: PieceType, attacks: F,
     ) {
         for from in self.our(piece) {
+            let stm = self.side_to_move();
+            let mut target2 = target;
+
+            if self.pinned(stm).contains(from) {
+                target2 &= ray_pass(self.king_square(stm), from);
+            }
+
             if T::KIND == Kind::Noisy {
-                list.push_setwise(from, attacks(from) & target & self.them(), MoveKind::Capture);
+                list.push_setwise(from, attacks(from) & target2 & self.them(), MoveKind::Capture);
             }
 
             if T::KIND == Kind::Quiet {
-                list.push_setwise(from, attacks(from) & target & !self.occupancies(), MoveKind::Normal);
+                list.push_setwise(from, attacks(from) & target2 & !self.occupancies(), MoveKind::Normal);
             }
         }
     }
