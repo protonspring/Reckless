@@ -244,7 +244,7 @@ impl MovePicker {
                     entry.score -= 10000;
                 }
                 else if queen_offense.contains(mv.to()) {
-                    entry.score += 4000;
+                    entry.score += 8000;
                 }
             }
         }
