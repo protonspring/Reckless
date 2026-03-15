@@ -242,7 +242,7 @@ impl MovePicker {
                 }
             } else if pt == PieceType::Knight {
                 if knight_offense.contains(mv.to()) {
-                    entry.score += 6000;
+                    entry.score += 12000;
                 }
             }
         }
