@@ -221,7 +221,7 @@ impl MovePicker {
             } else { //malus for moving into danger
 
                 if pt == PieceType::Rook && pawn_threats.contains(mv.to()) {
-                    entry.score -= 4000;
+                    entry.score -= 8000;
                 }
             }
 
