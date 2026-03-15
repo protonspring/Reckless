@@ -218,6 +218,11 @@ impl MovePicker {
                 } else if pt != PieceType::Pawn {
                     entry.score += 8000;
                 }
+            } else { //malus for moving into danger
+
+                if pt == PieceType::Rook && minor_threats.contains(mv.to()) {
+                    entry.score -= 4000;
+                }
             }
 
             // Bonus for checking moves
