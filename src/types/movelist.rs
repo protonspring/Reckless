@@ -9,15 +9,6 @@ pub struct MoveEntry {
     pub score: i32,
 }
 
-impl Default for MoveEntry {
-    fn default() -> Self {
-        MoveEntry {
-            mv: Move::NULL,
-            score: i32::MIN,
-        }
-    }
-}
-
 pub struct MoveList {
     inner: ArrayVec<MoveEntry, MAX_MOVES>,
 }
