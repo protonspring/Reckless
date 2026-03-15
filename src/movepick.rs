@@ -1,7 +1,7 @@
 use crate::{
     search::NodeType,
     thread::ThreadData,
-    types::{ArrayVec, MAX_MOVES, Move, MoveList, PieceType},
+    types::{ArrayVec, MAX_MOVES, Move, MoveKind, MoveList, PieceType},
 };
 
 #[derive(Copy, Clone, Eq, PartialEq, PartialOrd)]
@@ -168,8 +168,13 @@ impl MovePicker {
                 let captured =
                     if entry.mv.is_en_passant() { PieceType::Pawn } else { td.board.piece_on(mv.to()).piece_type() };
 
-                entry.score =
-                    16 * captured.value() + td.noisy_history.get(threats, td.board.moved_piece(mv), mv.to(), captured);
+                entry.score = 16 * captured.value()
+                            + td.noisy_history.get(threats, td.board.moved_piece(mv), mv.to(), captured);
+
+                if mv.kind() == MoveKind::PromotionCaptureQ ||
+                   mv.kind() == MoveKind::PromotionQ {
+                    entry.score += 40000;
+                }
             }
         } else {
             //in check
