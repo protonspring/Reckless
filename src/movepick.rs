@@ -1,7 +1,8 @@
 use crate::{
+    lookup::{bishop_attacks, rook_attacks, queen_attacks},
     search::NodeType,
     thread::ThreadData,
-    types::{ArrayVec, MAX_MOVES, Move, MoveList, PieceType},
+    types::{ArrayVec, Bitboard, MAX_MOVES, Move, MoveList, PieceType},
 };
 
 #[derive(Copy, Clone, Eq, PartialEq, PartialOrd)]
@@ -184,6 +185,7 @@ impl MovePicker {
 
     fn score_quiet(&mut self, td: &ThreadData, ply: isize) {
         let threats = td.board.all_threats();
+        let occ = td.board.occupancies();
 
         let side = td.board.side_to_move();
 
@@ -198,6 +200,17 @@ impl MovePicker {
             | (td.board.our(PieceType::Rook) & minor_threats)
             | (td.board.our(PieceType::Knight) & pawn_threats)
             | (td.board.our(PieceType::Bishop) & pawn_threats);
+
+        let mut queen_offense = Bitboard(0);
+        for square in td.board.their(PieceType::Knight) & !threats {
+            queen_offense |= queen_attacks(square, occ) & !threats;
+        }
+        for square in td.board.their(PieceType::Bishop) & !threats {
+            queen_offense |= rook_attacks(square, occ) & !threats;
+        }
+        for square in td.board.their(PieceType::Rook) & !threats {
+            queen_offense |= bishop_attacks(square, occ) & !threats;
+        }
 
         for entry in self.list.iter_mut() {
             let mv = entry.mv;
@@ -224,9 +237,15 @@ impl MovePicker {
             if td.board.checking_squares(td.board.moved_piece(mv).piece_type()).contains(mv.to()) {
                 entry.score += 10000;
             }
-            // Malus for moving into danger
-            else if pt == PieceType::Queen && minor_threats.contains(mv.to()) {
-                entry.score -= 10000;
+            // Malus for moving into danger and bonus for offense
+            else if pt == PieceType::Queen {
+
+                if minor_threats.contains(mv.to()) {
+                    entry.score -= 10000;
+                }
+                else if queen_offense.contains(mv.to()) {
+                    entry.score += 4000;
+                }
             }
         }
     }
