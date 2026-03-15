@@ -210,7 +210,7 @@ impl MovePicker {
                 + td.conthist(ply, 6, mv);
 
             // bonus for escaping capture
-            if threatened.contains(mv.from()) {
+            if threatened.contains(mv.from()) && !threatened.contains(mv.to()) {
                 if pt == PieceType::Queen {
                     entry.score += 20000;
                 } else if pt == PieceType::Rook {
