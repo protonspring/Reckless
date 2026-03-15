@@ -1,5 +1,5 @@
 use crate::{
-    lookup::{bishop_attacks, rook_attacks, queen_attacks},
+    lookup::{bishop_attacks, rook_attacks, },
     search::NodeType,
     thread::ThreadData,
     types::{ArrayVec, Bitboard, MAX_MOVES, Move, MoveList, PieceType},
@@ -202,11 +202,17 @@ impl MovePicker {
             | (td.board.our(PieceType::Bishop) & pawn_threats);
 
         let mut queen_offense = Bitboard(0);
-        for square in td.board.their(PieceType::Knight) & !threats {
-            queen_offense |= queen_attacks(square, occ) & !threats;
+        let mut rook_offense = Bitboard(0);
+        for square in (td.board.their(PieceType::Knight) | td.board.their(PieceType::Pawn)) & !threats {
+            let batt = bishop_attacks(square, occ);
+            let ratt = rook_attacks(square, occ);
+            queen_offense |= (batt | ratt) & !threats;
+            rook_offense |= ratt & !threats;
         }
         for square in td.board.their(PieceType::Bishop) & !threats {
-            queen_offense |= rook_attacks(square, occ) & !threats;
+            let att = rook_attacks(square, occ) & !threats;
+            queen_offense |= att;
+            rook_offense |= att;
         }
         for square in td.board.their(PieceType::Rook) & !threats {
             queen_offense |= bishop_attacks(square, occ) & !threats;
@@ -245,6 +251,11 @@ impl MovePicker {
                 }
                 else if queen_offense.contains(mv.to()) {
                     entry.score += 12000;
+                }
+            } else if pt == PieceType::Rook {
+
+                if rook_offense.contains(mv.to()) {
+                    entry.score += 6000;
                 }
             }
         }
