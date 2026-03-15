@@ -147,6 +147,10 @@ impl MovePicker {
         let mut best_index = 0;
         let mut best_score = i32::MIN;
 
+        if self.list.len() == 0 {
+            return MoveEntry::default();
+        }
+
         for (index, entry) in self.list.iter().enumerate() {
             if entry.score >= best_score {
                 best_index = index;
