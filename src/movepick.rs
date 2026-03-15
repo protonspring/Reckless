@@ -173,7 +173,7 @@ impl MovePicker {
 
                 if mv.kind() == MoveKind::PromotionCaptureQ ||
                    mv.kind() == MoveKind::PromotionQ {
-                    entry.score += 10000;
+                    entry.score += 80000;
                 }
             }
         } else {
