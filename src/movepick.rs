@@ -1,5 +1,5 @@
 use crate::{
-    lookup::{bishop_attacks, rook_attacks, queen_attacks},
+    lookup::{knight_attacks, bishop_attacks, rook_attacks, queen_attacks},
     search::NodeType,
     thread::ThreadData,
     types::{ArrayVec, Bitboard, MAX_MOVES, Move, MoveList, PieceType},
@@ -185,7 +185,6 @@ impl MovePicker {
 
     fn score_quiet(&mut self, td: &ThreadData, ply: isize) {
         let threats = td.board.all_threats();
-        let occ = td.board.occupancies();
 
         let side = td.board.side_to_move();
 
@@ -201,16 +200,14 @@ impl MovePicker {
             | (td.board.our(PieceType::Knight) & pawn_threats)
             | (td.board.our(PieceType::Bishop) & pawn_threats);
 
-        let mut queen_offense = Bitboard(0);
-        for square in td.board.their(PieceType::Knight) & !threats {
-            queen_offense |= queen_attacks(square, occ) & !threats;
+        let mut knight_offense = Bitboard(0);
+        for square in td.board.their(PieceType::Queen) {
+            knight_offense |= knight_attacks(square)
         }
-        for square in td.board.their(PieceType::Bishop) & !threats {
-            queen_offense |= rook_attacks(square, occ) & !threats;
+        for square in td.board.their(PieceType::Rook) {
+            knight_offense |= knight_attacks(square);
         }
-        for square in td.board.their(PieceType::Rook) & !threats {
-            queen_offense |= bishop_attacks(square, occ) & !threats;
-        }
+        knight_offense &= !(pawn_threats | minor_threats);
 
         for entry in self.list.iter_mut() {
             let mv = entry.mv;
@@ -243,8 +240,9 @@ impl MovePicker {
                 if minor_threats.contains(mv.to()) {
                     entry.score -= 10000;
                 }
-                else if queen_offense.contains(mv.to()) {
-                    entry.score += 12000;
+            } else if pt == PieceType::Knight {
+                if knight_offense.contains(mv.to()) {
+                    entry.score += 6000;
                 }
             }
         }
