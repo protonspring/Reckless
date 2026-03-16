@@ -1,7 +1,7 @@
 use crate::{
     search::NodeType,
     thread::ThreadData,
-    types::{ArrayVec, MAX_MOVES, Move, MoveList, PieceType},
+    types::{ArrayVec, Bitboard, MAX_MOVES, Move, MoveList, PieceType},
 };
 
 #[derive(Copy, Clone, Eq, PartialEq, PartialOrd)]
@@ -185,13 +185,10 @@ impl MovePicker {
             pawn_threats | td.board.piece_threats(PieceType::Knight) | td.board.piece_threats(PieceType::Bishop);
         let rook_threats = minor_threats | td.board.piece_threats(PieceType::Rook);
 
-        let threatened = (td.board.our(PieceType::Queen) & rook_threats)
-            | (td.board.our(PieceType::Rook) & minor_threats)
-            | (td.board.our(PieceType::Knight) & pawn_threats)
-            | (td.board.our(PieceType::Bishop) & pawn_threats);
-
+        let threatened = [Bitboard(0), pawn_threats, pawn_threats, minor_threats, rook_threats, Bitboard(0)];
         let escape = [0, 8000, 8000, 14000, 20000, 0];
-        let danger = [0,    0,    0,     0, 10000, 0];
+        let danger = [0, 4000, 4000,  7000, 10000, 0];
+        let checks = [10000, 10000, 10000, 10000, 10000, 0];
 
         for entry in self.list.iter_mut() {
             let mv = entry.mv;
@@ -202,13 +199,9 @@ impl MovePicker {
                 + td.conthist(ply, 2, mv)
                 + td.conthist(ply, 4, mv)
                 + td.conthist(ply, 6, mv)
-                + escape[pt] * threatened.contains(mv.from()) as i32
-                + 10000 * td.board.checking_squares(td.board.moved_piece(mv).piece_type()).contains(mv.to()) as i32;
-
-            // Malus for moving into danger
-            if minor_threats.contains(mv.to()) {
-                entry.score -= danger[pt];
-            }
+                + escape[pt] * threatened[pt].contains(mv.from()) as i32
+                + checks[pt] * td.board.checking_squares(td.board.moved_piece(mv).piece_type()).contains(mv.to()) as i32
+                - danger[pt] * threatened[pt].contains(mv.to()) as i32;
         }
     }
 }
