@@ -186,6 +186,7 @@ impl MovePicker {
         let rook_threats = minor_threats | td.board.piece_threats(PieceType::Rook);
 
         let threatened = [Bitboard(0), pawn_threats, pawn_threats, minor_threats, rook_threats, Bitboard(0)];
+        let bad_threats = [Bitboard(0), Bitboard(0), Bitboard(0), pawn_threats, minor_threats, Bitboard(0)];
         let escape = [0, 8000, 8000, 14000, 20000, 0];
 
         for entry in self.list.iter_mut() {
@@ -200,11 +201,11 @@ impl MovePicker {
                 + escape[pt] * threatened[pt].contains(mv.from()) as i32;
 
             // Bonus for checking moves
-            if td.board.checking_squares(td.board.moved_piece(mv).piece_type()).contains(mv.to()) {
+            if td.board.checking_squares(pt).contains(mv.to()) {
                 entry.score += 10000;
             }
             // Malus for moving into danger
-            else if pt == PieceType::Queen && minor_threats.contains(mv.to()) {
+            else if bad_threats[pt].contains(mv.from()) {
                 entry.score -= 10000;
             }
         }
