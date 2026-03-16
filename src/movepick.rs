@@ -194,6 +194,8 @@ impl MovePicker {
             | (td.board.our(PieceType::Knight) & pawn_threats)
             | (td.board.our(PieceType::Bishop) & pawn_threats);
 
+        let check_bonus = [20000, 14000, 14000, 10000, 10000];
+
         for entry in self.list.iter_mut() {
             let mv = entry.mv;
             let pt = td.board.piece_on(mv.from()).piece_type();
@@ -217,7 +219,7 @@ impl MovePicker {
 
             // Bonus for checking moves
             if td.board.checking_squares(td.board.moved_piece(mv).piece_type()).contains(mv.to()) {
-                entry.score += 10000;
+                entry.score += check_bonus[pt];
             }
             // Malus for moving into danger
             else if pt == PieceType::Queen && minor_threats.contains(mv.to()) {
