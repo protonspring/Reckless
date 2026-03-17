@@ -403,14 +403,6 @@ impl Board {
             return false;
         }
 
-        if captured != PieceType::None && (!mv.is_capture() || captured == PieceType::King) {
-            return false;
-        }
-
-        if mv.is_capture() && !mv.is_en_passant() && !self.them().contains(to) {
-            return false;
-        }
-
         if piece.piece_type() == PieceType::Pawn {
             if mv.is_en_passant() {
                 let occupancies = self.occupancies() ^ from.to_bb() ^ to.to_bb() ^ (to ^ 8).to_bb();
@@ -443,6 +435,10 @@ impl Board {
 
             return from.shift(offset) == to && !self.occupancies().contains(to);
         } else if mv.is_double_push() || mv.is_promotion() || mv.is_en_passant() {
+            return false;
+        }
+
+        if (captured != PieceType::None) != mv.is_capture() {
             return false;
         }
 
