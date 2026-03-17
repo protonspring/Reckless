@@ -69,6 +69,13 @@ impl Move {
         self.is_present() && !self.is_noisy()
     }
 
+    pub fn capture_sq(self) -> Square {
+        if self.is_en_passant() {
+            return self.to() ^ 8;
+        }
+        self.to()
+    }
+
     pub const fn is_noisy(self) -> bool {
         matches!(
             self.kind(),
