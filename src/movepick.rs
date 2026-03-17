@@ -185,7 +185,12 @@ impl MovePicker {
             pawn_threats | td.board.piece_threats(PieceType::Knight) | td.board.piece_threats(PieceType::Bishop);
         let rook_threats = minor_threats | td.board.piece_threats(PieceType::Rook);
 
-        let threatened = [Bitboard(0), pawn_threats, pawn_threats, minor_threats, rook_threats, Bitboard(0)];
+        let threatened = [Bitboard(0), 
+            pawn_threats & !td.board.checking_squares(PieceType::Knight),
+            pawn_threats & !td.board.checking_squares(PieceType::Bishop),
+            minor_threats & !td.board.checking_squares(PieceType::Rook),
+            rook_threats & !td.board.checking_squares(PieceType::Queen),
+            Bitboard(0)];
         let escape = [0, 8000, 8000, 14000, 20000, 0];
 
         for entry in self.list.iter_mut() {
@@ -197,16 +202,9 @@ impl MovePicker {
                 + td.conthist(ply, 2, mv)
                 + td.conthist(ply, 4, mv)
                 + td.conthist(ply, 6, mv)
-                + escape[pt] * threatened[pt].contains(mv.from()) as i32;
-
-            // Bonus for checking moves
-            if td.board.checking_squares(pt).contains(mv.to()) {
-                entry.score += 10000;
-            }
-            // Malus for moving into danger
-            else if threatened[pt].contains(mv.to()) {
-                entry.score -= 8000;
-            }
+                + escape[pt] * threatened[pt].contains(mv.from()) as i32
+                + 10000 * td.board.checking_squares(pt).contains(mv.to()) as i32
+                -  8000 * threatened[pt].contains(mv.to()) as i32;
         }
     }
 }
