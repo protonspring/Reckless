@@ -413,14 +413,12 @@ impl Board {
 
         if piece.piece_type() == PieceType::Pawn {
             if mv.is_en_passant() {
-                let occupancies = self.occupancies() ^ from.to_bb() ^ to.to_bb() ^ (to ^ 8).to_bb();
-                let diagonal = self.their(PieceType::Bishop) | self.their(PieceType::Queen);
-                let orthogonal = self.their(PieceType::Rook) | self.their(PieceType::Queen);
-                let diagonal = bishop_attacks(king, occupancies) & diagonal;
-                let orthogonal = rook_attacks(king, occupancies) & orthogonal;
-                return to == self.en_passant()
+                let occ = self.occupancies() ^ from.to_bb() ^ to.to_bb() ^ (to ^ 8).to_bb();
+                let orthogonal = rook_attacks(king, occ) & (self.their(PieceType::Rook) | self.their(PieceType::Queen));
+                return (self.checkers() & !(to ^ 8).to_bb()) == Bitboard (0)
+                    && to == self.en_passant()
                     && pawn_attacks(from, self.side_to_move()).contains(to)
-                    && (orthogonal | diagonal).is_empty();
+                    && orthogonal.is_empty();
             }
 
             let offset = if self.side_to_move() == Color::White { 8 } else { -8 };
