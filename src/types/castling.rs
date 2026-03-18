@@ -14,14 +14,27 @@ pub enum CastlingKind {
 impl CastlingKind {
     pub const KINGSIDE: [CastlingKind; 2] = [CastlingKind::WhiteKingside, CastlingKind::BlackKingside];
     pub const QUEENSIDE: [CastlingKind; 2] = [CastlingKind::WhiteQueenside, CastlingKind::BlackQueenside];
+    pub const LANDING_SQUARE: [Square; 16] = [
+        Square::None,
+        Square::G1,
+        Square::C1,
+        Square::None,
+        Square::G8,
+        Square::None,
+        Square::None,
+        Square::None,
+        Square::C8,
+        Square::None,
+        Square::None,
+        Square::None,
+        Square::None,
+        Square::None,
+        Square::None,
+        Square::None,
+    ];
 
-    pub const fn landing_square(self) -> Square {
-        match self {
-            Self::WhiteKingside => Square::G1,
-            Self::WhiteQueenside => Square::C1,
-            Self::BlackKingside => Square::G8,
-            Self::BlackQueenside => Square::C8,
-        }
+    pub fn landing_square(self) -> Square {
+        Self::LANDING_SQUARE[self]
     }
 }
 
