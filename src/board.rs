@@ -374,7 +374,6 @@ impl Board {
         }
 
         let piece = self.piece_on(from);
-        let captured = self.piece_on(to).piece_type();
 
         if mv.is_castling() {
             if king != from {
@@ -403,11 +402,7 @@ impl Board {
             return false;
         }
 
-        if captured != PieceType::None && (!mv.is_capture() || captured == PieceType::King) {
-            return false;
-        }
-
-        if mv.is_capture() && !mv.is_en_passant() && !self.them().contains(to) {
+        if ((self.occupancies() ^ self.pieces(PieceType::King)).contains(to) || mv.is_en_passant()) != mv.is_capture() {
             return false;
         }
 
