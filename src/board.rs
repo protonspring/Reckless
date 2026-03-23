@@ -390,19 +390,22 @@ impl Board {
                     && !self.pinned(stm).contains(self.castling_rooks[kind]);
             }
 
-            if (self.colors(stm) | self.all_threats()).contains(to) {
+            if self.all_threats().contains(to) {
                 return false;
             }
+        }
+        else if mv.is_castling() {
+            return false;
         }
 
         if self.colors(stm).contains(to) {
             return false;
         }
 
-        let mut targets = attacks(mover, from, self.occupancies());
+        let mut targets;
 
         // Add pawn pushes
-        if (mover_type == PieceType::Pawn) {
+        if mover_type == PieceType::Pawn {
             if !mv.is_capture() {
                 let mut pawn_pushes = from.shift(Square::UP[stm]).to_bb() & !self.occupancies();
                 if mv.is_double_push() {
@@ -411,14 +414,21 @@ impl Board {
                 }
                 targets = pawn_pushes;
             } else {
-                targets &= self.colors(!stm);
+                targets = pawn_attacks(from, stm) & self.colors(!stm);
             }
-        }
+        } else { //non-pawns
 
-        if mv.is_capture() {
-            targets &= self.colors(!stm);
-        } else {
-            targets &= !self.occupancies();
+            if mv.is_promotion() {
+                return false;
+            }
+
+            targets = attacks(mover, from, self.occupancies());
+
+            if mv.is_capture() {
+                targets &= self.colors(!stm);
+            } else {
+                targets &= !self.occupancies();
+            }
         }
 
         if self.in_check() {
