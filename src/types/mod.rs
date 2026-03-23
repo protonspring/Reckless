@@ -30,8 +30,13 @@ pub const MAX_MOVES: usize = 256;
 
 #[rustfmt::skip]
 #[repr(u8)]
-#[derive(PartialEq, PartialOrd)]
+#[derive(Clone, Copy, PartialEq, PartialOrd)]
 pub enum Rank { R1, R2, R3, R4, R5, R6, R7, R8 }
+
+impl Rank {
+    pub const PROMO_RANK: [Rank; Color::NUM] = [ Rank::R8, Rank::R1 ];
+    pub const PAWN_ROW_RANK: [Rank; Color::NUM] = [ Rank::R2, Rank::R7 ];
+}
 
 #[rustfmt::skip]
 #[repr(u8)]

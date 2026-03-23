@@ -209,9 +209,7 @@ impl Board {
     }
 
     pub fn advance_fullmove_counter(&mut self) {
-        if self.side_to_move() == Color::Black {
-            self.fullmove_number += 1;
-        }
+        self.fullmove_number += self.side_to_move() as usize;
     }
 
     pub fn set_frc(&mut self, frc: bool) {
@@ -419,23 +417,23 @@ impl Board {
                 let diagonal = bishop_attacks(king, occupancies) & diagonal;
                 let orthogonal = rook_attacks(king, occupancies) & orthogonal;
                 return to == self.en_passant()
-                    && pawn_attacks(from, self.side_to_move()).contains(to)
+                    && pawn_attacks(from, stm).contains(to)
                     && (orthogonal | diagonal).is_empty();
             }
 
-            let offset = if self.side_to_move() == Color::White { 8 } else { -8 };
-            let promotion_rank = if self.side_to_move() == Color::White { Rank::R8 } else { Rank::R1 };
+            let offset = Square::UP[stm];
+            let promotion_rank = Rank::PROMO_RANK[stm];
 
             if mv.is_promotion() != (mv.to().rank() == promotion_rank) {
                 return false;
             }
 
             if mv.is_capture() {
-                return pawn_attacks(from, self.side_to_move()).contains(to) && self.them().contains(to);
+                return pawn_attacks(from, stm).contains(to) && self.them().contains(to);
             }
 
             if mv.is_double_push() {
-                return from.rank() == (if self.side_to_move() == Color::White { Rank::R2 } else { Rank::R7 })
+                return from.rank() == Rank::PAWN_ROW_RANK[stm]
                     && from.shift(2 * offset) == to
                     && !self.occupancies().contains(from.shift(offset))
                     && !self.occupancies().contains(to);
@@ -509,11 +507,13 @@ impl Board {
     /// Updates the checkers bitboard to mark opponent pieces currently threatening our king,
     /// and our pinned pieces that cannot move without leaving the king in check.
     pub fn update_king_threats(&mut self) {
-        let our_king = self.king_square(self.side_to_move());
+        let stm = self.side_to_move();
+        let our_king = self.king_square(stm);
+
 
         self.state.pinned = [Bitboard::default(); 2];
         self.state.pinners = [Bitboard::default(); 2];
-        self.state.checkers = (pawn_attacks(our_king, self.side_to_move()) & self.their(PieceType::Pawn))
+        self.state.checkers = (pawn_attacks(our_king, stm) & self.their(PieceType::Pawn))
             | (knight_attacks(our_king) & self.their(PieceType::Knight));
 
         let diagonal = self.pieces2(PieceType::Bishop, PieceType::Queen);
@@ -529,7 +529,7 @@ impl Board {
                 let blockers = between(king, square) & self.colors(color);
                 match blockers.popcount() {
                     0 => {
-                        debug_assert_eq!(color, self.side_to_move());
+                        debug_assert_eq!(color, stm);
                         self.state.checkers.set(square);
                     }
                     1 => {
@@ -541,7 +541,7 @@ impl Board {
             }
         }
 
-        let their_king = self.king_square(!self.side_to_move());
+        let their_king = self.king_square(!stm);
         self.state.checking_squares[PieceType::Pawn] = pawn_attacks(their_king, !self.side_to_move());
         self.state.checking_squares[PieceType::Knight] = knight_attacks(their_king);
         self.state.checking_squares[PieceType::Bishop] = bishop_attacks(their_king, self.occupancies());
