@@ -400,7 +400,7 @@ impl Board {
             return false;
         }
 
-        if ((self.occupancies() ^ self.pieces(PieceType::King)).contains(to) || mv.is_en_passant()) != mv.is_capture() {
+        if ((self.colors(!stm) & !self.pieces(PieceType::King)).contains(to) || mv.is_en_passant()) != mv.is_capture() {
             return false;
         }
 
