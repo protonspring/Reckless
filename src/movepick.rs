@@ -65,7 +65,18 @@ impl MovePicker {
         if self.stage == Stage::HashMove {
             self.stage = Stage::GenerateNoisy;
 
-            if td.board.is_legal(self.tt_move) {
+            //let b1 = td.board.is_legal(self.tt_move);
+            //let b2 = td.board.is_legal2(self.tt_move);
+
+            //if b1 != b2 {
+                //println!("{}", td.board);
+                //println!("Move: {}-{}", self.tt_move.from(), self.tt_move.to());
+                //println!("results: {}, {}", b1, b2);
+                //if self.tt_move.is_capture() { println!("is capture"); }
+                //if self.tt_move.is_promotion() { println!("is promo"); }
+            //}
+
+            if td.board.is_legal2(self.tt_move) {
                 return Some(self.tt_move);
             }
         }

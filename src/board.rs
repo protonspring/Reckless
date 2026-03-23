@@ -345,6 +345,99 @@ impl Board {
             | (king_attacks(square) & self.pieces(PieceType::King))
     }
 
+    pub fn is_legal2(&self, mv: Move) -> bool {
+
+        let stm = self.side_to_move();
+        let king = self.king_square(stm);
+        let from = mv.from();
+        let mover = self.piece_on(from);
+        let mover_type = mover.piece_type();
+        let to = mv.to();
+
+        if !self.colors(stm).contains(from) {
+            return false;
+        }
+
+        if mv.is_en_passant() {
+            let occupancies = self.occupancies() ^ from.to_bb() ^ to.to_bb() ^ (to ^ 8).to_bb();
+            let diagonal = self.their(PieceType::Bishop) | self.their(PieceType::Queen);
+            let orthogonal = self.their(PieceType::Rook) | self.their(PieceType::Queen);
+            let diagonal = bishop_attacks(king, occupancies) & diagonal;
+            let orthogonal = rook_attacks(king, occupancies) & orthogonal;
+            return to == self.en_passant()
+                && mover_type == PieceType::Pawn
+                && pawn_attacks(from, self.side_to_move()).contains(to)
+                && (orthogonal | diagonal).is_empty();
+        }
+
+        if from == king {
+            if mv.is_castling() {
+                if king != from || self.in_check() {
+                    return false;
+                }
+
+                let kind = match to {
+                    Square::G1 => CastlingKind::WhiteKingside,
+                    Square::C1 => CastlingKind::WhiteQueenside,
+                    Square::G8 => CastlingKind::BlackKingside,
+                    Square::C8 => CastlingKind::BlackQueenside,
+                    _ => unreachable!(),
+                };
+
+                return self.castling().is_allowed(kind)
+                    && (self.castling_path[kind] & self.occupancies()).is_empty()
+                    && (self.castling_threat[kind] & self.all_threats()).is_empty()
+                    && !self.pinned(stm).contains(self.castling_rooks[kind]);
+            }
+
+            if (self.colors(stm) | self.all_threats()).contains(to) {
+                return false;
+            }
+        }
+
+        if self.colors(stm).contains(to) {
+            return false;
+        }
+
+        let mut targets = attacks(mover, from, self.occupancies());
+
+        // Add pawn pushes
+        if (mover_type == PieceType::Pawn) {
+            if !mv.is_capture() {
+                let mut pawn_pushes = from.shift(Square::UP[stm]).to_bb() & !self.occupancies();
+                if mv.is_double_push() {
+                    pawn_pushes |= pawn_pushes.shift(Square::UP[stm]) & !self.occupancies()
+                               & Bitboard::FOURTH_RANK[stm];
+                }
+                targets = pawn_pushes;
+            } else {
+                targets &= self.colors(!stm);
+            }
+        }
+
+        if mv.is_capture() {
+            targets &= self.colors(!stm);
+        } else {
+            targets &= !self.occupancies();
+        }
+
+        if self.in_check() {
+            if king != from {
+                if self.checkers().is_multiple() {
+                    return false;
+                }
+                targets &= between(king, self.checkers().lsb()) | self.checkers();
+            }
+        }
+ 
+        // Basic movement
+        if !targets.contains(to) {
+            return false;
+        }
+
+        return !self.pinned(stm).contains(from) || ray_pass(king, from).contains(to);
+    }
+
     /// Checks if the given move is legal in the current position.
     pub fn is_legal(&self, mv: Move) -> bool {
         if mv.is_null() {
