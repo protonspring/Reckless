@@ -416,6 +416,10 @@ impl Board {
             } else {
                 targets = pawn_attacks(from, stm) & self.colors(!stm);
             }
+
+            if mv.is_promotion() {
+                targets &= Bitboard::HOME_ROWS[!stm];
+            }
         } else { //non-pawns
 
             if mv.is_promotion() {
