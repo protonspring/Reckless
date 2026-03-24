@@ -345,6 +345,96 @@ impl Board {
             | (king_attacks(square) & self.pieces(PieceType::King))
     }
 
+    pub fn is_legal2(&self, mv: Move) -> bool {
+
+        let stm = self.side_to_move();
+        let from = mv.from();
+        let to = mv.to();
+        let piece = self.piece_on(from);
+        let moving_type = piece.piece_type();
+        let king = self.king_square(stm);
+
+        if !self.colors(stm).contains(from) {
+            return false;
+        }
+
+        if !self.in_check() && moving_type == PieceType::King && mv.is_castling() {
+            let kind = match to {
+                Square::G1 => CastlingKind::WhiteKingside,
+                Square::C1 => CastlingKind::WhiteQueenside,
+                Square::G8 => CastlingKind::BlackKingside,
+                Square::C8 => CastlingKind::BlackQueenside,
+                _ => unreachable!(),
+            };
+            return self.castling().is_allowed(kind)
+                && (self.castling_path[kind] & self.occupancies()).is_empty()
+                && (self.castling_threat[kind] & self.all_threats()).is_empty()
+        } else if mv.is_castling() {
+            return false;
+        }
+
+        if moving_type == PieceType::Pawn {
+            if mv.is_en_passant() {
+                let occupancies = self.occupancies() ^ from.to_bb() ^ to.to_bb() ^ (to ^ 8).to_bb();
+                let diagonal = self.their(PieceType::Bishop) | self.their(PieceType::Queen);
+                let orthogonal = self.their(PieceType::Rook) | self.their(PieceType::Queen);
+                let diagonal = bishop_attacks(king, occupancies) & diagonal;
+                let orthogonal = rook_attacks(king, occupancies) & orthogonal;
+                return to == self.en_passant()
+                    && pawn_attacks(from, self.side_to_move()).contains(to)
+                    && (orthogonal | diagonal).is_empty();
+            }
+
+            let mut targets = Bitboard::ALL;
+            let push = Square::UP[self.side_to_move()];
+
+            if mv.is_capture() {
+                targets &= pawn_attacks(from, stm) & self.colors(!stm);
+            } else {
+                targets = from.shift(push).to_bb() & !self.occupancies();
+
+                if mv.is_double_push() {
+                    targets |= (targets & Bitboard::THIRD_RANK[stm]).shift(push) & !self.occupancies();
+                }
+            }
+
+            if mv.is_promotion() {
+                targets &= Bitboard::HOME_ROWS[!stm];
+            } else {
+                targets &= !Bitboard::HOME_ROWS[!stm];
+            }
+
+            if self.in_check() {
+                targets &= self.checkers() | between(king, self.checkers().lsb());
+            }
+
+            return targets.contains(to);
+
+        } else if mv.is_double_push() || mv.is_promotion() || mv.is_en_passant() {
+            return false;
+        }
+
+        //ok, now non-pawn general movement (check if ok, reject everything else
+        if (king == from && self.all_threats().contains(to)) || self.colors(stm).contains(to) {
+            return false;
+        }
+
+        let capture_targets = self.colors(!stm) & !self.pieces(PieceType::King);
+        if mv.is_capture() != capture_targets.contains(to) {
+            return false;
+        }
+
+        if self.pinned(stm).contains(from) && !ray_pass(king, from).contains(to) {
+            return false;
+        }
+
+        if moving_type != PieceType::King && self.in_check() && !(self.checkers() | between(king, self.checkers().lsb())).contains(to) {
+            return false;
+        }
+
+        attacks(piece, from, self.occupancies()).contains(to)
+    }
+
     /// Checks if the given move is legal in the current position.
     pub fn is_legal(&self, mv: Move) -> bool {
         if mv.is_null() {
@@ -353,7 +443,6 @@ impl Board {
 
         let stm = self.side_to_move();
         let king = self.king_square(stm);
-
         let from = mv.from();
         let to = mv.to();
 
