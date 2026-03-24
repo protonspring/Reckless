@@ -358,18 +358,6 @@ impl Board {
             return false;
         }
 
-        if mv.is_en_passant() {
-            let occupancies = self.occupancies() ^ from.to_bb() ^ to.to_bb() ^ (to ^ 8).to_bb();
-            let diagonal = self.their(PieceType::Bishop) | self.their(PieceType::Queen);
-            let orthogonal = self.their(PieceType::Rook) | self.their(PieceType::Queen);
-            let diagonal = bishop_attacks(king, occupancies) & diagonal;
-            let orthogonal = rook_attacks(king, occupancies) & orthogonal;
-            return to == self.en_passant()
-                && mover_type == PieceType::Pawn
-                && pawn_attacks(from, self.side_to_move()).contains(to)
-                && (orthogonal | diagonal).is_empty();
-        }
-
         if from == king {
             if mv.is_castling() {
                 if king != from || self.in_check() {
@@ -406,6 +394,19 @@ impl Board {
 
         // Add pawn pushes
         if mover_type == PieceType::Pawn {
+
+            if mv.is_en_passant() {
+                let occupancies = self.occupancies() ^ from.to_bb() ^ to.to_bb() ^ (to ^ 8).to_bb();
+                let diagonal = self.their(PieceType::Bishop) | self.their(PieceType::Queen);
+                let orthogonal = self.their(PieceType::Rook) | self.their(PieceType::Queen);
+                let diagonal = bishop_attacks(king, occupancies) & diagonal;
+                let orthogonal = rook_attacks(king, occupancies) & orthogonal;
+                return to == self.en_passant()
+                    && mover_type == PieceType::Pawn
+                    && pawn_attacks(from, self.side_to_move()).contains(to)
+                    && (orthogonal | diagonal).is_empty();
+            }
+
             if !mv.is_capture() {
                 let mut pawn_pushes = from.shift(Square::UP[stm]).to_bb() & !self.occupancies();
                 if mv.is_double_push() {
@@ -422,7 +423,7 @@ impl Board {
             }
         } else { //non-pawns
 
-            if mv.is_promotion() {
+            if mv.is_promotion() || mv.is_double_push() || mv.is_en_passant() {
                 return false;
             }
 
