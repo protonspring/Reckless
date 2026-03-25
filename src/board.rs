@@ -451,11 +451,7 @@ impl Board {
         attacks(piece, from, self.occupancies()).contains(to)
     }
 
-    /// Quickly checks if the move *might* give check to the opponent's king.
-    ///
-    /// Roughly 90–95% accurate. Does not account for discovered checks, promotions,
-    /// en passant, or checks delivered via castling.
-    pub fn is_direct_check(&self, mv: Move) -> bool {
+    pub fn is_discover_check(&self, mv: Move) -> bool {
         let stm = self.side_to_move();
         if self.dcblockers(stm).contains(mv.from()) {
             let ray = between(self.king_square(stm), mv.from());
@@ -463,7 +459,14 @@ impl Board {
                 return true;
             }
         }
+        false
+    }
 
+    /// Quickly checks if the move *might* give check to the opponent's king.
+    ///
+    /// Roughly 90–95% accurate. Does not account for discovered checks, promotions,
+    /// en passant, or checks delivered via castling.
+    pub fn is_direct_check(&self, mv: Move) -> bool {
         self.checking_squares(self.moved_piece(mv).piece_type()).contains(mv.to())
     }
 

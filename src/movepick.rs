@@ -207,6 +207,11 @@ impl MovePicker {
             else if threatened[pt].contains(mv.to()) {
                 entry.score -= 8000;
             }
+
+            // Bonus for discovery checks?
+            if td.board.is_discover_check(mv) && !td.board.piece_threats(PieceType::King).contains(mv.to()) {
+                entry.score += 10000;
+            }
         }
     }
 }
