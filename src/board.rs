@@ -454,7 +454,7 @@ impl Board {
     pub fn is_discover_check(&self, mv: Move) -> bool {
         let stm = self.side_to_move();
         if self.dcblockers(stm).contains(mv.from()) {
-            let ray = between(self.king_square(stm), mv.from());
+            let ray = ray_pass(self.king_square(stm), mv.from());
             if !ray.contains(mv.to()) {
                 return true;
             }
