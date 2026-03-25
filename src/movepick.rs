@@ -163,7 +163,9 @@ impl MovePicker {
                 entry.score =
                     16 * captured.value() + td.noisy_history.get(threats, td.board.moved_piece(mv), mv.to(), captured);
 
-                if td.board.is_discover_check(mv) {
+                if td.board.is_discover_check(mv) && !td.board.piece_threats(PieceType::King).contains(mv.to()) {
+                    //println!("{}", td.board);
+                    //println!("Move: {}-{}", mv.from(), mv.to());
                     entry.score += 10000;
                 }
             }
