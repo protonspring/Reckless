@@ -166,7 +166,7 @@ impl MovePicker {
                 if td.board.is_discover_check(mv) && !td.board.piece_threats(PieceType::King).contains(mv.to()) {
                     //println!("{}", td.board);
                     //println!("Move: {}-{}", mv.from(), mv.to());
-                    entry.score += 10000;
+                    entry.score += 4000;
                 }
             }
         } else {
