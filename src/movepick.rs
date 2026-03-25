@@ -2,6 +2,7 @@ use crate::{
     search::NodeType,
     thread::ThreadData,
     types::{ArrayVec, Bitboard, MAX_MOVES, Move, MoveEntry, MoveList, PieceType},
+    lookup::{ knight_attacks,},
 };
 
 #[derive(Copy, Clone, Eq, PartialEq, PartialOrd)]
@@ -164,9 +165,15 @@ impl MovePicker {
                     16 * captured.value() + td.noisy_history.get(threats, td.board.moved_piece(mv), mv.to(), captured);
 
                 if td.board.is_discover_check(mv) && !td.board.piece_threats(PieceType::King).contains(mv.to()) {
-                    //println!("{}", td.board);
-                    //println!("Move: {}-{}", mv.from(), mv.to());
-                    entry.score += 40000;
+
+                    //see if this piece could now attack a more valuable one
+                    //since the opponent must deal with the check
+                    if (td.board.piece_on(mv.from()).piece_type() == PieceType::Knight)
+                        && !(knight_attacks(mv.to()) & (td.board.their(PieceType::Queen) | td.board.their(PieceType::Rook))).is_empty() {
+                        //println!("{}", td.board);
+                        //println!("Move: {}-{}", mv.from(), mv.to());
+                        entry.score += 10000;
+                    }
                 }
             }
         } else {
