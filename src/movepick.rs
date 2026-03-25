@@ -162,6 +162,10 @@ impl MovePicker {
 
                 entry.score =
                     16 * captured.value() + td.noisy_history.get(threats, td.board.moved_piece(mv), mv.to(), captured);
+
+                if td.board.is_discover_check(mv) {
+                    entry.score += 10000;
+                }
             }
         } else {
             //in check
@@ -205,10 +209,10 @@ impl MovePicker {
                 entry.score -= 8000;
             }
 
-            // Bonus for discovery checks?
-            if td.board.is_discover_check(mv) && !td.board.piece_threats(PieceType::King).contains(mv.to()) {
-                entry.score += 10000;
-            }
+            // Bonus for discovery checks that capture something.
+            //if td.board.is_discover_check(mv) && mv.is_capture() && !td.board.piece_threats(PieceType::King).contains(mv.to()) {
+                //entry.score += 100000;
+            //}
         }
     }
 }
