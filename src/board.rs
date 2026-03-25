@@ -36,6 +36,8 @@ struct InternalState {
     all_threats: Bitboard,
     pinned: [Bitboard; Color::NUM],
     pinners: [Bitboard; Color::NUM],
+    dcblockers: [Bitboard; Color::NUM],
+    dccheckers: [Bitboard; Color::NUM],
     checkers: Bitboard,
     checking_squares: [Bitboard; PieceType::NUM],
 }
@@ -98,6 +100,14 @@ impl Board {
 
     pub const fn pinners(&self, color: Color) -> Bitboard {
         self.state.pinners[color as usize]
+    }
+
+    pub const fn dcblockers(&self, color: Color) -> Bitboard {
+        self.state.dcblockers[color as usize]
+    }
+
+    pub const fn dccheckers(&self, color: Color) -> Bitboard {
+        self.state.dccheckers[color as usize]
     }
 
     pub const fn checking_squares(&self, pt: PieceType) -> Bitboard {
@@ -446,6 +456,14 @@ impl Board {
     /// Roughly 90–95% accurate. Does not account for discovered checks, promotions,
     /// en passant, or checks delivered via castling.
     pub fn is_direct_check(&self, mv: Move) -> bool {
+        let stm = self.side_to_move();
+        if self.dcblockers(stm).contains(mv.from()) {
+            let ray = between(self.king_square(stm), mv.from());
+            if !ray.contains(mv.to()) {
+                return true;
+            }
+        }
+
         self.checking_squares(self.moved_piece(mv).piece_type()).contains(mv.to())
     }
 
@@ -505,28 +523,35 @@ impl Board {
 
         self.state.pinned = [Bitboard::default(); 2];
         self.state.pinners = [Bitboard::default(); 2];
+        self.state.dccheckers = [Bitboard::default(); 2];
+        self.state.dcblockers = [Bitboard::default(); 2];
         self.state.checkers = (pawn_attacks(our_king, self.side_to_move()) & self.their(PieceType::Pawn))
             | (knight_attacks(our_king) & self.their(PieceType::Knight));
 
-        let diagonal = self.pieces2(PieceType::Bishop, PieceType::Queen);
-        let orthogonal = self.pieces2(PieceType::Rook, PieceType::Queen);
+        let diag_pieces = self.pieces2(PieceType::Bishop, PieceType::Queen);
+        let ortho_pieces = self.pieces2(PieceType::Rook, PieceType::Queen);
 
         for color in [Color::White, Color::Black] {
             let king = self.king_square(color);
 
-            let diagonal = diagonal & bishop_attacks(king, self.colors(!color)) & self.colors(!color);
-            let orthogonal = orthogonal & rook_attacks(king, self.colors(!color)) & self.colors(!color);
+            let diagonal = diag_pieces & bishop_attacks(king, Bitboard(0)) & self.colors(!color);
+            let orthogonal = ortho_pieces & rook_attacks(king, Bitboard(0)) & self.colors(!color);
 
             for square in diagonal | orthogonal {
-                let blockers = between(king, square) & self.colors(color);
+                let blockers = between(king, square) & self.occupancies();
                 match blockers.popcount() {
                     0 => {
                         debug_assert_eq!(color, self.side_to_move());
                         self.state.checkers.set(square);
                     }
                     1 => {
-                        self.state.pinners[!color].set(square);
-                        self.state.pinned[color] |= blockers;
+                        if !(blockers & self.colors(color)).is_empty() {
+                            self.state.pinners[!color].set(square);
+                            self.state.pinned[color] |= blockers;
+                        } else {
+                            self.state.dccheckers[!color].set(square);
+                            self.state.dcblockers[!color] |= blockers;
+                        }
                     }
                     _ => (),
                 }
