@@ -2,7 +2,7 @@ use crate::{
     search::NodeType,
     thread::ThreadData,
     types::{ArrayVec, Bitboard, MAX_MOVES, Move, MoveEntry, MoveList, PieceType},
-    lookup::{ bishop_attacks,},
+    lookup::{ bishop_attacks, knight_attacks},
 };
 
 #[derive(Copy, Clone, Eq, PartialEq, PartialOrd)]
@@ -164,17 +164,6 @@ impl MovePicker {
                 entry.score =
                     16 * captured.value() + td.noisy_history.get(threats, td.board.moved_piece(mv), mv.to(), captured);
 
-                if td.board.is_discover_check(mv) && !td.board.piece_threats(PieceType::King).contains(mv.to()) {
-
-                    //see if this piece could now attack a more valuable one
-                    //since the opponent must deal with the check
-                    if (td.board.piece_on(mv.from()).piece_type() == PieceType::Bishop)
-                        && !(bishop_attacks(mv.to(), td.board.occupancies()) & (td.board.their(PieceType::Queen) | td.board.their(PieceType::Rook))).is_empty() {
-                        //println!("{}", td.board);
-                        //println!("Move: {}-{}", mv.from(), mv.to());
-                        entry.score += 10000;
-                    }
-                }
             }
         } else {
             //in check
@@ -201,6 +190,7 @@ impl MovePicker {
         for entry in self.list.iter_mut() {
             let mv = entry.mv;
             let pt = td.board.piece_on(mv.from()).piece_type();
+            let hanging = td.board.colors(!side) & !threats;
 
             entry.score = td.quiet_history.get(threats, side, mv)
                 + td.conthist(ply, 1, mv)
@@ -218,10 +208,21 @@ impl MovePicker {
                 entry.score -= 8000;
             }
 
-            // Bonus for discovery checks that capture something.
-            //if td.board.is_discover_check(mv) && mv.is_capture() && !td.board.piece_threats(PieceType::King).contains(mv.to()) {
-                //entry.score += 100000;
-            //}
+            if td.board.is_discover_check(mv) && !td.board.piece_threats(PieceType::King).contains(mv.to()) {
+
+                //since the opponent must deal with the check
+                if (pt == PieceType::Bishop)
+                    && !(bishop_attacks(mv.to(), td.board.occupancies()) & (hanging | td.board.their(PieceType::Queen) | td.board.their(PieceType::Rook))).is_empty() {
+                    //println!("{}", td.board);
+                    //println!("Move: {}-{}", mv.from(), mv.to());
+                    entry.score += 10000;
+                } else if (pt == PieceType::Knight)
+                    && !(knight_attacks(mv.to()) & (hanging | td.board.their(PieceType::Queen) | td.board.their(PieceType::Rook))).is_empty() {
+                    //println!("{}", td.board);
+                    //println!("Move: {}-{}", mv.from(), mv.to());
+                    entry.score += 10000;
+                }
+            }
         }
     }
 }
