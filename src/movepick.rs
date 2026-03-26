@@ -2,7 +2,7 @@ use crate::{
     search::NodeType,
     thread::ThreadData,
     types::{ArrayVec, Bitboard, MAX_MOVES, Move, MoveEntry, MoveList, PieceType},
-    lookup::{ bishop_attacks, knight_attacks},
+    lookup::{ attacks, },
 };
 
 #[derive(Copy, Clone, Eq, PartialEq, PartialOrd)]
@@ -189,7 +189,8 @@ impl MovePicker {
 
         for entry in self.list.iter_mut() {
             let mv = entry.mv;
-            let pt = td.board.piece_on(mv.from()).piece_type();
+            let pc = td.board.piece_on(mv.from());
+            let pt = pc.piece_type();
             let hanging = td.board.colors(!side) & !threats;
 
             entry.score = td.quiet_history.get(threats, side, mv)
@@ -210,17 +211,13 @@ impl MovePicker {
 
             if td.board.is_discover_check(mv) && !td.board.piece_threats(PieceType::King).contains(mv.to()) {
 
-                //since the opponent must deal with the check
-                if (pt == PieceType::Bishop)
-                    && !(bishop_attacks(mv.to(), td.board.occupancies()) & (hanging | td.board.their(PieceType::Queen) | td.board.their(PieceType::Rook))).is_empty() {
-                    //println!("{}", td.board);
-                    //println!("Move: {}-{}", mv.from(), mv.to());
-                    entry.score += 10000;
-                } else if (pt == PieceType::Knight)
-                    && !(knight_attacks(mv.to()) & (hanging | td.board.their(PieceType::Queen) | td.board.their(PieceType::Rook))).is_empty() {
-                    //println!("{}", td.board);
-                    //println!("Move: {}-{}", mv.from(), mv.to());
-                    entry.score += 10000;
+                if pt < PieceType::Rook {
+                    let next_attacks = attacks(pc, mv.to(), td.board.occupancies());
+                    let targets = hanging | td.board.their(PieceType::Queen) | td.board.their(PieceType::Rook);
+
+                    if !(next_attacks & targets).is_empty() {
+                        entry.score += 10000;
+                    }
                 }
             }
         }

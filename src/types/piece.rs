@@ -132,7 +132,7 @@ impl<T> IndexMut<Piece> for [T] {
     }
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, PartialOrd, Debug)]
 pub enum PieceType {
     Pawn,
     Knight,
