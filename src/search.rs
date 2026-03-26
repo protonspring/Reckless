@@ -724,6 +724,7 @@ fn search<NODE: NodeType>(
             // Late Move Pruning (LMP)
             if !in_check
                 && !td.board.is_direct_check(mv)
+                && !td.board.is_discover_check(mv)
                 && is_quiet
                 && move_count >= (3072 + 4 * improvement + 1536 * depth * depth + 64 * history / 1024) / 1024
             {

@@ -48,15 +48,8 @@ impl super::Board {
         let king_rays =
             [ray_pass(self.king_square(Color::White), mv.to()), ray_pass(self.king_square(Color::Black), mv.to())];
 
-        let mut prev_from = mv.from();
-
         loop {
             let mut our_attackers = attackers & self.colors(stm);
-
-            // If we moved a discovery blocker, then only the king can go
-            if (self.dcblockers(!stm) & !king_rays[stm]).contains(prev_from) {
-                our_attackers &= self.pieces(PieceType::King);
-            }
 
             // Exclude pinned pieces if pinners are still on the board
             if (self.pinners(!stm) & occupancies) != Bitboard(0) {
@@ -75,8 +68,7 @@ impl super::Board {
             }
 
             // Make the capture
-            prev_from = (self.pieces(attacker) & our_attackers).lsb();
-            occupancies.clear(prev_from);
+            occupancies.clear((self.pieces(attacker) & our_attackers).lsb());
             stm = !stm;
 
             // Assume our piece is going to be captured
