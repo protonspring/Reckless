@@ -215,12 +215,12 @@ impl MovePicker {
                     && !(bishop_attacks(mv.to(), td.board.occupancies()) & (hanging | td.board.their(PieceType::Queen) | td.board.their(PieceType::Rook))).is_empty() {
                     //println!("{}", td.board);
                     //println!("Move: {}-{}", mv.from(), mv.to());
-                    entry.score += 15000;
+                    entry.score += 25000;
                 } else if (pt == PieceType::Knight)
                     && !(knight_attacks(mv.to()) & (hanging | td.board.their(PieceType::Queen) | td.board.their(PieceType::Rook))).is_empty() {
                     //println!("{}", td.board);
                     //println!("Move: {}-{}", mv.from(), mv.to());
-                    entry.score += 15000;
+                    entry.score += 25000;
                 }
             }
         }
