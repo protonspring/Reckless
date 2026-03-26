@@ -589,7 +589,7 @@ fn search<NODE: NodeType>(
 
     if cut_node
         && !is_decisive(beta)
-        && (!is_valid(tt_score) || tt_score >= probcut_beta && !is_decisive(tt_score))
+        && if is_valid(tt_score) { tt_score >= probcut_beta && !is_decisive(tt_score) } else { eval >= beta }
         && !tt_move.is_quiet()
     {
         let mut move_picker = MovePicker::new_probcut(probcut_beta - eval);
@@ -645,7 +645,9 @@ fn search<NODE: NodeType>(
     if !NODE::ROOT && !excluded && potential_singularity {
         debug_assert!(is_valid(tt_score));
 
-        let singular_beta = tt_score - depth - depth * (tt_pv && !NODE::PV) as i32;
+        let singular_margin =
+            depth * if tt_bound == Bound::Exact { 1 } else { 2 } / 2 + depth * (tt_pv && !NODE::PV) as i32;
+        let singular_beta = tt_score - singular_margin;
         let singular_depth = (depth - 1) / 2;
 
         td.stack[ply].excluded = tt_move;
