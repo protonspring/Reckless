@@ -153,6 +153,7 @@ impl MovePicker {
 
     fn score_noisy(&mut self, td: &ThreadData) {
         let threats = td.board.all_threats();
+        let hanging = td.board.colors(!td.board.side_to_move()) & !threats;
 
         if !td.board.in_check() {
             for entry in self.list.iter_mut() {
@@ -162,6 +163,11 @@ impl MovePicker {
 
                 entry.score =
                     16 * captured.value() + td.noisy_history.get(threats, td.board.moved_piece(mv), mv.to(), captured);
+
+                // Bonus for capturing any hanging piece
+                if hanging.contains(mv.to()) {
+                    entry.score += 5000;
+                }
             }
         } else {
             //in check
@@ -204,6 +210,7 @@ impl MovePicker {
             else if threatened[pt].contains(mv.to()) {
                 entry.score -= 8000;
             }
+            // Bonus for taking any hanging piece
         }
     }
 }
