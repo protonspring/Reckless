@@ -166,7 +166,7 @@ impl MovePicker {
 
                 // Bonus for capturing any hanging piece
                 if hanging.contains(mv.to()) {
-                    entry.score += 5000;
+                    entry.score += 10000;
                 }
             }
         } else {
