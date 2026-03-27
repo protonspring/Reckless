@@ -164,7 +164,7 @@ impl MovePicker {
                     16 * captured.value() + td.noisy_history.get(threats, td.board.moved_piece(mv), mv.to(), captured);
 
                 if td.board.pinners(!td.board.side_to_move()).contains(mv.to()) {
-                    entry.score += 2000;
+                    entry.score += 4000;
                 }
             }
         } else {
