@@ -1125,7 +1125,7 @@ fn qsearch<NODE: NodeType>(td: &mut ThreadData, mut alpha: i32, beta: i32, ply: 
         return Score::ZERO;
     }
 
-    if td.board.is_draw(ply) {
+    if td.board.draw_by_material() {
         return draw(td);
     }
 
