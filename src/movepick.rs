@@ -222,7 +222,7 @@ impl MovePicker {
             }
             // offensive moves
             else if offense[pt].contains(mv.to()) {
-                entry.score += 6000;
+                entry.score += 10000;
             }
         }
     }
