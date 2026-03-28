@@ -1357,16 +1357,8 @@ fn make_move(td: &mut ThreadData, ply: isize, mv: Move) {
         td.continuation_corrhist.subtable_ptr(td.board.in_check(), mv.is_noisy(), td.board.moved_piece(mv), mv.to());
 
     td.shared.nodes.increment(td.id);
-
     td.nnue.push(mv, &td.board);
-
-    //if !mv.is_en_passant() && !mv.is_capture() && !mv.is_promotion() && !mv.is_castling() {
-    if mv.is_en_passant() {
-        td.board.make_move2(mv, &mut td.nnue);
-    } else {
-        td.board.make_move(mv, &mut td.nnue);
-    }
-
+    td.board.make_move(mv, &mut td.nnue);
     td.shared.tt.prefetch(td.board.hash());
 }
 
