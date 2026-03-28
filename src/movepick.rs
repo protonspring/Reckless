@@ -155,22 +155,17 @@ impl MovePicker {
     fn score_noisy(&mut self, td: &ThreadData) {
         let threats = td.board.all_threats();
 
-        if !td.board.in_check() {
-            for entry in self.list.iter_mut() {
-                let mv = entry.mv;
-                let captured =
-                    if entry.mv.is_en_passant() { PieceType::Pawn } else { td.board.piece_on(mv.to()).piece_type() };
+        for entry in self.list.iter_mut() {
+            let mv = entry.mv;
+            let mover = td.board.piece_on(mv.from());
+            let captured =
+                if entry.mv.is_en_passant() { PieceType::Pawn } else { td.board.piece_on(mv.to()).piece_type() };
 
+            if td.board.in_check() {
+                entry.score = 10000 - 1000 * mover.piece_type() as i32;
+            } else {
                 entry.score =
-                    16 * captured.value() + td.noisy_history.get(threats, td.board.moved_piece(mv), mv.to(), captured);
-            }
-        } else {
-            //in check
-            for entry in self.list.iter_mut() {
-                let mv = entry.mv;
-                let pt = td.board.piece_on(mv.from()).piece_type();
-
-                entry.score = 10000 - 1000 * pt as i32;
+                    16 * captured.value() + td.noisy_history.get(threats, mover, mv.to(), captured);
             }
         }
     }
