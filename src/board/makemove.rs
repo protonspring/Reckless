@@ -75,6 +75,8 @@ impl Board {
                 observer.on_piece_change(self, captured, captured_to, false);
                 self.update_hash(captured, captured_to);
                 self.state.material -= captured.value();
+                self.state.captured = Some(captured);
+                self.state.recapture_square = to;
             }
 
             self.remove_piece(mover, from);
@@ -94,6 +96,7 @@ impl Board {
                     observer.on_piece_change(self, promotion, to, true);
                     self.update_hash(mover, to);
                     self.update_hash(promotion, to);
+                    self.state.material += promotion.value() - PieceType::Pawn.value();
                 } else if mv.is_double_push() {
                     self.state.en_passant = Square::new((from as u8 + to as u8) / 2);
                     self.state.key ^= ZOBRIST.en_passant[self.state.en_passant];

@@ -1360,7 +1360,7 @@ fn make_move(td: &mut ThreadData, ply: isize, mv: Move) {
 
     td.nnue.push(mv, &td.board);
 
-    if mv.is_castling() {
+    if mv.is_promotion() && !mv.is_capture() {
         td.board.make_move2(mv, &mut td.nnue);
     } else {
         td.board.make_move(mv, &mut td.nnue);
