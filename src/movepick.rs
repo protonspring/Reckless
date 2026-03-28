@@ -189,18 +189,15 @@ impl MovePicker {
         // safe squares where we can attack an opponent piece
         let mut n = Bitboard(0);
         let mut b = Bitboard(0);
-        let mut r = Bitboard(0);
         let pawn_offense = pawn_attacks_setwise(td.board.colors(!side), !side) & !threats;
 
         // hanging knights
         for square in td.board.their(PieceType::Knight) & !threats {
             b |= bishop_attacks(square, td.board.occupancies());
-            r |= rook_attacks(square, td.board.occupancies());
         }
         // hanging bishops
         for square in td.board.their(PieceType::Bishop) & !threats {
             n |= knight_attacks(square);
-            r |= rook_attacks(square, td.board.occupancies());
         }
         for square in td.board.their(PieceType::Rook) {
             n |= knight_attacks(square);
@@ -209,10 +206,9 @@ impl MovePicker {
         for square in td.board.their(PieceType::Queen) {
             n |= knight_attacks(square);
             b |= bishop_attacks(square, td.board.occupancies());
-            r |= rook_attacks(square, td.board.occupancies());
         }
 
-        let offense = [pawn_offense, n & !threats, b & !threats, r, Bitboard(0), Bitboard(0)];
+        let offense = [pawn_offense, n & !threats, b & !threats, Bitboard(0), Bitboard(0), Bitboard(0)];
 
         for entry in self.list.iter_mut() {
             let mv = entry.mv;
