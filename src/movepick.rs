@@ -226,7 +226,7 @@ impl MovePicker {
             }
 
             if dbl_pawn_threats.contains(mv.to()) {
-                entry.score -= 6000;
+                entry.score -= 14000;
             }
         }
     }
