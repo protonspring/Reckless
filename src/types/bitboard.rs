@@ -1,4 +1,4 @@
-use std::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, Not};
+use std::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Not};
 
 use super::{File, Rank, Square};
 
@@ -49,12 +49,14 @@ impl Bitboard {
     }
 
     pub fn set(&mut self, square: Square) {
-        self.0 |= 1 << square as u64;
+        *self |= square.to_bb();
     }
 
     pub fn clear(&mut self, square: Square) {
-        self.0 &= !(1 << square as u64);
+        debug_assert!(self.0 & (1 << square as u64) != 0);
+        *self ^= square.to_bb();
     }
+
 }
 
 impl Iterator for Bitboard {
@@ -98,6 +100,12 @@ impl BitXor for Bitboard {
 impl BitOrAssign for Bitboard {
     fn bitor_assign(&mut self, rhs: Self) {
         self.0 |= rhs.0;
+    }
+}
+
+impl BitXorAssign for Bitboard {
+    fn bitxor_assign(&mut self, rhs: Self) {
+        self.0 ^= rhs.0;
     }
 }
 
