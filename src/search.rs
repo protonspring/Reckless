@@ -1359,7 +1359,12 @@ fn make_move(td: &mut ThreadData, ply: isize, mv: Move) {
     td.shared.nodes.increment(td.id);
 
     td.nnue.push(mv, &td.board);
-    td.board.make_move(mv, &mut td.nnue);
+
+    if mv.is_castling() {
+        td.board.make_move2(mv, &mut td.nnue);
+    } else {
+        td.board.make_move(mv, &mut td.nnue);
+    }
 
     td.shared.tt.prefetch(td.board.hash());
 }

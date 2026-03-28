@@ -41,7 +41,15 @@ impl Board {
             self.state.en_passant = Square::None;
         }
 
+        self.state.captured = None;
+        self.state.recapture_square = Square::None;
+        self.state.halfmove_clock += 1;
+        self.state.plies_from_null += 1;
+
         if mv.is_castling() {
+            self.update_hash(mover, from);
+            self.update_hash(mover, to);
+
             let (rook_from, rook_to) = self.get_castling_rook(to);
             let rook = Piece::new(stm, PieceType::Rook);
 
@@ -65,6 +73,8 @@ impl Board {
                 self.state.halfmove_clock = 0;
                 self.remove_piece(captured, captured_to);
                 observer.on_piece_change(self, captured, captured_to, false);
+                self.update_hash(captured, captured_to);
+                self.state.material -= captured.value();
             }
 
             self.remove_piece(mover, from);
