@@ -1,5 +1,5 @@
 use crate::{
-    lookup::{bishop_attacks, knight_attacks, pawn_attacks_setwise},
+    lookup::{bishop_attacks, dbl_pawn_attacks, knight_attacks, pawn_attacks_setwise},
     search::NodeType,
     thread::ThreadData,
     types::{ArrayVec, Bitboard, MAX_MOVES, Move, MoveEntry, MoveList, PieceType},
@@ -179,6 +179,7 @@ impl MovePicker {
         let threats = td.board.all_threats();
         let side = td.board.side_to_move();
         let pawn_threats = td.board.piece_threats(PieceType::Pawn);
+        let dbl_pawn_threats = dbl_pawn_attacks(td.board.their(PieceType::Pawn), !side);
         let minor_threats =
             pawn_threats | td.board.piece_threats(PieceType::Knight) | td.board.piece_threats(PieceType::Bishop);
         let rook_threats = minor_threats | td.board.piece_threats(PieceType::Rook);
@@ -222,6 +223,10 @@ impl MovePicker {
             // offensive moves
             else if offense[pt].contains(mv.to()) {
                 entry.score += 6000;
+            }
+
+            if dbl_pawn_threats.contains(mv.to()) {
+                entry.score -= 10000;
             }
         }
     }
