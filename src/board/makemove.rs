@@ -69,24 +69,22 @@ impl Board {
 
             if mv.is_capture() {
                 if mv.is_en_passant() {
-                    let captured_to = if mv.is_en_passant() { to ^ 8 } else { to };
+                    let captured_to = to ^ 8;
                     let captured = self.piece_on(captured_to);
-                    self.state.halfmove_clock = 0;
                     self.remove_piece(captured, captured_to);
                     observer.on_piece_change(self, captured, captured_to, false);
                     self.update_hash(captured, captured_to);
                     self.state.material -= captured.value();
                 } else {
-                    let captured_to = if mv.is_en_passant() { to ^ 8 } else { to };
-                    let captured = self.piece_on(captured_to);
-                    self.state.halfmove_clock = 0;
-                    self.remove_piece(captured, captured_to);
-                    observer.on_piece_change(self, captured, captured_to, false);
-                    self.update_hash(captured, captured_to);
+                    let captured = self.piece_on(to);
+                    self.remove_piece(captured, to);
+                    observer.on_piece_change(self, captured, to, false);
+                    self.update_hash(captured, to);
                     self.state.material -= captured.value();
                     self.state.captured = Some(captured);
                     self.state.recapture_square = to;
                 }
+                self.state.halfmove_clock = 0;
                 self.remove_piece(mover, from);
                 self.add_piece(mover, to);
                 observer.on_piece_move(self, mover, from, to);
