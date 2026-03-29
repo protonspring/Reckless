@@ -75,6 +75,9 @@ impl Board {
                     observer.on_piece_change(self, captured, captured_to, false);
                     self.update_hash(captured, captured_to);
                     self.state.material -= captured.value();
+                    self.remove_piece(mover, from);
+                    self.add_piece(mover, to);
+                    observer.on_piece_move(self, mover, from, to);
                 } else {
                     let captured = self.piece_on(to);
                     self.remove_piece(captured, to);
@@ -83,11 +86,11 @@ impl Board {
                     self.state.material -= captured.value();
                     self.state.captured = Some(captured);
                     self.state.recapture_square = to;
+                    self.remove_piece(mover, from);
+                    self.add_piece(mover, to);
+                    observer.on_piece_move(self, mover, from, to);
                 }
                 self.state.halfmove_clock = 0;
-                self.remove_piece(mover, from);
-                self.add_piece(mover, to);
-                observer.on_piece_move(self, mover, from, to);
             } else {
                 self.remove_piece(mover, from);
                 self.add_piece(mover, to);
