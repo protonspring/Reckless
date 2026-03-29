@@ -571,41 +571,28 @@ impl Board {
         let stm = self.side_to_move();
         let king = self.king_square(stm);
         let pushed_pawn = self.en_passant() ^ 8;
+        let pushed_pawn_bb = pushed_pawn.to_bb();
 
-        if !((self.checkers() & !pushed_pawn.to_bb()).is_empty()) {
+        if !((self.checkers() & !pushed_pawn_bb).is_empty()) {
             return false;
         }
 
-        let attackers = pawn_attacks(self.en_passant(), !stm) & self.our(PieceType::Pawn);
+        let mut attackers = pawn_attacks(self.en_passant(), !stm) & self.our(PieceType::Pawn);
 
-        // Remove vertically pinned attackers
-        let attackers = attackers & !(self.pinned(stm) & Bitboard::file(king.file()));
+        // just check if each capture is legal or not
+        for attacker in attackers {
+            let occupancies = self.occupancies() ^ attacker.to_bb() ^ pushed_pawn_bb;
+            let diagonal = self.their(PieceType::Bishop) | self.their(PieceType::Queen);
+            let orthogonal = self.their(PieceType::Rook) | self.their(PieceType::Queen);
+            let diagonal = bishop_attacks(king, occupancies) & diagonal;
+            let orthogonal = rook_attacks(king, occupancies) & orthogonal;
 
-        if attackers.is_empty() {
-            return false;
+            if !(orthogonal | diagonal).is_empty() {
+                attackers &= !attacker.to_bb();
+            }
         }
 
-        let pinned = attackers & self.pinned(stm);
-
-        if attackers.is_multiple() {
-            // If two candidates, a clearance pin is impossible. Detect case when both are diagonally pinned.
-            return attackers != pinned;
-        }
-
-        if !pinned.is_empty() {
-            // Pinned pawn can move along pin ray.
-            return ray_pass(king, pinned.lsb()).contains(self.en_passant());
-        }
-
-        if king.rank() != pushed_pawn.rank() {
-            // Clearance pin impossible
-            return true;
-        }
-
-        // Detect clearance pin
-        let occ = self.occupancies() ^ pushed_pawn.to_bb() ^ attackers;
-        let king_ray = rook_attacks(king, occ) & Bitboard::rank(king.rank());
-        (king_ray & (self.their(PieceType::Rook) | self.their(PieceType::Queen))).is_empty()
+        !attackers.is_empty()
     }
 
     /// We verify is self.state.enpassant is valid, and remove it if it is not.
