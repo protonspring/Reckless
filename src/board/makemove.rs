@@ -68,9 +68,11 @@ impl Board {
         } else {
 
             if mv.is_capture() {
+                let captured;
+                let captured_to;
                 if mv.is_en_passant() {
-                    let captured_to = to ^ 8;
-                    let captured = self.piece_on(captured_to);
+                    captured_to = to ^ 8;
+                    captured = self.piece_on(captured_to);
                     self.remove_piece(captured, captured_to);
                     observer.on_piece_change(self, captured, captured_to, false);
                     self.update_hash(captured, captured_to);
@@ -79,17 +81,14 @@ impl Board {
                     self.add_piece(mover, to);
                     observer.on_piece_move(self, mover, from, to);
                 } else {
-                    let captured = self.piece_on(to);
-
-
+                    captured_to = to;
+                    captured = self.piece_on(to);
                     self.remove_piece(mover, from);
                     observer.on_piece_change(self, mover, from, false);
-
-                    self.remove_piece(captured, to);
-                    self.add_piece(mover, to);
+                    self.remove_piece(captured, captured_to);
+                    self.add_piece(mover, captured_to);
                     observer.on_piece_mutate(self, captured, mover, to);
-
-                    self.update_hash(captured, to);
+                    self.update_hash(captured, captured_to);
                     self.state.material -= captured.value();
                     self.state.captured = Some(captured);
                     self.state.recapture_square = to;
