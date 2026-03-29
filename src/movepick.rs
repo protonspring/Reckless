@@ -210,9 +210,9 @@ impl MovePicker {
                 + td.conthist(ply, 4, mv)
                 + td.conthist(ply, 6, mv)
                 + escape[pt] * threatened[pt].contains(mv.from()) as i32
-                + 10000 * td.board.checking_squares(pt).contains(mv.to()) as i32
-                +  8000 * threatened[pt].contains(mv.to()) as i32
-                +  6000 * offense[pt].contains(mv.to()) as i32;
+                + 8000 * td.board.checking_squares(pt).contains(mv.to()) as i32
+                + 5000 * threatened[pt].contains(mv.to()) as i32
+                + 4000 * offense[pt].contains(mv.to()) as i32;
         }
     }
 }
