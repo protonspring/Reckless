@@ -94,9 +94,8 @@ impl Board {
                 if mv.is_promotion() {
                     let promotion = Piece::new(stm, mv.promotion_piece().unwrap());
                     self.remove_piece(mover, to);
-                    observer.on_piece_change(self, mover, to, false);
                     self.add_piece(promotion, to);
-                    observer.on_piece_change(self, promotion, to, true);
+                    observer.on_piece_mutate(self, mover, promotion, to);
                     self.update_hash(mover, to);
                     self.update_hash(promotion, to);
                     self.state.material += promotion.value() - PieceType::Pawn.value();
