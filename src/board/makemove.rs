@@ -69,7 +69,6 @@ impl Board {
 
             if mv.is_capture() {
                 if mv.is_en_passant() {
-
                     let captured_to = if mv.is_en_passant() { to ^ 8 } else { to };
                     let captured = self.piece_on(captured_to);
                     self.state.halfmove_clock = 0;
@@ -91,15 +90,14 @@ impl Board {
                 self.remove_piece(mover, from);
                 self.add_piece(mover, to);
                 observer.on_piece_move(self, mover, from, to);
-                self.update_hash(mover, from);
-                self.update_hash(mover, to);
             } else {
                 self.remove_piece(mover, from);
                 self.add_piece(mover, to);
                 observer.on_piece_move(self, mover, from, to);
-                self.update_hash(mover, from);
-                self.update_hash(mover, to);
             }
+
+            self.update_hash(mover, from);
+            self.update_hash(mover, to);
 
             // Special pawn rules
             if mover_type == PieceType::Pawn {
