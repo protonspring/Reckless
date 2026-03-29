@@ -88,13 +88,18 @@ impl Board {
                     self.state.captured = Some(captured);
                     self.state.recapture_square = to;
                 }
+                self.remove_piece(mover, from);
+                self.add_piece(mover, to);
+                observer.on_piece_move(self, mover, from, to);
+                self.update_hash(mover, from);
+                self.update_hash(mover, to);
+            } else {
+                self.remove_piece(mover, from);
+                self.add_piece(mover, to);
+                observer.on_piece_move(self, mover, from, to);
+                self.update_hash(mover, from);
+                self.update_hash(mover, to);
             }
-
-            self.remove_piece(mover, from);
-            self.add_piece(mover, to);
-            observer.on_piece_move(self, mover, from, to);
-            self.update_hash(mover, from);
-            self.update_hash(mover, to);
 
             // Special pawn rules
             if mover_type == PieceType::Pawn {
