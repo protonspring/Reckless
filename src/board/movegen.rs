@@ -1,6 +1,6 @@
 use crate::{
     lookup::{
-        between, bishop_attacks, king_attacks, knight_attacks, queen_attacks, ray_pass, relative_anti_diagonal,
+        between, bishop_attacks, king_attacks, knight_attacks, pawn_attacks, queen_attacks, ray_pass, relative_anti_diagonal,
         relative_diagonal, rook_attacks,
     },
     types::{Bitboard, CastlingKind, File, MoveKind, MoveList, PieceType, Square},
@@ -202,11 +202,9 @@ impl super::Board {
         list.push_pawns_setwise(up_right, right_captures & target, MoveKind::Capture);
         list.push_pawns_setwise(up_left, left_captures & target, MoveKind::Capture);
 
-        if self.state.en_passant != Square::None {
-            let ep = self.state.en_passant.to_bb();
-            let right_attacker = right_pawns & !Bitboard::file(File::H) & ep.shift(-up_right);
-            let left_attacker = left_pawns & !Bitboard::file(File::A) & ep.shift(-up_left);
-            for pawn in right_attacker | left_attacker {
+        if self.en_passant() != Square::None {
+            let ep_capturers = pawn_attacks(self.en_passant(), !stm) & self.our(PieceType::Pawn);
+            for pawn in ep_capturers {
                 list.push(pawn, self.state.en_passant, MoveKind::EnPassant);
             }
         }
