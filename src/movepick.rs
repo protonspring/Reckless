@@ -206,6 +206,7 @@ impl MovePicker {
             n |= knight_attacks(square);
         }
 
+        let offense_scale = [4000, 8000, 8000, 4000, 0, 0];
         let offense = [pawn_offense, n & !threats, b & !threats, r, Bitboard(0), Bitboard(0)];
 
         for entry in self.list.iter_mut() {
@@ -220,7 +221,7 @@ impl MovePicker {
                 + escape[pt] * threatened[pt].contains(mv.from()) as i32
                 + 10000 * td.board.checking_squares(pt).contains(mv.to()) as i32
                 - 8000 * threatened[pt].contains(mv.to()) as i32
-                + 6000 * offense[pt].contains(mv.to()) as i32;
+                + offense_scale[pt] * offense[pt].contains(mv.to()) as i32;
         }
     }
 }
