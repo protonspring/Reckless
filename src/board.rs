@@ -347,53 +347,53 @@ impl Board {
 
         let stm = self.side_to_move();
         let king = self.king_square(stm);
-
         let from = mv.from();
         let to = mv.to();
 
-        if self.in_check() && king != from {
-            if self.checkers().is_multiple() {
-                return false;
+        if king == from {
+            if mv.is_castling() {
+                if king != from {
+                    return false;
+                }
+
+                let kind = match to {
+                    Square::G1 => CastlingKind::WhiteKingside,
+                    Square::C1 => CastlingKind::WhiteQueenside,
+                    Square::G8 => CastlingKind::BlackKingside,
+                    Square::C8 => CastlingKind::BlackQueenside,
+                    _ => unreachable!(),
+                };
+
+                return self.castling().is_allowed(kind)
+                    && (self.castling_path[kind] & self.occupancies()).is_empty()
+                    && (self.castling_threat[kind] & self.all_threats()).is_empty()
+                    && !self.pinned(stm).contains(self.castling_rooks[kind]);
             }
 
-            if !mv.is_en_passant() && !(self.checkers() | between(king, self.checkers().lsb())).contains(to) {
+            if self.all_threats().contains(to) {
                 return false;
             }
-        }
+        } else {
+            if self.in_check() {
+                if self.checkers().is_multiple() {
+                    return false;
+                }
 
-        if self.pinned(stm).contains(from) && !ray_pass(king, from).contains(to) {
-            return false;
-        }
-
-        let piece = self.piece_on(from);
-        let captured = self.piece_on(to).piece_type();
-
-        if mv.is_castling() {
-            if king != from {
+                if !mv.is_en_passant() && !(self.checkers() | between(king, self.checkers().lsb())).contains(to) {
+                    return false;
+                }
+            }
+            if self.pinned(stm).contains(from) && !ray_pass(king, from).contains(to) {
                 return false;
             }
-
-            let kind = match to {
-                Square::G1 => CastlingKind::WhiteKingside,
-                Square::C1 => CastlingKind::WhiteQueenside,
-                Square::G8 => CastlingKind::BlackKingside,
-                Square::C8 => CastlingKind::BlackQueenside,
-                _ => unreachable!(),
-            };
-
-            return self.castling().is_allowed(kind)
-                && (self.castling_path[kind] & self.occupancies()).is_empty()
-                && (self.castling_threat[kind] & self.all_threats()).is_empty()
-                && !self.pinned(stm).contains(self.castling_rooks[kind]);
-        }
-
-        if king == from && self.all_threats().contains(to) {
-            return false;
         }
 
         if !self.us().contains(from) || self.us().contains(to) {
             return false;
         }
+
+        let piece = self.piece_on(from);
+        let captured = self.piece_on(to).piece_type();
 
         if captured != PieceType::None && (!mv.is_capture() || captured == PieceType::King) {
             return false;
