@@ -352,9 +352,6 @@ impl Board {
 
         if king == from {
             if mv.is_castling() {
-                if king != from {
-                    return false;
-                }
 
                 let kind = match to {
                     Square::G1 => CastlingKind::WhiteKingside,
@@ -383,7 +380,7 @@ impl Board {
                     return false;
                 }
             }
-            if self.pinned(stm).contains(from) && !ray_pass(king, from).contains(to) {
+            if mv.is_castling() || (self.pinned(stm).contains(from) && !ray_pass(king, from).contains(to)) {
                 return false;
             }
         }
