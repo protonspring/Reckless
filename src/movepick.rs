@@ -206,7 +206,7 @@ impl MovePicker {
             n |= knight_attacks(square);
         }
 
-        let offense_scale = [4000, 8000, 8000, 4000, 0, 0];
+        let offense_scale = [9000, 6000, 6000, 3000, 0, 0];
         let offense = [pawn_offense, n & !threats, b & !threats, r, Bitboard(0), Bitboard(0)];
 
         for entry in self.list.iter_mut() {
