@@ -182,8 +182,8 @@ impl MovePicker {
             pawn_threats | td.board.piece_threats(PieceType::Knight) | td.board.piece_threats(PieceType::Bishop);
         let rook_threats = minor_threats | td.board.piece_threats(PieceType::Rook);
 
-        let threatened = [Bitboard(0), pawn_threats, pawn_threats, minor_threats, rook_threats, Bitboard(0)];
-        let escape = [0, 8000, 8000, 14000, 20000, 0];
+        let threatened = [pawn_threats, pawn_threats, pawn_threats, minor_threats, rook_threats, Bitboard(0)];
+        let escape = [8000, 8000, 8000, 14000, 20000, 0];
 
         // safe squares where we can attack an opponent piece
         let mut n = Bitboard(0);
