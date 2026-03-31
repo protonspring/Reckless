@@ -1,5 +1,5 @@
 use crate::{
-    lookup::{bishop_attacks, knight_attacks, pawn_attacks_setwise},
+    lookup::{bishop_attacks, dbl_pawn_attacks_setwise, knight_attacks, pawn_attacks_setwise},
     search::NodeType,
     thread::ThreadData,
     types::{ArrayVec, Bitboard, MAX_MOVES, Move, MoveEntry, MoveList, PieceType},
@@ -177,12 +177,13 @@ impl MovePicker {
     fn score_quiet(&mut self, td: &ThreadData, ply: isize) {
         let threats = td.board.all_threats();
         let side = td.board.side_to_move();
+        let dbl_pawn_threats = dbl_pawn_attacks_setwise(td.board.their(PieceType::Pawn), !side);
         let pawn_threats = td.board.piece_threats(PieceType::Pawn);
         let minor_threats =
             pawn_threats | td.board.piece_threats(PieceType::Knight) | td.board.piece_threats(PieceType::Bishop);
         let rook_threats = minor_threats | td.board.piece_threats(PieceType::Rook);
 
-        let threatened = [Bitboard(0), pawn_threats, pawn_threats, minor_threats, rook_threats, Bitboard(0)];
+        let threatened = [dbl_pawn_threats, pawn_threats, pawn_threats, minor_threats, rook_threats, Bitboard(0)];
         let escape = [0, 8000, 8000, 14000, 20000, 0];
 
         // safe squares where we can attack an opponent piece
