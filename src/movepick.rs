@@ -228,7 +228,7 @@ impl MovePicker {
                 //entry.score += 10000;
             //}
             if pt == PieceType::Rook && king_ring_ortho.contains(mv.to()) {
-                entry.score += 5000;
+                entry.score += 10000;
             }
         }
     }
