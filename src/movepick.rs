@@ -212,6 +212,14 @@ impl MovePicker {
                 + 10000 * td.board.checking_squares(pt).contains(mv.to()) as i32
                 - 8000 * threatened[pt].contains(mv.to()) as i32
                 + 6000 * offense[pt].contains(mv.to()) as i32;
+
+            if pt == PieceType::Pawn && !td.board.passed_space().contains(mv.from())
+                && td.board.passed_space().contains(mv.to()) {
+
+                //println!("{}", td.board);
+                //println!("Move: {}-{}", mv.from(), mv.to());
+                entry.score += 5000;
+            }
         }
     }
 }

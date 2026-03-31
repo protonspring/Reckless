@@ -38,6 +38,7 @@ struct InternalState {
     pinners: [Bitboard; Color::NUM],
     checkers: Bitboard,
     checking_squares: [Bitboard; PieceType::NUM],
+    passed_space: Bitboard,
 }
 
 #[derive(Clone)]
@@ -110,6 +111,10 @@ impl Board {
 
     pub const fn all_threats(&self) -> Bitboard {
         self.state.all_threats
+    }
+
+    pub const fn passed_space(&self) -> Bitboard {
+        self.state.passed_space
     }
 
     pub const fn piece_threats(&self, pt: PieceType) -> Bitboard {
@@ -484,6 +489,14 @@ impl Board {
             | self.piece_threats(PieceType::Rook)
             | self.piece_threats(PieceType::Queen)
             | self.piece_threats(PieceType::King);
+
+        // Build outpost space
+        //passed_space.
+        let mut opp_space = self.colored_pieces(!stm, PieceType::Pawn) | self.piece_threats(PieceType::Pawn);
+        opp_space |= opp_space.shift(Square::UP[!stm]);
+        opp_space |= opp_space.shift(2 * Square::UP[!stm]);
+        opp_space |= opp_space.shift(4 * Square::UP[!stm]);
+        self.state.passed_space = !opp_space;
     }
 
     /// Updates the checkers bitboard to mark opponent pieces currently threatening our king,
