@@ -233,7 +233,7 @@ impl MovePicker {
                 + 6000 * offense[pt].contains(mv.to()) as i32;
 
             if pt == PieceType::Rook && king_ring_ortho.contains(mv.to()) {
-                entry.score += 5000;
+                entry.score += 3000;
             }
         }
     }
