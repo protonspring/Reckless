@@ -225,7 +225,7 @@ impl MovePicker {
                 + 6000 * offense[pt].contains(mv.to()) as i32;
 
             if pt == PieceType::Rook {
-                entry.score += 4000 * (td.board.rook_space() & !threats).contains(mv.to()) as i32;
+                entry.score += 8000 * (td.board.rook_space() & !threats).contains(mv.to()) as i32;
             }
         }
     }
