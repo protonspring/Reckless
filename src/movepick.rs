@@ -227,7 +227,7 @@ impl MovePicker {
                 + 6000 * offense[pt].contains(mv.to()) as i32;
 
             if pt == PieceType::Bishop {
-                entry.score += 4000 * (!Bitboard::LONG_DIAGS.contains(mv.from()) && Bitboard::LONG_DIAGS.contains(mv.to())) as i32;
+                entry.score += 2000 * (!Bitboard::LONG_DIAGS.contains(mv.from()) && Bitboard::LONG_DIAGS.contains(mv.to())) as i32;
             }
         }
     }
