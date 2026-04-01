@@ -223,6 +223,11 @@ impl MovePicker {
                 + 10000 * td.board.checking_squares(pt).contains(mv.to()) as i32
                 - 8000 * threatened[pt].contains(mv.to()) as i32
                 + 6000 * offense[pt].contains(mv.to()) as i32;
+
+            // For bishop moves, penalize the count of x-rayed pawns
+            if pt == PieceType::Bishop {
+                entry.score -= 2000 * (bishop_attacks(mv.to(), Bitboard(0)) & td.board.colored_pieces(!side, PieceType::Pawn)).popcount() as i32;
+            }
         }
     }
 }
