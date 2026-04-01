@@ -14,6 +14,7 @@ impl Bitboard {
     pub const LIGHT_SQUARES: Self = Self(0x55AA55AA55AA55AA);
     pub const SEVENTH_RANK: [Bitboard; 2] = [Self::rank(Rank::R7), Self::rank(Rank::R2)];
     pub const THIRD_RANK: [Bitboard; 2] = [Self::rank(Rank::R3), Self::rank(Rank::R6)];
+    pub const LONG_DIAGS: Self = Self(0x8142241818244281);
 
     /// Creates a bitboard with all bits set in the specified rank.
     pub const fn rank(rank: Rank) -> Self {

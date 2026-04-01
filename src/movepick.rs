@@ -223,6 +223,10 @@ impl MovePicker {
                 + 10000 * td.board.checking_squares(pt).contains(mv.to()) as i32
                 - 8000 * threatened[pt].contains(mv.to()) as i32
                 + 6000 * offense[pt].contains(mv.to()) as i32;
+
+            if pt == PieceType::Bishop {
+                entry.score += 4000 * (!Bitboard::LONG_DIAGS.contains(mv.from()) && Bitboard::LONG_DIAGS.contains(mv.to())) as i32;
+            }
         }
     }
 }
