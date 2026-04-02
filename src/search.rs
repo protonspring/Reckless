@@ -1217,7 +1217,7 @@ fn qsearch<NODE: NodeType>(td: &mut ThreadData, depth: i32,  mut alpha: i32, bet
 
         if !is_loss(best_score) {
             // only do recaptures below a certain depth
-            if mv.to() != td.board.recapture_square() && depth < -7 {
+            if mv.to() != td.board.recapture_square() && depth < -11 {
                 continue;
             }
 
