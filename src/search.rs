@@ -1216,17 +1216,16 @@ fn qsearch<NODE: NodeType>(td: &mut ThreadData, mut alpha: i32, beta: i32, ply: 
         move_count += 1;
 
         if !is_loss(best_score) {
-            // Late Move Pruning (LMP)
-            if move_count >= 3 && !td.board.is_direct_check(mv) {
-                break;
+
+            if !td.board.in_check() && !mv.is_promotion() && !td.board.is_direct_check(mv) {
+                // Late Move Pruning (LMP)
+                if move_count >= 3 {
+                    break;
+                }
             }
 
             // Static Exchange Evaluation Pruning (SEE Pruning)
             if is_valid(eval) && !td.board.see(mv, (alpha - eval) / 8 - 100) {
-                continue;
-            }
-
-            if !mv.is_en_passant() && !td.board.occupancies().contains(mv.to()) {
                 continue;
             }
         }
