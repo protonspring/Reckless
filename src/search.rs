@@ -1225,6 +1225,10 @@ fn qsearch<NODE: NodeType>(td: &mut ThreadData, mut alpha: i32, beta: i32, ply: 
             if is_valid(eval) && !td.board.see(mv, (alpha - eval) / 8 - 100) {
                 continue;
             }
+
+            if !mv.is_en_passant() && !td.board.occupancies().contains(mv.to()) {
+                continue;
+            }
         }
 
         make_move(td, ply, mv);
