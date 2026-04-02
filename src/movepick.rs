@@ -206,6 +206,7 @@ impl MovePicker {
         }
         for square in td.board.colored_pieces(!side, PieceType::Queen) {
             n |= knight_attacks(square);
+            b |= bishop_attacks(square, td.board.occupancies());
         }
 
         let offense = [pawn_offense, n & !threats, b & !threats, Bitboard(0), q & !threats, Bitboard(0)];
