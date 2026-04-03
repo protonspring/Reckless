@@ -134,8 +134,7 @@ impl MovePicker {
 
         //Stage::BadNoisy
         if !self.list.is_empty() {
-            let entry = self.get_best_entry();
-            return Some(entry.mv);
+            return Some(self.list.remove(0).mv);
         }
 
         None
