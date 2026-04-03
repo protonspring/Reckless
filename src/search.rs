@@ -598,6 +598,7 @@ fn search<NODE: NodeType>(
         && !tt_move.is_quiet()
     {
         let mut move_picker = MovePicker::new_probcut(probcut_beta - eval);
+        move_picker.build_threats(td);
 
         while let Some(mv) = move_picker.next::<NODE>(td, true, ply) {
             if move_picker.stage() == Stage::BadNoisy {
@@ -698,6 +699,8 @@ fn search<NODE: NodeType>(
     let mut skip_quiets = false;
     let mut current_search_count = 0;
     let mut alpha_raises = 0;
+
+     move_picker.build_threats(td);
 
     while let Some(mv) = move_picker.next::<NODE>(td, skip_quiets, ply) {
         if mv == td.stack[ply].excluded {
@@ -1208,6 +1211,7 @@ fn qsearch<NODE: NodeType>(td: &mut ThreadData, mut alpha: i32, beta: i32, ply: 
 
     let mut move_count = 0;
     let mut move_picker = MovePicker::new_qsearch();
+    move_picker.build_threats(td);
 
     let skip_quiets =
         |best_score| !((in_check && is_loss(best_score)) || (tt_move.is_quiet() && tt_bound != Bound::Upper));

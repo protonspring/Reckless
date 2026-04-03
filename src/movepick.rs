@@ -22,6 +22,7 @@ pub struct MovePicker {
     stage: Stage,
     bad_noisy: ArrayVec<Move, MAX_MOVES>,
     bad_noisy_idx: usize,
+    threats: Bitboard,
 }
 
 impl MovePicker {
@@ -33,6 +34,7 @@ impl MovePicker {
             stage: if tt_move.is_present() { Stage::HashMove } else { Stage::GenerateNoisy },
             bad_noisy: ArrayVec::new(),
             bad_noisy_idx: 0,
+            threats: Bitboard(0),
         }
     }
 
@@ -44,6 +46,7 @@ impl MovePicker {
             stage: Stage::GenerateNoisy,
             bad_noisy: ArrayVec::new(),
             bad_noisy_idx: 0,
+            threats: Bitboard(0),
         }
     }
 
@@ -55,13 +58,14 @@ impl MovePicker {
             stage: Stage::GenerateNoisy,
             bad_noisy: ArrayVec::new(),
             bad_noisy_idx: 0,
+            threats: Bitboard(0),
         }
     }
 
     pub const fn stage(&self) -> Stage {
         self.stage
     }
-
+    
     pub fn next<NODE: NodeType>(&mut self, td: &ThreadData, skip_quiets: bool, ply: isize) -> Option<Move> {
         if self.stage == Stage::HashMove {
             self.stage = Stage::GenerateNoisy;
@@ -152,6 +156,11 @@ impl MovePicker {
         self.list.remove(best_index)
     }
 
+    pub fn build_threats(&mut self, td: &ThreadData) {
+        self.threats = td.board.all_threats();
+
+    }
+
     fn score_noisy(&mut self, td: &ThreadData) {
         let threats = td.board.all_threats();
 
@@ -175,7 +184,6 @@ impl MovePicker {
     }
 
     fn score_quiet(&mut self, td: &ThreadData, ply: isize) {
-        let threats = td.board.all_threats();
         let side = td.board.side_to_move();
         let pawn_threats = td.board.piece_threats(PieceType::Pawn);
         let minor_threats =
@@ -189,9 +197,9 @@ impl MovePicker {
         let mut n = Bitboard(0);
         let mut b = Bitboard(0);
         let mut q = Bitboard(0);
-        let pawn_offense = pawn_attacks_setwise(td.board.colors(!side), !side) & !threats;
+        let pawn_offense = pawn_attacks_setwise(td.board.colors(!side), !side) & !self.threats;
 
-        for square in td.board.colored_pieces(!side, PieceType::Bishop) & !threats {
+        for square in td.board.colored_pieces(!side, PieceType::Bishop) & !self.threats {
             n |= knight_attacks(square);
             q |= rook_attacks(square, td.board.occupancies());
         }
@@ -200,7 +208,7 @@ impl MovePicker {
             n |= knight_attacks(square);
             b |= bishop_attacks(square, td.board.occupancies());
 
-            if !threats.contains(square) {
+            if !self.threats.contains(square) {
                 q |= bishop_attacks(square, td.board.occupancies());
             }
         }
@@ -208,7 +216,7 @@ impl MovePicker {
             n |= knight_attacks(square);
         }
 
-        let offense = [pawn_offense, n & !threats, b & !threats, Bitboard(0), q & !threats, Bitboard(0)];
+        let offense = [pawn_offense, n & !self.threats, b & !self.threats, Bitboard(0), q & !self.threats, Bitboard(0)];
 
         // King ring diag attacks and ortho attacks
         let mut king_ring_ortho = Bitboard(0);
@@ -216,13 +224,13 @@ impl MovePicker {
         for square in king_attacks(td.board.king_square(!side)) {
             king_ring_ortho |= rook_attacks(square, td.board.occupancies());
         }
-        king_ring_ortho &= !threats;
+        king_ring_ortho &= !self.threats;
 
         for entry in self.list.iter_mut() {
             let mv = entry.mv;
             let pt = td.board.piece_on(mv.from()).piece_type();
 
-            entry.score = td.quiet_history.get(threats, side, mv)
+            entry.score = td.quiet_history.get(self.threats, side, mv)
                 + td.conthist(ply, 1, mv)
                 + td.conthist(ply, 2, mv)
                 + td.conthist(ply, 4, mv)
