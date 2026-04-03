@@ -2,7 +2,7 @@ use crate::{
     lookup::{bishop_attacks, king_attacks, knight_attacks, pawn_attacks_setwise, rook_attacks},
     search::NodeType,
     thread::ThreadData,
-    types::{ArrayVec, Bitboard, MAX_MOVES, Move, MoveEntry, MoveList, PieceType},
+    types::{Bitboard, MAX_MOVES, Move, MoveEntry, MoveList, PieceType},
 };
 
 #[derive(Copy, Clone, Eq, PartialEq, PartialOrd)]
@@ -20,8 +20,8 @@ pub struct MovePicker {
     tt_move: Move,
     threshold: Option<i32>,
     stage: Stage,
-    bad_noisy: ArrayVec<Move, MAX_MOVES>,
-    bad_noisy_idx: usize,
+    bad_noisy: [Move; MAX_MOVES],
+    bad_noisy_idx: usize, //for pushing and returning
 }
 
 impl MovePicker {
@@ -31,7 +31,7 @@ impl MovePicker {
             tt_move,
             threshold: None,
             stage: if tt_move.is_present() { Stage::HashMove } else { Stage::GenerateNoisy },
-            bad_noisy: ArrayVec::new(),
+            bad_noisy: [Move::NULL; MAX_MOVES],
             bad_noisy_idx: 0,
         }
     }
@@ -42,7 +42,7 @@ impl MovePicker {
             tt_move: Move::NULL,
             threshold: Some(threshold),
             stage: Stage::GenerateNoisy,
-            bad_noisy: ArrayVec::new(),
+            bad_noisy: [Move::NULL; MAX_MOVES],
             bad_noisy_idx: 0,
         }
     }
@@ -53,7 +53,7 @@ impl MovePicker {
             tt_move: Move::NULL,
             threshold: None,
             stage: Stage::GenerateNoisy,
-            bad_noisy: ArrayVec::new(),
+            bad_noisy: [Move::NULL; MAX_MOVES],
             bad_noisy_idx: 0,
         }
     }
@@ -86,7 +86,8 @@ impl MovePicker {
 
                 let threshold = self.threshold.unwrap_or_else(|| -entry.score / 46 + 109);
                 if !td.board.see(entry.mv, threshold) {
-                    self.bad_noisy.push(entry.mv);
+                    self.bad_noisy[self.bad_noisy_idx] = entry.mv;
+                    self.bad_noisy_idx += 1;
                     continue;
                 }
 
@@ -127,11 +128,12 @@ impl MovePicker {
             }
 
             self.stage = Stage::BadNoisy;
+            self.bad_noisy_idx = 0;
         }
 
         // Stage::BadNoisy
-        if self.bad_noisy_idx < self.bad_noisy.len() {
-            let mv = self.bad_noisy[self.bad_noisy_idx];
+        let mv = self.bad_noisy[self.bad_noisy_idx];
+        if mv != Move::NULL {
             self.bad_noisy_idx += 1;
             return Some(mv);
         }
