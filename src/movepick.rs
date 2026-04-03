@@ -21,6 +21,7 @@ pub struct MovePicker {
     threshold: Option<i32>,
     stage: Stage,
     bad_noisy: Vec<Move>,
+    bad_noisy_idx: usize,
 }
 
 impl MovePicker {
@@ -31,6 +32,7 @@ impl MovePicker {
             threshold: None,
             stage: if tt_move.is_present() { Stage::HashMove } else { Stage::GenerateNoisy },
             bad_noisy: Vec::with_capacity(16),
+            bad_noisy_idx: 0,
         }
     }
 
@@ -41,6 +43,7 @@ impl MovePicker {
             threshold: Some(threshold),
             stage: Stage::GenerateNoisy,
             bad_noisy: Vec::with_capacity(16),
+            bad_noisy_idx: 0,
         }
     }
 
@@ -51,6 +54,7 @@ impl MovePicker {
             threshold: None,
             stage: Stage::GenerateNoisy,
             bad_noisy: Vec::with_capacity(16),
+            bad_noisy_idx: 0,
         }
     }
 
@@ -126,8 +130,10 @@ impl MovePicker {
         }
 
         // Stage::BadNoisy
-        if !self.bad_noisy.is_empty() {
-            return self.bad_noisy.pop();
+        if self.bad_noisy_idx < self.bad_noisy.len() {
+            let mv = self.bad_noisy[self.bad_noisy_idx];
+            self.bad_noisy_idx += 1;
+            return Some(mv);
         }
 
         None
