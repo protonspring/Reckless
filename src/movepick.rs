@@ -71,19 +71,20 @@ impl MovePicker {
 
         if self.stage == Stage::GoodNoisy {
             while !self.list.is_empty() {
-                let entry = self.get_best_entry();
+                let mut entry = self.get_best_entry();
                 if entry.mv == self.tt_move {
                     continue;
                 }
 
                 if entry.score == i32::MIN {
-                    self.list.push(entry.mv.from(), entry.mv.to(), entry.mv.kind());
+                    self.list.push_entry(entry);
                     break;
                 }
 
                 let threshold = self.threshold.unwrap_or_else(|| -entry.score / 46 + 109);
                 if !td.board.see(entry.mv, threshold) {
-                    self.list.push(entry.mv.from(), entry.mv.to(), entry.mv.kind());
+                    entry.score = i32::MIN;
+                    self.list.push_entry(entry);
                     continue;
                 }
 
@@ -113,7 +114,7 @@ impl MovePicker {
                     let entry = self.get_best_entry();
 
                     if entry.score == i32::MIN {
-                        self.list.push(entry.mv.from(), entry.mv.to(), entry.mv.kind());
+                        self.list.push_entry(entry);
                         break;
                     }
 

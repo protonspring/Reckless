@@ -139,7 +139,7 @@ impl super::Board {
             && !self.pinned(stm).contains(self.castling_rooks[kind])
         {
             let king = self.king_square(self.side_to_move());
-            list.push(king, kind.landing_square(), MoveKind::Castling);
+            list.push_move(king, kind.landing_square(), MoveKind::Castling);
         }
     }
 
@@ -216,7 +216,7 @@ impl super::Board {
             let right_attacker = right_pawns & !Bitboard::file(File::H) & ep.shift(-up_right);
             let left_attacker = left_pawns & !Bitboard::file(File::A) & ep.shift(-up_left);
             for pawn in right_attacker | left_attacker {
-                list.push(pawn, self.en_passant(), MoveKind::EnPassant);
+                list.push_move(pawn, self.en_passant(), MoveKind::EnPassant);
             }
         }
     }

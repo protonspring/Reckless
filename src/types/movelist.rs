@@ -26,14 +26,18 @@ impl MoveList {
         self.inner.is_empty()
     }
 
-    pub fn push(&mut self, from: Square, to: Square, kind: MoveKind) {
+    pub fn push_entry(&mut self, me: MoveEntry) {
+        self.inner.push(me);
+    }
+
+    pub fn push_move(&mut self, from: Square, to: Square, kind: MoveKind) {
         self.inner.push(MoveEntry { mv: Move::new(from, to, kind), score: i32::MIN });
     }
 
     #[cfg(not(target_feature = "avx512vbmi2"))]
     pub fn push_setwise(&mut self, from: Square, to_bb: Bitboard, kind: MoveKind) {
         for to in to_bb {
-            self.push(from, to, kind);
+            self.push_move(from, to, kind);
         }
     }
 
@@ -69,7 +73,7 @@ impl MoveList {
     #[cfg(not(target_feature = "avx512vbmi2"))]
     pub fn push_pawns_setwise(&mut self, offset: i8, to_bb: Bitboard, kind: MoveKind) {
         for to in to_bb {
-            self.push(to.shift(-offset), to, kind);
+            self.push_move(to.shift(-offset), to, kind);
         }
     }
 
