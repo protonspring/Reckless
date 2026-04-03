@@ -26,6 +26,9 @@ pub struct MovePicker {
 }
 
 impl MovePicker {
+
+    pub const ESCAPE: [i32; 6] = [0, 8000, 8000, 14000, 20000, 0];
+
     pub const fn new(tt_move: Move) -> Self {
         Self {
             list: MoveList::new(),
@@ -191,7 +194,6 @@ impl MovePicker {
         let rook_threats = minor_threats | td.board.piece_threats(PieceType::Rook);
 
         let threatened = [Bitboard(0), pawn_threats, pawn_threats, minor_threats, rook_threats, Bitboard(0)];
-        let escape = [0, 8000, 8000, 14000, 20000, 0];
 
         // safe squares where we can attack an opponent piece
         let mut n = Bitboard(0);
@@ -235,7 +237,7 @@ impl MovePicker {
                 + td.conthist(ply, 2, mv)
                 + td.conthist(ply, 4, mv)
                 + td.conthist(ply, 6, mv)
-                + escape[pt] * threatened[pt].contains(mv.from()) as i32
+                + Self::ESCAPE[pt] * threatened[pt].contains(mv.from()) as i32
                 + 10000 * td.board.checking_squares(pt).contains(mv.to()) as i32
                 - 8000 * threatened[pt].contains(mv.to()) as i32
                 + 6000 * offense[pt].contains(mv.to()) as i32
