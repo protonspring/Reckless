@@ -236,7 +236,7 @@ impl MovePicker {
                     16 * captured.value() + td.noisy_history.get(self.threats, td.board.moved_piece(mv), mv.to(), captured);
 
                 if !self.threats.contains(mv.to()) { //hanging piece capture
-                    entry.score += 10000;
+                    entry.score += 4000;
                 }
             }
         }
