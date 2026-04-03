@@ -126,11 +126,7 @@ impl MovePicker {
         }
 
         // Stage::BadNoisy
-        if !self.bad_noisy.is_empty() {
-            return self.bad_noisy.pop();
-        }
-
-        None
+        self.bad_noisy.pop()
     }
 
     fn get_best_entry(&mut self) -> MoveEntry {
