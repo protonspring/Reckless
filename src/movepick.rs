@@ -24,33 +24,33 @@ pub struct MovePicker {
 }
 
 impl MovePicker {
-    pub const fn new(tt_move: Move) -> Self {
+    pub fn new(tt_move: Move) -> Self {
         Self {
             list: MoveList::new(),
             tt_move,
             threshold: None,
             stage: if tt_move.is_present() { Stage::HashMove } else { Stage::GenerateNoisy },
-            bad_noisy: Vec::new(),
+            bad_noisy: Vec::with_capacity(16),
         }
     }
 
-    pub const fn new_probcut(threshold: i32) -> Self {
+    pub fn new_probcut(threshold: i32) -> Self {
         Self {
             list: MoveList::new(),
             tt_move: Move::NULL,
             threshold: Some(threshold),
             stage: Stage::GenerateNoisy,
-            bad_noisy: Vec::new(),
+            bad_noisy: Vec::with_capacity(16),
         }
     }
 
-    pub const fn new_qsearch() -> Self {
+    pub fn new_qsearch() -> Self {
         Self {
             list: MoveList::new(),
             tt_move: Move::NULL,
             threshold: None,
             stage: Stage::GenerateNoisy,
-            bad_noisy: Vec::new(),
+            bad_noisy: Vec::with_capacity(16),
         }
     }
 
