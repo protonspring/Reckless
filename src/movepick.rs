@@ -25,6 +25,7 @@ pub struct MovePicker {
     threats: Bitboard,
     threatened: [Bitboard; 6],
     offense: [Bitboard; 6],
+    king_ring_ortho: Bitboard,
 }
 
 impl MovePicker {
@@ -42,6 +43,7 @@ impl MovePicker {
             threats: Bitboard(0),
             threatened: [Bitboard(0), Bitboard(0),Bitboard(0),Bitboard(0),Bitboard(0),Bitboard(0)],
             offense: [Bitboard(0), Bitboard(0),Bitboard(0),Bitboard(0),Bitboard(0),Bitboard(0)],
+            king_ring_ortho: Bitboard(0),
         }
     }
 
@@ -56,6 +58,7 @@ impl MovePicker {
             threats: Bitboard(0),
             threatened: [Bitboard(0), Bitboard(0),Bitboard(0),Bitboard(0),Bitboard(0),Bitboard(0)],
             offense: [Bitboard(0), Bitboard(0),Bitboard(0),Bitboard(0),Bitboard(0),Bitboard(0)],
+            king_ring_ortho: Bitboard(0),
         }
     }
 
@@ -70,6 +73,7 @@ impl MovePicker {
             threats: Bitboard(0),
             threatened: [Bitboard(0), Bitboard(0),Bitboard(0),Bitboard(0),Bitboard(0),Bitboard(0)],
             offense: [Bitboard(0), Bitboard(0),Bitboard(0),Bitboard(0),Bitboard(0),Bitboard(0)],
+            king_ring_ortho: Bitboard(0),
         }
     }
 
@@ -202,6 +206,14 @@ impl MovePicker {
         }
 
         self.offense = [pawn_offense, n & !self.threats, b & !self.threats, Bitboard(0), q & !self.threats, Bitboard(0)];
+
+        // King ring diag attacks and ortho attacks
+        let mut king_ring_ortho = Bitboard(0);
+
+        for square in king_attacks(td.board.king_square(!side)) {
+            king_ring_ortho |= rook_attacks(square, td.board.occupancies());
+        }
+        self.king_ring_ortho = king_ring_ortho & !self.threats;
     }
 
     fn score_noisy(&mut self, td: &ThreadData) {
@@ -227,14 +239,6 @@ impl MovePicker {
     fn score_quiet(&mut self, td: &ThreadData, ply: isize) {
         let side = td.board.side_to_move();
 
-        // King ring diag attacks and ortho attacks
-        let mut king_ring_ortho = Bitboard(0);
-
-        for square in king_attacks(td.board.king_square(!side)) {
-            king_ring_ortho |= rook_attacks(square, td.board.occupancies());
-        }
-        king_ring_ortho &= !self.threats;
-
         for entry in self.list.iter_mut() {
             let mv = entry.mv;
             let pt = td.board.piece_on(mv.from()).piece_type();
@@ -248,7 +252,7 @@ impl MovePicker {
                 + 10000 * td.board.checking_squares(pt).contains(mv.to()) as i32
                 - 8000 * self.threatened[pt].contains(mv.to()) as i32
                 + 6000 * self.offense[pt].contains(mv.to()) as i32
-                + 5000 * (pt == PieceType::Rook && king_ring_ortho.contains(mv.to())) as i32;
+                + 5000 * (pt == PieceType::Rook && self.king_ring_ortho.contains(mv.to())) as i32;
         }
     }
 }
