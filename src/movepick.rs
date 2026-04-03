@@ -170,6 +170,11 @@ impl MovePicker {
 
                 entry.score =
                     16 * captured.value() + td.noisy_history.get(threats, td.board.moved_piece(mv), mv.to(), captured);
+
+                //try to resist moving pinners
+                if td.board.pinners(td.board.side_to_move()).contains(mv.from()) {
+                    entry.score -= 4000;
+                }
             }
         }
     }
