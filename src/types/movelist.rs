@@ -27,7 +27,7 @@ impl MoveList {
     }
 
     pub fn push(&mut self, from: Square, to: Square, kind: MoveKind) {
-        self.inner.push(MoveEntry { mv: Move::new(from, to, kind), score: 0 });
+        self.inner.push(MoveEntry { mv: Move::new(from, to, kind), score: i32::MIN });
     }
 
     #[cfg(not(target_feature = "avx512vbmi2"))]

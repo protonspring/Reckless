@@ -2,7 +2,7 @@ use crate::{
     lookup::{bishop_attacks, king_attacks, knight_attacks, pawn_attacks_setwise, rook_attacks},
     search::NodeType,
     thread::ThreadData,
-    types::{ArrayVec, Bitboard, MAX_MOVES, Move, MoveEntry, MoveList, PieceType},
+    types::{Bitboard, Move, MoveEntry, MoveList, PieceType},
 };
 
 #[derive(Copy, Clone, Eq, PartialEq, PartialOrd)]
@@ -20,8 +20,6 @@ pub struct MovePicker {
     tt_move: Move,
     threshold: Option<i32>,
     stage: Stage,
-    bad_noisy: ArrayVec<Move, MAX_MOVES>,
-    bad_noisy_idx: usize,
 }
 
 impl MovePicker {
@@ -31,8 +29,6 @@ impl MovePicker {
             tt_move,
             threshold: None,
             stage: if tt_move.is_present() { Stage::HashMove } else { Stage::GenerateNoisy },
-            bad_noisy: ArrayVec::new(),
-            bad_noisy_idx: 0,
         }
     }
 
@@ -42,8 +38,6 @@ impl MovePicker {
             tt_move: Move::NULL,
             threshold: Some(threshold),
             stage: Stage::GenerateNoisy,
-            bad_noisy: ArrayVec::new(),
-            bad_noisy_idx: 0,
         }
     }
 
@@ -53,8 +47,6 @@ impl MovePicker {
             tt_move: Move::NULL,
             threshold: None,
             stage: Stage::GenerateNoisy,
-            bad_noisy: ArrayVec::new(),
-            bad_noisy_idx: 0,
         }
     }
 
@@ -84,9 +76,14 @@ impl MovePicker {
                     continue;
                 }
 
+                if entry.score == i32::MIN {
+                    self.list.push(entry.mv.from(), entry.mv.to(), entry.mv.kind());
+                    break;
+                }
+
                 let threshold = self.threshold.unwrap_or_else(|| -entry.score / 46 + 109);
                 if !td.board.see(entry.mv, threshold) {
-                    self.bad_noisy.push(entry.mv);
+                    self.list.push(entry.mv.from(), entry.mv.to(), entry.mv.kind());
                     continue;
                 }
 
@@ -114,6 +111,12 @@ impl MovePicker {
             if !skip_quiets {
                 while !self.list.is_empty() {
                     let entry = self.get_best_entry();
+
+                    if entry.score == i32::MIN {
+                        self.list.push(entry.mv.from(), entry.mv.to(), entry.mv.kind());
+                        break;
+                    }
+
                     if entry.mv == self.tt_move {
                         continue;
                     }
@@ -129,11 +132,10 @@ impl MovePicker {
             self.stage = Stage::BadNoisy;
         }
 
-        // Stage::BadNoisy
-        if self.bad_noisy_idx < self.bad_noisy.len() {
-            let mv = self.bad_noisy[self.bad_noisy_idx];
-            self.bad_noisy_idx += 1;
-            return Some(mv);
+        //Stage::BadNoisy
+        if !self.list.is_empty() {
+            let entry = self.get_best_entry();
+            return Some(entry.mv);
         }
 
         None
