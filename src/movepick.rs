@@ -24,6 +24,7 @@ pub struct MovePicker {
     bad_noisy_idx: usize,
     threats: Bitboard,
     threatened: [Bitboard; 6],
+    offense: [Bitboard; 6],
 }
 
 impl MovePicker {
@@ -40,6 +41,7 @@ impl MovePicker {
             bad_noisy_idx: 0,
             threats: Bitboard(0),
             threatened: [Bitboard(0), Bitboard(0),Bitboard(0),Bitboard(0),Bitboard(0),Bitboard(0)],
+            offense: [Bitboard(0), Bitboard(0),Bitboard(0),Bitboard(0),Bitboard(0),Bitboard(0)],
         }
     }
 
@@ -53,6 +55,7 @@ impl MovePicker {
             bad_noisy_idx: 0,
             threats: Bitboard(0),
             threatened: [Bitboard(0), Bitboard(0),Bitboard(0),Bitboard(0),Bitboard(0),Bitboard(0)],
+            offense: [Bitboard(0), Bitboard(0),Bitboard(0),Bitboard(0),Bitboard(0),Bitboard(0)],
         }
     }
 
@@ -66,6 +69,7 @@ impl MovePicker {
             bad_noisy_idx: 0,
             threats: Bitboard(0),
             threatened: [Bitboard(0), Bitboard(0),Bitboard(0),Bitboard(0),Bitboard(0),Bitboard(0)],
+            offense: [Bitboard(0), Bitboard(0),Bitboard(0),Bitboard(0),Bitboard(0),Bitboard(0)],
         }
     }
 
@@ -174,7 +178,30 @@ impl MovePicker {
 
         self.threatened = [Bitboard(0), pawn_threats, pawn_threats, minor_threats, rook_threats, Bitboard(0)];
 
+        // safe squares where we can attack an opponent piece
+        let mut n = Bitboard(0);
+        let mut b = Bitboard(0);
+        let mut q = Bitboard(0);
+        let pawn_offense = pawn_attacks_setwise(td.board.colors(!side), !side) & !self.threats;
 
+        for square in td.board.colored_pieces(!side, PieceType::Bishop) & !self.threats {
+            n |= knight_attacks(square);
+            q |= rook_attacks(square, td.board.occupancies());
+        }
+
+        for square in td.board.colored_pieces(!side, PieceType::Rook) {
+            n |= knight_attacks(square);
+            b |= bishop_attacks(square, td.board.occupancies());
+
+            if !self.threats.contains(square) {
+                q |= bishop_attacks(square, td.board.occupancies());
+            }
+        }
+        for square in td.board.colored_pieces(!side, PieceType::Queen) {
+            n |= knight_attacks(square);
+        }
+
+        self.offense = [pawn_offense, n & !self.threats, b & !self.threats, Bitboard(0), q & !self.threats, Bitboard(0)];
     }
 
     fn score_noisy(&mut self, td: &ThreadData) {
@@ -200,31 +227,6 @@ impl MovePicker {
     fn score_quiet(&mut self, td: &ThreadData, ply: isize) {
         let side = td.board.side_to_move();
 
-        // safe squares where we can attack an opponent piece
-        let mut n = Bitboard(0);
-        let mut b = Bitboard(0);
-        let mut q = Bitboard(0);
-        let pawn_offense = pawn_attacks_setwise(td.board.colors(!side), !side) & !self.threats;
-
-        for square in td.board.colored_pieces(!side, PieceType::Bishop) & !self.threats {
-            n |= knight_attacks(square);
-            q |= rook_attacks(square, td.board.occupancies());
-        }
-
-        for square in td.board.colored_pieces(!side, PieceType::Rook) {
-            n |= knight_attacks(square);
-            b |= bishop_attacks(square, td.board.occupancies());
-
-            if !self.threats.contains(square) {
-                q |= bishop_attacks(square, td.board.occupancies());
-            }
-        }
-        for square in td.board.colored_pieces(!side, PieceType::Queen) {
-            n |= knight_attacks(square);
-        }
-
-        let offense = [pawn_offense, n & !self.threats, b & !self.threats, Bitboard(0), q & !self.threats, Bitboard(0)];
-
         // King ring diag attacks and ortho attacks
         let mut king_ring_ortho = Bitboard(0);
 
@@ -245,7 +247,7 @@ impl MovePicker {
                 + Self::ESCAPE[pt] * self.threatened[pt].contains(mv.from()) as i32
                 + 10000 * td.board.checking_squares(pt).contains(mv.to()) as i32
                 - 8000 * self.threatened[pt].contains(mv.to()) as i32
-                + 6000 * offense[pt].contains(mv.to()) as i32
+                + 6000 * self.offense[pt].contains(mv.to()) as i32
                 + 5000 * (pt == PieceType::Rook && king_ring_ortho.contains(mv.to())) as i32;
         }
     }
