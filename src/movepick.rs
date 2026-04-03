@@ -23,6 +23,7 @@ pub struct MovePicker {
     bad_noisy: ArrayVec<Move, MAX_MOVES>,
     bad_noisy_idx: usize,
     threats: Bitboard,
+    threatened: [Bitboard; 6],
 }
 
 impl MovePicker {
@@ -38,6 +39,7 @@ impl MovePicker {
             bad_noisy: ArrayVec::new(),
             bad_noisy_idx: 0,
             threats: Bitboard(0),
+            threatened: [Bitboard(0), Bitboard(0),Bitboard(0),Bitboard(0),Bitboard(0),Bitboard(0)],
         }
     }
 
@@ -50,6 +52,7 @@ impl MovePicker {
             bad_noisy: ArrayVec::new(),
             bad_noisy_idx: 0,
             threats: Bitboard(0),
+            threatened: [Bitboard(0), Bitboard(0),Bitboard(0),Bitboard(0),Bitboard(0),Bitboard(0)],
         }
     }
 
@@ -62,6 +65,7 @@ impl MovePicker {
             bad_noisy: ArrayVec::new(),
             bad_noisy_idx: 0,
             threats: Bitboard(0),
+            threatened: [Bitboard(0), Bitboard(0),Bitboard(0),Bitboard(0),Bitboard(0),Bitboard(0)],
         }
     }
 
@@ -162,11 +166,18 @@ impl MovePicker {
     pub fn build_threats(&mut self, td: &ThreadData) {
         self.threats = td.board.all_threats();
 
+        let side = td.board.side_to_move();
+        let pawn_threats = td.board.piece_threats(PieceType::Pawn);
+        let minor_threats =
+            pawn_threats | td.board.piece_threats(PieceType::Knight) | td.board.piece_threats(PieceType::Bishop);
+        let rook_threats = minor_threats | td.board.piece_threats(PieceType::Rook);
+
+        self.threatened = [Bitboard(0), pawn_threats, pawn_threats, minor_threats, rook_threats, Bitboard(0)];
+
+
     }
 
     fn score_noisy(&mut self, td: &ThreadData) {
-        let threats = td.board.all_threats();
-
         if td.board.in_check() {
             for entry in self.list.iter_mut() {
                 let mv = entry.mv;
@@ -181,19 +192,13 @@ impl MovePicker {
                     if entry.mv.is_en_passant() { PieceType::Pawn } else { td.board.piece_on(mv.to()).piece_type() };
 
                 entry.score =
-                    16 * captured.value() + td.noisy_history.get(threats, td.board.moved_piece(mv), mv.to(), captured);
+                    16 * captured.value() + td.noisy_history.get(self.threats, td.board.moved_piece(mv), mv.to(), captured);
             }
         }
     }
 
     fn score_quiet(&mut self, td: &ThreadData, ply: isize) {
         let side = td.board.side_to_move();
-        let pawn_threats = td.board.piece_threats(PieceType::Pawn);
-        let minor_threats =
-            pawn_threats | td.board.piece_threats(PieceType::Knight) | td.board.piece_threats(PieceType::Bishop);
-        let rook_threats = minor_threats | td.board.piece_threats(PieceType::Rook);
-
-        let threatened = [Bitboard(0), pawn_threats, pawn_threats, minor_threats, rook_threats, Bitboard(0)];
 
         // safe squares where we can attack an opponent piece
         let mut n = Bitboard(0);
@@ -237,9 +242,9 @@ impl MovePicker {
                 + td.conthist(ply, 2, mv)
                 + td.conthist(ply, 4, mv)
                 + td.conthist(ply, 6, mv)
-                + Self::ESCAPE[pt] * threatened[pt].contains(mv.from()) as i32
+                + Self::ESCAPE[pt] * self.threatened[pt].contains(mv.from()) as i32
                 + 10000 * td.board.checking_squares(pt).contains(mv.to()) as i32
-                - 8000 * threatened[pt].contains(mv.to()) as i32
+                - 8000 * self.threatened[pt].contains(mv.to()) as i32
                 + 6000 * offense[pt].contains(mv.to()) as i32
                 + 5000 * (pt == PieceType::Rook && king_ring_ortho.contains(mv.to())) as i32;
         }
