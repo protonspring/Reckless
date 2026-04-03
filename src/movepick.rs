@@ -5,6 +5,8 @@ use crate::{
     types::{Bitboard, Move, MoveEntry, MoveList, PieceType},
 };
 
+use std::collections::VecDeque;
+
 #[derive(Copy, Clone, Eq, PartialEq, PartialOrd)]
 pub enum Stage {
     HashMove,
@@ -20,7 +22,7 @@ pub struct MovePicker {
     tt_move: Move,
     threshold: Option<i32>,
     stage: Stage,
-    bad_noisy: Vec<Move>,
+    bad_noisy: VecDeque<Move>,
 }
 
 impl MovePicker {
@@ -30,7 +32,7 @@ impl MovePicker {
             tt_move,
             threshold: None,
             stage: if tt_move.is_present() { Stage::HashMove } else { Stage::GenerateNoisy },
-            bad_noisy: Vec::with_capacity(16),
+            bad_noisy: VecDeque::with_capacity(16),
         }
     }
 
@@ -40,7 +42,7 @@ impl MovePicker {
             tt_move: Move::NULL,
             threshold: Some(threshold),
             stage: Stage::GenerateNoisy,
-            bad_noisy: Vec::with_capacity(16),
+            bad_noisy: VecDeque::with_capacity(16),
         }
     }
 
@@ -50,7 +52,7 @@ impl MovePicker {
             tt_move: Move::NULL,
             threshold: None,
             stage: Stage::GenerateNoisy,
-            bad_noisy: Vec::with_capacity(16),
+            bad_noisy: VecDeque::with_capacity(16),
         }
     }
 
@@ -82,7 +84,7 @@ impl MovePicker {
 
                 let threshold = self.threshold.unwrap_or_else(|| -entry.score / 46 + 109);
                 if !td.board.see(entry.mv, threshold) {
-                    self.bad_noisy.push(entry.mv);
+                    self.bad_noisy.push_back(entry.mv);
                     continue;
                 }
 
@@ -126,11 +128,7 @@ impl MovePicker {
         }
 
         // Stage::BadNoisy
-        if self.bad_noisy.len() > 0 {
-            return Some(self.bad_noisy.remove(0));
-        }
-
-        None
+        self.bad_noisy.pop_front()
     }
 
     fn get_best_entry(&mut self) -> MoveEntry {
