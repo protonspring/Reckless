@@ -2,8 +2,10 @@ use crate::{
     lookup::{bishop_attacks, king_attacks, knight_attacks, pawn_attacks_setwise, rook_attacks},
     search::NodeType,
     thread::ThreadData,
-    types::{Bitboard, MAX_MOVES, Move, MoveEntry, MoveList, PieceType},
+    types::{Bitboard, Move, MoveEntry, MoveList, PieceType},
 };
+
+use std::cmp;
 
 #[derive(Copy, Clone, Eq, PartialEq, PartialOrd)]
 pub enum Stage {
@@ -20,8 +22,9 @@ pub struct MovePicker {
     tt_move: Move,
     threshold: Option<i32>,
     stage: Stage,
-    bad_noisy: [Move; MAX_MOVES],
-    bad_noisy_idx: usize, //for pushing and returning
+    bad_noisy: [Move; 16],
+    bad_noisy_len: usize,
+    bad_noisy_curr: usize,
 }
 
 impl MovePicker {
@@ -31,8 +34,9 @@ impl MovePicker {
             tt_move,
             threshold: None,
             stage: if tt_move.is_present() { Stage::HashMove } else { Stage::GenerateNoisy },
-            bad_noisy: [Move::NULL; MAX_MOVES],
-            bad_noisy_idx: 0,
+            bad_noisy: [Move::NULL; 16],
+            bad_noisy_len: 0,
+            bad_noisy_curr: 0,
         }
     }
 
@@ -42,8 +46,9 @@ impl MovePicker {
             tt_move: Move::NULL,
             threshold: Some(threshold),
             stage: Stage::GenerateNoisy,
-            bad_noisy: [Move::NULL; MAX_MOVES],
-            bad_noisy_idx: 0,
+            bad_noisy: [Move::NULL; 16],
+            bad_noisy_len: 0,
+            bad_noisy_curr: 0,
         }
     }
 
@@ -53,8 +58,9 @@ impl MovePicker {
             tt_move: Move::NULL,
             threshold: None,
             stage: Stage::GenerateNoisy,
-            bad_noisy: [Move::NULL; MAX_MOVES],
-            bad_noisy_idx: 0,
+            bad_noisy: [Move::NULL; 16],
+            bad_noisy_len: 0,
+            bad_noisy_curr: 0,
         }
     }
 
@@ -86,8 +92,8 @@ impl MovePicker {
 
                 let threshold = self.threshold.unwrap_or_else(|| -entry.score / 46 + 109);
                 if !td.board.see(entry.mv, threshold) {
-                    self.bad_noisy[self.bad_noisy_idx] = entry.mv;
-                    self.bad_noisy_idx += 1;
+                    self.bad_noisy[self.bad_noisy_len] = entry.mv;
+                    self.bad_noisy_len = cmp::min(15, self.bad_noisy_len + 1);
                     continue;
                 }
 
@@ -128,14 +134,12 @@ impl MovePicker {
             }
 
             self.stage = Stage::BadNoisy;
-            self.bad_noisy_idx = 0;
         }
 
         // Stage::BadNoisy
-        let mv = self.bad_noisy[self.bad_noisy_idx];
-        if mv != Move::NULL {
-            self.bad_noisy_idx += 1;
-            return Some(mv);
+        if self.bad_noisy_curr < self.bad_noisy_len {
+            self.bad_noisy_curr += 1;
+            return Some(self.bad_noisy[self.bad_noisy_curr - 1]);
         }
 
         None
