@@ -63,80 +63,73 @@ impl MovePicker {
     }
 
     pub fn next<NODE: NodeType>(&mut self, td: &ThreadData, skip_quiets: bool, ply: isize) -> Option<Move> {
-        if self.stage == Stage::HashMove {
-            self.stage = Stage::GenerateNoisy;
+        loop {
+        match self.stage {
 
-            if td.board.is_legal(self.tt_move) {
-                return Some(self.tt_move);
-            }
-        }
-
-        if self.stage == Stage::GenerateNoisy {
-            self.stage = Stage::GoodNoisy;
-            td.board.append_noisy_moves(&mut self.list);
-            self.score_noisy(td);
-        }
-
-        if self.stage == Stage::GoodNoisy {
-            while !self.list.is_empty() {
-                let entry = self.get_best_entry();
-                if entry.mv == self.tt_move {
-                    continue;
+            Stage::HashMove => {
+                self.stage = Stage::GenerateNoisy;
+                if td.board.is_legal(self.tt_move) {
+                    return Some(self.tt_move);
                 }
-
-                let threshold = self.threshold.unwrap_or_else(|| -entry.score / 46 + 109);
-                if !td.board.see(entry.mv, threshold) {
-                    self.bad_noisy.push(entry.mv);
-                    continue;
-                }
-
-                if NODE::ROOT {
-                    self.score_noisy(td);
-                }
-
-                return Some(entry.mv);
             }
 
-            if skip_quiets {
-                self.stage = Stage::BadNoisy;
-            } else {
-                self.stage = Stage::GenerateQuiet;
+            Stage::GenerateNoisy => {
+                self.stage = Stage::GoodNoisy;
+                td.board.append_noisy_moves(&mut self.list);
+                self.score_noisy(td);
+                self.stage = Stage::GoodNoisy;
             }
-        }
 
-        if self.stage == Stage::GenerateQuiet {
-            self.stage = Stage::Quiet;
-            td.board.append_quiet_moves(&mut self.list);
-            self.score_quiet(td, ply);
-        }
-
-        if self.stage == Stage::Quiet {
-            if !skip_quiets {
+            Stage::GoodNoisy => {
                 while !self.list.is_empty() {
                     let entry = self.get_best_entry();
                     if entry.mv == self.tt_move {
                         continue;
                     }
 
-                    if NODE::ROOT {
-                        self.score_quiet(td, ply);
+                    let threshold = self.threshold.unwrap_or_else(|| -entry.score / 46 + 109);
+                    if !td.board.see(entry.mv, threshold) {
+                        self.bad_noisy.push(entry.mv);
+                        continue;
                     }
 
+                    if NODE::ROOT { self.score_noisy(td); }
                     return Some(entry.mv);
                 }
+
+                // Fallthrough logic: use ternary or branchless style
+                self.stage = if skip_quiets { Stage::BadNoisy } else { Stage::GenerateQuiet };
             }
 
-            self.stage = Stage::BadNoisy;
-        }
+            Stage::GenerateQuiet => {
+                self.stage = Stage::Quiet;
+                td.board.append_quiet_moves(&mut self.list);
+                self.score_quiet(td, ply);
+                self.stage = Stage::Quiet;
+            }
 
-        // Stage::BadNoisy
-        if self.bad_noisy_idx < self.bad_noisy.len() {
-            let mv = self.bad_noisy[self.bad_noisy_idx];
-            self.bad_noisy_idx += 1;
-            return Some(mv);
-        }
+            Stage::Quiet => {
+                if !skip_quiets {
+                    while !self.list.is_empty() {
+                        let entry = self.get_best_entry();
+                        if entry.mv == self.tt_move { continue; }
+                        if NODE::ROOT { self.score_quiet(td, ply); }
+                        return Some(entry.mv);
+                    }
+                }
+                self.stage = Stage::BadNoisy;
+            }
 
-        None
+            Stage::BadNoisy => {
+                if self.bad_noisy_idx < self.bad_noisy.len() {
+                    let mv = self.bad_noisy[self.bad_noisy_idx];
+                    self.bad_noisy_idx += 1;
+                    return Some(mv);
+                }
+                return None;
+            }
+        }
+        }
     }
 
     fn get_best_entry(&mut self) -> MoveEntry {
