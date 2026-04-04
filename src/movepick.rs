@@ -92,8 +92,11 @@ impl MovePicker {
 
                 let threshold = self.threshold.unwrap_or_else(|| -entry.score / 46 + 109);
                 if !td.board.see(entry.mv, threshold) {
-                    self.bad_noisy[self.bad_noisy_len] = entry.mv;
-                    self.bad_noisy_len = cmp::min(15, self.bad_noisy_len + 1);
+                    unsafe {
+                        let mv_ptr = self.bad_noisy.get_unchecked_mut(self.bad_noisy_len);
+                        *mv_ptr = entry.mv;
+                        self.bad_noisy_len = cmp::min(15, self.bad_noisy_len + 1);
+                    }
                     continue;
                 }
 
@@ -138,8 +141,11 @@ impl MovePicker {
 
         // Stage::BadNoisy
         if self.bad_noisy_curr < self.bad_noisy_len {
+            let m = unsafe {
+                self.bad_noisy.get_unchecked(self.bad_noisy_curr)
+            };
             self.bad_noisy_curr += 1;
-            return Some(self.bad_noisy[self.bad_noisy_curr - 1]);
+            return Some(*m);
         }
 
         None
