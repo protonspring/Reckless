@@ -84,7 +84,9 @@ impl ThreatAccumulator {
                 let mirrored = king.is_kingside();
 
                 let index = threat_index(piece, square, attacked, target, mirrored, pov);
-                adds.maybe_push(index >= 0, index as usize);
+                if index >= 0 {
+                    adds.push(index as usize);
+                }
             }
         }
 
@@ -146,10 +148,13 @@ impl ThreatAccumulator {
             let mirrored = king.is_kingside();
 
             let index = threat_index(piece, from, attacked, to, mirrored, pov);
-            if add {
-                adds.maybe_push(index >= 0, index as usize);
-            } else {
-                subs.maybe_push(index >= 0, index as usize);
+
+            if index >= 0 {
+                if add {
+                    adds.push(index as usize);
+                } else {
+                    subs.push(index as usize);
+                }
             }
         }
 
