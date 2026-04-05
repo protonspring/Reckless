@@ -241,7 +241,7 @@ impl MovePicker {
                     // pawn on opposite side
                     if Bitboard::QUEEN_SIDE.contains(td.board.king_square(side)) !=
                        Bitboard::QUEEN_SIDE.contains(mv.from()) {
-                        entry.score += 4000;
+                        entry.score += 8000;
                         //println!("{}", td.board);
                         //println!("Move: {}-{}", mv.from(), mv.to());
                     }
