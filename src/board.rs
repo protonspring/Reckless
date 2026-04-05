@@ -3,7 +3,7 @@ use crate::{
         attacks, between, bishop_attacks, cuckoo, cuckoo_a, cuckoo_b, h1, h2, king_attacks, knight_attacks,
         pawn_attacks, pawn_attacks_setwise, queen_attacks, ray_pass, rook_attacks,
     },
-    types::{Bitboard, Castling, CastlingKind, Color, Move, Piece, PieceType, Rank, Square, ZOBRIST},
+    types::{Bitboard, Castling, CastlingKind, Color, MAX_PLY, Move, Piece, PieceType, Rank, Square, ZOBRIST},
 };
 
 #[cfg(test)]
@@ -139,6 +139,14 @@ impl Board {
 
     pub const fn halfmove_clock(&self) -> u8 {
         self.state.halfmove_clock
+    }
+
+    pub fn scale_up_by_ply(&self, value: i32) -> i32 {
+        ((value * self.halfmove_clock() as i32) / MAX_PLY as i32).try_into().unwrap()
+    }
+
+    pub fn scale_down_by_ply(&mut self, value: i32, ) -> i32 {
+        ((value * (MAX_PLY as i32 - self.halfmove_clock() as i32)) / MAX_PLY as i32).try_into().unwrap()
     }
 
     pub const fn material(&self) -> i32 {

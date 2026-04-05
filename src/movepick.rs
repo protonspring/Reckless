@@ -62,6 +62,14 @@ impl MovePicker {
         self.stage
     }
 
+    //pub fn scale_up_by_ply(&mut self, ply: i32, value: i32) -> i32 {
+        //((value * ply) / MAX_PLY as i32).try_into().unwrap()
+    //}
+
+    //pub fn scale_down_by_ply(&mut self, ply: i32, value: i32, ) -> i32 {
+        //((value * (MAX_PLY as i32 - ply)) / MAX_PLY as i32).try_into().unwrap()
+    //}
+
     pub fn next<NODE: NodeType>(&mut self, td: &ThreadData, skip_quiets: bool, ply: isize) -> Option<Move> {
         if self.stage == Stage::HashMove {
             self.stage = Stage::GenerateNoisy;
@@ -228,7 +236,7 @@ impl MovePicker {
                 + td.conthist(ply, 4, mv)
                 + td.conthist(ply, 6, mv)
                 + escape[pt] * threatened[pt].contains(mv.from()) as i32
-                + 10000 * td.board.checking_squares(pt).contains(mv.to()) as i32
+                + td.board.scale_up_by_ply(10000) * td.board.checking_squares(pt).contains(mv.to()) as i32
                 - 8000 * threatened[pt].contains(mv.to()) as i32
                 + 6000 * offense[pt].contains(mv.to()) as i32
                 + 5000 * (pt == PieceType::Rook && king_ring_ortho.contains(mv.to())) as i32;
