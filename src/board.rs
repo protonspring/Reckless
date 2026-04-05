@@ -145,7 +145,7 @@ impl Board {
         ((value * self.halfmove_clock() as i32) / MAX_PLY as i32).try_into().unwrap()
     }
 
-    pub fn scale_down_by_ply(&mut self, value: i32, ) -> i32 {
+    pub fn scale_down_by_ply(&self, value: i32, ) -> i32 {
         ((value * (MAX_PLY as i32 - self.halfmove_clock() as i32)) / MAX_PLY as i32).try_into().unwrap()
     }
 
