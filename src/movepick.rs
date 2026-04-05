@@ -2,7 +2,7 @@ use crate::{
     lookup::{bishop_attacks, king_attacks, knight_attacks, pawn_attacks_setwise, rook_attacks},
     search::NodeType,
     thread::ThreadData,
-    types::{ArrayVec, Bitboard, MAX_MOVES, Move, MoveEntry, MoveList, PieceType},
+    types::{ArrayVec, Bitboard, File, MAX_MOVES, Move, MoveEntry, MoveList, PieceType},
 };
 
 #[derive(Copy, Clone, Eq, PartialEq, PartialOrd)]
@@ -232,6 +232,21 @@ impl MovePicker {
                 - 8000 * threatened[pt].contains(mv.to()) as i32
                 + 6000 * offense[pt].contains(mv.to()) as i32
                 + 5000 * (pt == PieceType::Rook && king_ring_ortho.contains(mv.to())) as i32;
+
+            //bonus for pushing pawns on the opposite side of our king
+            if pt == PieceType::Pawn {
+                //king in a castled position
+                if (Bitboard::HOME_ROWS[side] & (Bitboard::file(File::C) | Bitboard::file(File::G))).contains(td.board.king_square(side)) {
+
+                    // pawn on opposite side
+                    if Bitboard::QUEEN_SIDE.contains(td.board.king_square(side)) !=
+                       Bitboard::QUEEN_SIDE.contains(mv.from()) {
+                        entry.score += 4000;
+                        //println!("{}", td.board);
+                        //println!("Move: {}-{}", mv.from(), mv.to());
+                    }
+                }
+            }
         }
     }
 }
