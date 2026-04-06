@@ -1,5 +1,5 @@
 use crate::{
-    lookup::{bishop_attacks, king_attacks, knight_attacks, pawn_attacks_setwise, rook_attacks},
+    lookup::{attacks, between, bishop_attacks, king_attacks, knight_attacks, pawn_attacks_setwise, rook_attacks},
     search::NodeType,
     thread::ThreadData,
     types::{ArrayVec, Bitboard, MAX_MOVES, Move, MoveEntry, MoveList, PieceType},
@@ -224,7 +224,8 @@ impl MovePicker {
 
         for entry in self.list.iter_mut() {
             let mv = entry.mv;
-            let pt = td.board.piece_on(mv.from()).piece_type();
+            let piece = td.board.piece_on(mv.from());
+            let pt = piece.piece_type();
 
             entry.score = td.quiet_history.get(threats, side, mv)
                 + td.conthist(ply, 1, mv)
@@ -239,6 +240,18 @@ impl MovePicker {
 
             if Bitboard::HOME_ROWS[side].contains(td.board.king_square(side)) && wall_pawns.contains(mv.from()) {
                 entry.score -= 4000;
+            }
+
+            let enemy_king = td.board.king_square(!side);
+            if attacks(piece, mv.to(), Bitboard(0)).contains(enemy_king) {
+
+                if (between(mv.to(), enemy_king) & td.board.occupancies()).popcount() == 1 {
+                    //println!("{}", td.board);
+                    //println!("Move: {}-{}", mv.from(), mv.to());
+                    //println!("{}", (ray_pass(mv.to(), enemy_king) & td.board.occupancies()).popcount() == 1 {
+                    //println!("{}", (between(mv.to(), enemy_king) & td.board.occupancies()));
+                    entry.score += 5000;
+                }
             }
         }
     }

@@ -38,6 +38,7 @@ struct InternalState {
     pinners: [Bitboard; Color::NUM],
     checkers: Bitboard,
     checking_squares: [Bitboard; PieceType::NUM],
+    pinning_space: Bitboard,
 }
 
 #[derive(Clone)]
@@ -102,6 +103,10 @@ impl Board {
 
     pub const fn checking_squares(&self, pt: PieceType) -> Bitboard {
         self.state.checking_squares[pt as usize]
+    }
+
+    pub const fn pinning_space(&self) -> Bitboard {
+        self.state.pinning_space
     }
 
     pub const fn checkers(&self) -> Bitboard {
@@ -530,6 +535,14 @@ impl Board {
         self.state.checking_squares[PieceType::Rook] = rook_attacks(their_king, self.occupancies());
         self.state.checking_squares[PieceType::Queen] =
             self.checking_squares(PieceType::Bishop) | self.checking_squares(PieceType::Rook);
+
+        //determing pinning space and/or discovery check space
+        let att1 = queen_attacks(their_king, self.occupancies());
+        let occ2 = self.occupancies() & !att1;
+        let att2 = queen_attacks(their_king, occ2);
+        self.state.pinning_space = att2 & !att1;
+        //println!("{}", self);
+        //println!("{}", self.pinning_space());
     }
 
     pub fn update_hash_keys(&mut self) {
