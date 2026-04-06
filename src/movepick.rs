@@ -235,7 +235,7 @@ impl MovePicker {
                 + 10000 * td.board.checking_squares(pt).contains(mv.to()) as i32
                 - 8000 * threatened[pt].contains(mv.to()) as i32
                 + 6000 * offense[pt].contains(mv.to()) as i32
-                + td.board.scale_down_by_ply(7000) * (pt == PieceType::Rook && king_ring_ortho.contains(mv.to())) as i32;
+                + td.board.scale_up_by_ply(7000) * (pt == PieceType::Rook && king_ring_ortho.contains(mv.to())) as i32;
 
             if Bitboard::HOME_ROWS[side].contains(td.board.king_square(side)) && wall_pawns.contains(mv.from()) {
                 entry.score -= 4000;
