@@ -250,7 +250,7 @@ impl MovePicker {
                     //println!("Move: {}-{}", mv.from(), mv.to());
                     //println!("{}", (ray_pass(mv.to(), enemy_king) & td.board.occupancies()).popcount() == 1 {
                     //println!("{}", (between(mv.to(), enemy_king) & td.board.occupancies()));
-                    entry.score += 5000;
+                    entry.score += 10000;
                 }
             }
         }
