@@ -141,6 +141,14 @@ impl Board {
         self.state.halfmove_clock
     }
 
+    pub fn scale_up_by_ply(&self, value: i32) -> i32 {
+        ((value * (16 - self.pieces(PieceType::Pawn).popcount() as i32)) / 16).try_into().unwrap()
+    }
+
+    pub fn scale_down_by_ply(&self, value: i32, ) -> i32 {
+        ((value * self.pieces(PieceType::Pawn).popcount() as i32) / 16).try_into().unwrap()
+    }
+
     pub const fn material(&self) -> i32 {
         self.state.material
     }
