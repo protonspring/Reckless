@@ -243,7 +243,7 @@ impl MovePicker {
             }
 
             let enemy_king = td.board.king_square(!side);
-            if attacks(piece, mv.to(), Bitboard(0)).contains(enemy_king) {
+            if !td.board.pinners(side).contains(mv.from()) && attacks(piece, mv.to(), Bitboard(0)).contains(enemy_king) {
 
                 if (between(mv.to(), enemy_king) & td.board.occupancies()).popcount() == 1 {
                     //println!("{}", td.board);
