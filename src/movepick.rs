@@ -1,5 +1,5 @@
 use crate::{
-    lookup::{attacks, between, bishop_attacks, king_attacks, knight_attacks, pawn_attacks_setwise, rook_attacks},
+    lookup::{attacks, between, bishop_attacks, king_attacks, knight_attacks, pawn_attacks_setwise, ray_pass, rook_attacks},
     search::NodeType,
     thread::ThreadData,
     types::{ArrayVec, Bitboard, MAX_MOVES, Move, MoveEntry, MoveList, PieceType},
@@ -243,7 +243,8 @@ impl MovePicker {
             }
 
             let enemy_king = td.board.king_square(!side);
-            if !td.board.pinners(side).contains(mv.from()) && attacks(piece, mv.to(), Bitboard(0)).contains(enemy_king) {
+            //if !td.board.pinners(side).contains(mv.from()) && attacks(piece, mv.to(), Bitboard(0)).contains(enemy_king) {
+            if ray_pass(enemy_king, mv.from()) != ray_pass(enemy_king, mv.to()) && attacks(piece, mv.to(), Bitboard(0)).contains(enemy_king) {
 
                 if (between(mv.to(), enemy_king) & td.board.occupancies()).popcount() == 1 {
                     //println!("{}", td.board);
