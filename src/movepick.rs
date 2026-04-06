@@ -244,9 +244,10 @@ impl MovePicker {
 
             let enemy_king = td.board.king_square(!side);
             //if !td.board.pinners(side).contains(mv.from()) && attacks(piece, mv.to(), Bitboard(0)).contains(enemy_king) {
-            if ray_pass(enemy_king, mv.from()) != ray_pass(enemy_king, mv.to()) && attacks(piece, mv.to(), Bitboard(0)).contains(enemy_king) {
+            if !threats.contains(mv.to()) && ray_pass(enemy_king, mv.from()) != ray_pass(enemy_king, mv.to()) && attacks(piece, mv.to(), Bitboard(0)).contains(enemy_king) {
 
-                if (between(mv.to(), enemy_king) & td.board.occupancies()).popcount() == 1 {
+                if (between(mv.to(), enemy_king) & td.board.occupancies()).popcount() == 1 
+                    && (between(mv.to(), enemy_king) & td.board.colors(!side)).popcount() == 1 {
                     //println!("{}", td.board);
                     //println!("Move: {}-{}", mv.from(), mv.to());
                     //println!("{}", (ray_pass(mv.to(), enemy_king) & td.board.occupancies()).popcount() == 1 {
