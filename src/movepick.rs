@@ -22,6 +22,7 @@ pub struct MovePicker {
     stage: Stage,
     bad_noisy: ArrayVec<Move, MAX_MOVES>,
     bad_noisy_idx: usize,
+    inqsearch: bool,
 }
 
 impl MovePicker {
@@ -33,6 +34,7 @@ impl MovePicker {
             stage: if tt_move.is_present() { Stage::HashMove } else { Stage::GenerateNoisy },
             bad_noisy: ArrayVec::new(),
             bad_noisy_idx: 0,
+            inqsearch: false,
         }
     }
 
@@ -44,6 +46,7 @@ impl MovePicker {
             stage: Stage::GenerateNoisy,
             bad_noisy: ArrayVec::new(),
             bad_noisy_idx: 0,
+            inqsearch: false,
         }
     }
 
@@ -55,6 +58,7 @@ impl MovePicker {
             stage: Stage::GenerateNoisy,
             bad_noisy: ArrayVec::new(),
             bad_noisy_idx: 0,
+            inqsearch: true,
         }
     }
 
@@ -97,7 +101,7 @@ impl MovePicker {
                 return Some(entry.mv);
             }
 
-            if skip_quiets {
+            if skip_quiets || (self.inqsearch && !td.board.in_check()) {
                 self.stage = Stage::BadNoisy;
             } else {
                 self.stage = Stage::GenerateQuiet;
