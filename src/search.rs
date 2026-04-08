@@ -1212,8 +1212,9 @@ fn qsearch<NODE: NodeType>(td: &mut ThreadData, mut alpha: i32, beta: i32, ply: 
     let mut move_count = 0;
     let mut move_picker = MovePicker::new_qsearch();
 
-    let skip_quiets =
-        |best_score| !((in_check && is_loss(best_score)) || (tt_move.is_quiet() && tt_bound != Bound::Upper));
+    let quiet_from_search = tt_move.is_quiet() && tt_bound != Bound::Upper;
+
+    let skip_quiets = |best_score| !((in_check && is_loss(best_score)) || quiet_from_search);
 
     while let Some(mv) = move_picker.next::<NODE>(td, skip_quiets(best_score), ply) {
         move_count += 1;
