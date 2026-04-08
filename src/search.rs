@@ -1210,7 +1210,7 @@ fn qsearch<NODE: NodeType>(td: &mut ThreadData, mut alpha: i32, beta: i32, ply: 
     let mut best_move = Move::NULL;
 
     let mut move_count = 0;
-    let mut move_picker = MovePicker::new_qsearch(depth < -11); //skip quiets or no
+    let mut move_picker = MovePicker::new_qsearch(depth < -19); //skip quiets or no
 
     let skip_quiets =
         |best_score| !((in_check && is_loss(best_score)) || (tt_move.is_quiet() && tt_bound != Bound::Upper));
