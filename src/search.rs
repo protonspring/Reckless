@@ -1207,6 +1207,7 @@ fn qsearch<NODE: NodeType>(td: &mut ThreadData, mut alpha: i32, beta: i32, ply: 
 
     let mut best_move = Move::NULL;
 
+    let mut quiet_move_count = 0;
     let mut move_count = 0;
     let mut move_picker = MovePicker::new_qsearch();
 
@@ -1215,6 +1216,9 @@ fn qsearch<NODE: NodeType>(td: &mut ThreadData, mut alpha: i32, beta: i32, ply: 
 
     while let Some(mv) = move_picker.next::<NODE>(td, skip_quiets(best_score), ply) {
         move_count += 1;
+        if !mv.is_capture() {
+            quiet_move_count += 1;
+        }
 
         if !is_loss(best_score) {
             // Late Move Pruning (LMP)
@@ -1224,6 +1228,12 @@ fn qsearch<NODE: NodeType>(td: &mut ThreadData, mut alpha: i32, beta: i32, ply: 
 
             // Static Exchange Evaluation Pruning (SEE Pruning)
             if is_valid(eval) && !td.board.see(mv, (alpha - eval) / 8 - 108) {
+                continue;
+            }
+        } else {
+
+            //Even in winning positions, limit # of quiet moves
+            if !mv.is_capture() && quiet_move_count > 2 {
                 continue;
             }
         }
