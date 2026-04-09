@@ -212,7 +212,14 @@ impl MovePicker {
                 n |= knight_attacks(square);
             }
 
-            [pawn_offense, n & !threats, b & !threats, Bitboard(0), q & !threats, Bitboard(0)]
+            //rook offense is on 7th rank w/ king on 8th rank
+            let rook_offense = if Bitboard::HOME_ROWS[!side].contains(td.board.king_square(!side)) {
+                Bitboard::SEVENTH_RANK[side]
+            } else {
+                Bitboard(0)
+            };
+
+            [pawn_offense, n & !threats, b & !threats, rook_offense & !threats, q & !threats, Bitboard(0)]
         };
 
         // King ring diag attacks and ortho attacks
