@@ -187,6 +187,8 @@ impl MovePicker {
         };
 
         let escape = [0, 7768, 8218, 13424, 20208, 0];
+        let pawn_pushing = [[0, 0, 0, 100, 200, 400, 800, 1600],
+                            [1600, 800, 400, 200, 100, 0, 0, 0]];
 
         // safe squares where we can attack an opponent piece
         let offense = {
@@ -247,6 +249,11 @@ impl MovePicker {
                 + 6158 * offense[pt].contains(mv.to()) as i32
                 + 5000 * (pt == PieceType::Rook && king_ring_ortho.contains(mv.to())) as i32
                 - 4000 * wall_pawns.contains(mv.from()) as i32;
+
+            if pt == PieceType::Pawn {
+                let rank = mv.to().rank() as usize;
+                entry.score += pawn_pushing[side][rank];
+            }
         }
     }
 }
