@@ -73,8 +73,8 @@ pub fn start(td: &mut ThreadData, report: Report, thread_count: usize) {
     let mut average = vec![td.previous_best_score; td.multi_pv];
     let mut last_best_rootmove = RootMove::default();
 
-    let mut eval_stability;
-    let mut pv_stability;
+    let mut eval_stability = 0;
+    let mut pv_stability = 0;
     let mut best_move_changes = 0;
     let mut soft_stop_voted = false;
 
@@ -192,10 +192,10 @@ pub fn start(td: &mut ThreadData, report: Report, thread_count: usize) {
         }
 
         let es = ((td.root_moves[0].score - average[td.pv_index]).abs() < 12) as i32;
-        eval_stability = es * (es + 1);
+        eval_stability = es * (eval_stability + 1);
 
         let pvs = (last_best_rootmove.mv == td.root_moves[0].mv) as i32;
-        pv_stability = pvs * (pvs + 1);
+        pv_stability = pvs * (pv_stability + 1);
 
         best_move_changes += td.best_move_changes;
 
