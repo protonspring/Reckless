@@ -1233,7 +1233,7 @@ fn qsearch<NODE: NodeType>(td: &mut ThreadData, mut alpha: i32, beta: i32, ply: 
         } else {
 
             //Even in winning positions, limit # of quiet moves
-            if !mv.is_capture() && quiet_move_count > 2 {
+            if !mv.is_capture() && quiet_move_count > 2 && move_count > 0 {
                 continue;
             }
         }
