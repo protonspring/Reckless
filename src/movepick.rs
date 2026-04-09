@@ -2,7 +2,7 @@ use crate::{
     lookup::{bishop_attacks, king_attacks, knight_attacks, pawn_attacks_setwise, rook_attacks},
     search::NodeType,
     thread::ThreadData,
-    types::{ArrayVec, Bitboard, MAX_MOVES, Move, MoveEntry, MoveList, PieceType},
+    types::{ArrayVec, Bitboard, MAX_MOVES, Move, MoveEntry, MoveList, PieceType, Square},
 };
 
 #[derive(Copy, Clone, Eq, PartialEq, PartialOrd)]
@@ -213,13 +213,12 @@ impl MovePicker {
             }
 
             //rook offense is on 7th rank w/ king on 8th rank
-            let rook_offense = if Bitboard::HOME_ROWS[!side].contains(td.board.king_square(!side)) {
-                Bitboard::SEVENTH_RANK[side]
-            } else {
-                Bitboard(0)
-            };
+            let mut advanced_pawns = Bitboard::ADVANCED[side] & td.board.colored_pieces(side, PieceType::Pawn);
+            advanced_pawns |= advanced_pawns.shift(Square::UP[!side]);
+            advanced_pawns |= advanced_pawns.shift(Square::UP[!side] + Square::UP[!side]);
+            advanced_pawns |= advanced_pawns.shift(Square::UP[!side] + Square::UP[!side]);
 
-            [pawn_offense, n & !threats, b & !threats, rook_offense & !threats, q & !threats, Bitboard(0)]
+            [pawn_offense, n & !threats, b & !threats, advanced_pawns & !threats, q & !threats, Bitboard(0)]
         };
 
         // King ring diag attacks and ortho attacks
