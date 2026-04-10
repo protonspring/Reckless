@@ -421,7 +421,7 @@ impl Board {
 
                 // normal king movement
                 if mv.is_capture() != self.colors(!stm).contains(to) { return false; }
-                return attacks(piece, from, Bitboard(0)).contains(to);
+                return (attacks(piece, from, Bitboard(0)) & !self.all_threats()).contains(to);
             }
         }
     }
