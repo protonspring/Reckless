@@ -36,11 +36,11 @@ impl MovePicker {
         }
     }
 
-    pub const fn new_nonmain(threshold: i32) -> Self {
+    pub const fn new_nonmain(threshold: Option<i32>) -> Self {
         Self {
             list: MoveList::new(),
             tt_move: Move::NULL,
-            threshold: if threshold != i32::MIN { Some(threshold) } else { None },
+            threshold: threshold,
             stage: Stage::GenerateNoisy,
             bad_noisy: ArrayVec::new(),
             bad_noisy_idx: 0,
