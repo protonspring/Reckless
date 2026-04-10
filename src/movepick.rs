@@ -66,20 +66,6 @@ impl MovePicker {
         if self.stage == Stage::HashMove {
             self.stage = Stage::GenerateNoisy;
 
-            //let pt = td.board.piece_on(self.tt_move.from()).piece_type();
-            if true { //pt != PieceType::Pawn {
-                let b1 = td.board.is_legal(self.tt_move);
-                let b2 = td.board.is_legal2(self.tt_move);
-
-                if b1 != b2 {
-                    println!("{}", td.board);
-                    println!("Move: {}{}", self.tt_move.from(), self.tt_move.to());
-                    println!("results: main {}, patch {}", b1, b2);
-                    println!("move kind: {}", self.tt_move.kind() as u8);
-                    println!("special?: {}", self.tt_move.is_special());
-                }
-            }
-
             if td.board.is_legal(self.tt_move) {
                 return Some(self.tt_move);
             }
