@@ -249,7 +249,7 @@ impl MovePicker {
                 - 4000 * wall_pawns.contains(mv.from()) as i32;
 
             if pt == PieceType::Pawn && Bitboard::SEVENTH_RANK[side].contains(mv.to()) {
-                entry.score += 4000;
+                entry.score += 9000;
             }
         }
     }
