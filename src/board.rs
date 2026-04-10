@@ -331,7 +331,6 @@ impl Board {
     }
 
     pub fn is_legal(&self, mv: Move) -> bool {
-
         debug_assert!(mv.is_present());
         let stm = self.side_to_move();
         let king = self.king_square(stm);
@@ -346,7 +345,6 @@ impl Board {
 
         match piece.piece_type() {
             PieceType::Pawn => {
-
                 if self.colors(stm).contains(to) {
                     return false;
                 }
@@ -384,7 +382,6 @@ impl Board {
             }
             PieceType::King => {
                 if mv.is_castling() {
-
                     let kind = match to {
                         Square::G1 => CastlingKind::WhiteKingside,
                         Square::C1 => CastlingKind::WhiteQueenside,
@@ -399,23 +396,26 @@ impl Board {
                         && !self.pinned(stm).contains(self.castling_rooks[kind]);
                 }
 
-                return !mv.is_special() &&
-                    !self.colors(stm).contains(to) &&
-                    (mv.is_capture() == self.colors(!stm).contains(to)) &&
-                    (attacks(piece, from, Bitboard(0)) & !self.all_threats()).contains(to);
+                return !mv.is_special()
+                    && !self.colors(stm).contains(to)
+                    && (mv.is_capture() == self.colors(!stm).contains(to))
+                    && (attacks(piece, from, Bitboard(0)) & !self.all_threats()).contains(to);
             }
             _ => {
-                if self.colors(stm).contains(to) ||
-                    (self.pinned(stm).contains(from) && !ray_pass(king, from).contains(to)) ||
-                    mv.is_special() ||
-                    (mv.is_capture() != self.colors(!stm).contains(to)) {
+                if self.colors(stm).contains(to)
+                    || (self.pinned(stm).contains(from) && !ray_pass(king, from).contains(to))
+                    || mv.is_special()
+                    || (mv.is_capture() != self.colors(!stm).contains(to))
+                {
                     return false;
                 }
 
                 let mut to_squares = attacks(piece, from, self.occupancies());
 
                 if self.in_check() {
-                    if self.checkers().is_multiple() { return false; }
+                    if self.checkers().is_multiple() {
+                        return false;
+                    }
                     to_squares &= self.checkers() | between(king, self.checkers().lsb());
                 }
 

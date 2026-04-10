@@ -82,7 +82,7 @@ impl Move {
         )
     }
 
-    pub const fn is_special(self) -> bool { //anything but a capture
+    pub const fn is_special(self) -> bool {
         (self.kind() as u8 & 11) != 0
     }
 
