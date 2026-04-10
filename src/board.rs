@@ -382,26 +382,7 @@ impl Board {
 
                 return from.shift(offset) == to && !self.occupancies().contains(to);
             }
-            PieceType::Knight | PieceType::Bishop | PieceType::Rook | PieceType::Queen => {
-
-                if self.colors(stm).contains(to) ||
-                    (self.pinned(stm).contains(from) && !ray_pass(king, from).contains(to)) ||
-                    mv.is_special() ||
-                    (mv.is_capture() != self.colors(!stm).contains(to)) {
-                    return false;
-                }
-
-                let mut to_squares = attacks(piece, from, self.occupancies());
-
-                if self.in_check() {
-                    if self.checkers().is_multiple() { return false; }
-                    to_squares &= self.checkers() | between(king, self.checkers().lsb());
-                }
-
-                return to_squares.contains(mv.to());
-            }
-            _ => { //PieceType::King => {
-
+            PieceType::King => {
                 if mv.is_castling() {
 
                     let kind = match to {
@@ -422,6 +403,23 @@ impl Board {
                     !self.colors(stm).contains(to) &&
                     (mv.is_capture() == self.colors(!stm).contains(to)) &&
                     (attacks(piece, from, Bitboard(0)) & !self.all_threats()).contains(to);
+            }
+            _ => {
+                if self.colors(stm).contains(to) ||
+                    (self.pinned(stm).contains(from) && !ray_pass(king, from).contains(to)) ||
+                    mv.is_special() ||
+                    (mv.is_capture() != self.colors(!stm).contains(to)) {
+                    return false;
+                }
+
+                let mut to_squares = attacks(piece, from, self.occupancies());
+
+                if self.in_check() {
+                    if self.checkers().is_multiple() { return false; }
+                    to_squares &= self.checkers() | between(king, self.checkers().lsb());
+                }
+
+                return to_squares.contains(mv.to());
             }
         }
     }
