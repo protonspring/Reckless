@@ -249,7 +249,7 @@ impl MovePicker {
                 - 4000 * wall_pawns.contains(mv.from()) as i32;
 
             if mv.is_promotion() && mv.promotion_piece() == Some(PieceType::Queen) {
-                entry.score += 9000;
+                entry.score += 18000;
             }
         }
     }
