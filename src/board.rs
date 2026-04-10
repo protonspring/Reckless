@@ -351,7 +351,7 @@ impl Board {
 
 
             }
-            PieceType::Knight | PieceType::Bishop | PieceType::Rook => {
+            PieceType::Knight | PieceType::Bishop | PieceType::Rook | PieceType::Queen => {
 
                 if self.pinned(stm).contains(from) && !ray_pass(king, from).contains(to) {
                     return false;
@@ -371,14 +371,6 @@ impl Board {
                 if !to_squares.contains(mv.to()) { return false; }
 
                 return true;
-            }
-            //PieceType::Bishop => {
-            //}
-            //PieceType::Rook => {
-//
-            //}
-            PieceType::Queen => {
-
             }
             _ => { //PieceType::King => {
 
