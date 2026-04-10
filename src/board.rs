@@ -332,9 +332,7 @@ impl Board {
 
     pub fn is_legal2(&self, mv: Move) -> bool {
 
-        //disallow all of the bad stuff, and allow everything else.
         debug_assert!(mv.is_present());
-
         let stm = self.side_to_move();
         let king = self.king_square(stm);
         let from = mv.from();
@@ -349,7 +347,36 @@ impl Board {
         match piece.piece_type() {
             PieceType::Pawn => {
 
+                if mv.is_en_passant() {
+                    let occupancies = self.occupancies() ^ from.to_bb() ^ to.to_bb() ^ (to ^ 8).to_bb();
+                    let diagonal = self.colored_pieces2(!stm, PieceType::Bishop, PieceType::Queen);
+                    let orthogonal = self.colored_pieces2(!stm, PieceType::Rook, PieceType::Queen);
+                    let diagonal = bishop_attacks(king, occupancies) & diagonal;
+                    let orthogonal = rook_attacks(king, occupancies) & orthogonal;
+                    return to == self.en_passant()
+                        && pawn_attacks(from, stm).contains(to)
+                        && (orthogonal | diagonal).is_empty();
+                }
 
+                let offset = Square::UP[stm];
+                let promotion_rank = if stm == Color::White { Rank::R8 } else { Rank::R1 };
+
+                if mv.is_promotion() != (mv.to().rank() == promotion_rank) {
+                    return false;
+                }
+
+                if mv.is_capture() {
+                    return pawn_attacks(from, stm).contains(to) && self.colors(!stm).contains(to);
+                }
+
+                if mv.is_double_push() {
+                    return from.rank() == (if stm == Color::White { Rank::R2 } else { Rank::R7 })
+                        && from.shift(2 * offset) == to
+                        && !self.occupancies().contains(from.shift(offset))
+                        && !self.occupancies().contains(to);
+                }
+
+                return from.shift(offset) == to && !self.occupancies().contains(to);
             }
             PieceType::Knight | PieceType::Bishop | PieceType::Rook | PieceType::Queen => {
 
@@ -394,12 +421,9 @@ impl Board {
 
                 // normal king movement
                 if mv.is_capture() != self.colors(!stm).contains(to) { return false; }
-
                 return attacks(piece, from, Bitboard(0)).contains(to);
             }
         }
-
-        true
     }
 
     /// Checks if the given move is legal in the current position.
