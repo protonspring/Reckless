@@ -374,6 +374,28 @@ impl Board {
             }
             _ => { //PieceType::King => {
 
+                if mv.is_castling() {
+
+                    let kind = match to {
+                        Square::G1 => CastlingKind::WhiteKingside,
+                        Square::C1 => CastlingKind::WhiteQueenside,
+                        Square::G8 => CastlingKind::BlackKingside,
+                        Square::C8 => CastlingKind::BlackQueenside,
+                        _ => unreachable!(),
+                    };
+
+                    return self.castling().is_allowed(kind)
+                        && (self.castling_path[kind] & self.occupancies()).is_empty()
+                        && (self.castling_threat[kind] & self.all_threats()).is_empty()
+                        && !self.pinned(stm).contains(self.castling_rooks[kind]);
+                } else if mv.is_special() {
+                    return false;
+                }
+
+                // normal king movement
+                if mv.is_capture() != self.colors(!stm).contains(to) { return false; }
+
+                return attacks(piece, from, Bitboard(0)).contains(to);
             }
         }
 

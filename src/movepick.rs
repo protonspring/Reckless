@@ -67,7 +67,8 @@ impl MovePicker {
             self.stage = Stage::GenerateNoisy;
 
             let pt = td.board.piece_on(self.tt_move.from()).piece_type();
-            if pt == PieceType::Knight || pt == PieceType::Bishop || pt == PieceType::Rook || pt == PieceType::Queen {
+            //if pt == PieceType::Knight || pt == PieceType::Bishop || pt == PieceType::Rook || pt == PieceType::Queen {
+            if pt != PieceType::Pawn {
                 let b1 = td.board.is_legal(self.tt_move);
                 let b2 = td.board.is_legal2(self.tt_move);
 
