@@ -347,6 +347,10 @@ impl Board {
         match piece.piece_type() {
             PieceType::Pawn => {
 
+                if self.colors(stm).contains(to) {
+                    return false;
+                }
+
                 if mv.is_en_passant() {
                     let occupancies = self.occupancies() ^ from.to_bb() ^ to.to_bb() ^ (to ^ 8).to_bb();
                     let diagonal = self.colored_pieces2(!stm, PieceType::Bishop, PieceType::Queen);
@@ -379,6 +383,9 @@ impl Board {
                 return from.shift(offset) == to && !self.occupancies().contains(to);
             }
             PieceType::Knight | PieceType::Bishop | PieceType::Rook | PieceType::Queen => {
+                if self.colors(stm).contains(to) {
+                    return false;
+                }
 
                 if self.pinned(stm).contains(from) && !ray_pass(king, from).contains(to) {
                     return false;
@@ -420,6 +427,9 @@ impl Board {
                 }
 
                 // normal king movement
+                if self.colors(stm).contains(to) {
+                    return false;
+                }
                 if mv.is_capture() != self.colors(!stm).contains(to) { return false; }
                 return (attacks(piece, from, Bitboard(0)) & !self.all_threats()).contains(to);
             }
