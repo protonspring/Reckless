@@ -422,12 +422,9 @@ impl Board {
                     return false;
                 }
 
-                // normal king movement
-                if self.colors(stm).contains(to) {
-                    return false;
-                }
-                if mv.is_capture() != self.colors(!stm).contains(to) { return false; }
-                return (attacks(piece, from, Bitboard(0)) & !self.all_threats()).contains(to);
+                return !self.colors(stm).contains(to) &&
+                    (mv.is_capture() == self.colors(!stm).contains(to)) &&
+                    (attacks(piece, from, Bitboard(0)) & !self.all_threats()).contains(to);
             }
         }
     }
