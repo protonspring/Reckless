@@ -247,6 +247,10 @@ impl MovePicker {
                 + 6158 * offense[pt].contains(mv.to()) as i32
                 + 5000 * (pt == PieceType::Rook && king_ring_ortho.contains(mv.to())) as i32
                 - 4000 * wall_pawns.contains(mv.from()) as i32;
+
+            if mv.is_promotion() && mv.promotion_piece() == Some(PieceType::Queen) {
+                entry.score += 4000;
+            }
         }
     }
 }
