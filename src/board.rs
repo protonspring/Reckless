@@ -330,6 +330,64 @@ impl Board {
             | (king_attacks(square) & self.pieces(PieceType::King))
     }
 
+    pub fn is_legal2(&self, mv: Move) -> bool {
+
+        //disallow all of the bad stuff, and allow everything else.
+        debug_assert!(mv.is_present());
+
+        let stm = self.side_to_move();
+        let king = self.king_square(stm);
+        let from = mv.from();
+        let to = mv.to();
+
+        if !self.colors(stm).contains(from) {
+            return false;
+        }
+
+        let piece = self.piece_on(from);
+
+        match piece.piece_type() {
+            PieceType::Pawn => {
+
+
+            }
+            PieceType::Knight | PieceType::Bishop | PieceType::Rook => {
+
+                if self.pinned(stm).contains(from) && !ray_pass(king, from).contains(to) {
+                    return false;
+                }
+
+                if mv.is_special() { return false; }
+
+                if mv.is_capture() != self.colors(!stm).contains(to) { return false; }
+
+                let mut to_squares = attacks(piece, from, self.occupancies());
+
+                if self.in_check() {
+                    if self.checkers().is_multiple() { return false; }
+                    to_squares &= self.checkers() | between(king, self.checkers().lsb());
+                }
+
+                if !to_squares.contains(mv.to()) { return false; }
+
+                return true;
+            }
+            //PieceType::Bishop => {
+            //}
+            //PieceType::Rook => {
+//
+            //}
+            PieceType::Queen => {
+
+            }
+            _ => { //PieceType::King => {
+
+            }
+        }
+
+        true
+    }
+
     /// Checks if the given move is legal in the current position.
     pub fn is_legal(&self, mv: Move) -> bool {
         debug_assert!(mv.is_present());
