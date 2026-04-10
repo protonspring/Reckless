@@ -1216,7 +1216,17 @@ fn qsearch<NODE: NodeType>(td: &mut ThreadData, mut alpha: i32, beta: i32, ply: 
     while let Some(mv) = move_picker.next::<NODE>(td, skip_quiets(best_score), ply) {
         move_count += 1;
 
+        if !mv.is_promotion() && !td.board.in_check() && !mv.is_capture() && !td.board.is_direct_check(mv) {
+            continue;
+            //println!("{}", td.board);
+            //println!("Move: {}-{}", mv.from(), mv.to());
+        }
+
         if !is_loss(best_score) {
+
+            if !mv.is_promotion() && !td.board.in_check() && !mv.is_capture() && !td.board.is_direct_check(mv) {
+            }
+
             // Late Move Pruning (LMP)
             if move_count >= 3 && !td.board.is_direct_check(mv) {
                 break;
