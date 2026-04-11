@@ -407,7 +407,7 @@ impl Board {
                     && !self.occupancies().contains(to);
             }
 
-            return from.shift(offset) == to && !self.occupancies().contains(to);
+            return !mv.is_special() && from.shift(offset) == to && !self.occupancies().contains(to);
         }
 
         return !mv.is_special()
