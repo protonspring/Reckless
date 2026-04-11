@@ -331,7 +331,6 @@ impl Board {
     }
 
     pub fn is_legal(&self, mv: Move) -> bool {
-
         debug_assert!(mv.is_present());
         let stm = self.side_to_move();
         let king = self.king_square(stm);
@@ -344,88 +343,81 @@ impl Board {
 
         let piece = self.piece_on(from);
 
-        match piece.piece_type() {
-            PieceType::Pawn => {
+        if piece.piece_type() == PieceType::Pawn {
 
-                if self.colors(stm).contains(to) {
-                    return false;
-                }
-
-                if mv.is_en_passant() {
-                    let occupancies = self.occupancies() ^ from.to_bb() ^ to.to_bb() ^ (to ^ 8).to_bb();
-                    let diagonal = self.colored_pieces2(!stm, PieceType::Bishop, PieceType::Queen);
-                    let orthogonal = self.colored_pieces2(!stm, PieceType::Rook, PieceType::Queen);
-                    let diagonal = bishop_attacks(king, occupancies) & diagonal;
-                    let orthogonal = rook_attacks(king, occupancies) & orthogonal;
-                    return to == self.en_passant()
-                        && pawn_attacks(from, stm).contains(to)
-                        && (orthogonal | diagonal).is_empty();
-                }
-
-                let offset = Square::UP[stm];
-                let promotion_rank = if stm == Color::White { Rank::R8 } else { Rank::R1 };
-
-                if mv.is_promotion() != (mv.to().rank() == promotion_rank) {
-                    return false;
-                }
-
-                if mv.is_capture() {
-                    return pawn_attacks(from, stm).contains(to) && self.colors(!stm).contains(to);
-                }
-
-                if mv.is_double_push() {
-                    return from.rank() == (if stm == Color::White { Rank::R2 } else { Rank::R7 })
-                        && from.shift(2 * offset) == to
-                        && !self.occupancies().contains(from.shift(offset))
-                        && !self.occupancies().contains(to);
-                }
-
-                return from.shift(offset) == to && !self.occupancies().contains(to);
+            if self.colors(stm).contains(to) {
+                return false;
             }
-            PieceType::Knight | PieceType::Bishop | PieceType::Rook | PieceType::Queen => {
 
-                if self.colors(stm).contains(to) ||
-                    (self.pinned(stm).contains(from) && !ray_pass(king, from).contains(to)) ||
-                    mv.is_special() ||
-                    (mv.is_capture() != self.colors(!stm).contains(to)) {
-                    return false;
-                }
-
-                let mut to_squares = attacks(piece, from, self.occupancies());
-
-                if self.in_check() {
-                    if self.checkers().is_multiple() { return false; }
-                    to_squares &= self.checkers() | between(king, self.checkers().lsb());
-                }
-
-                if !to_squares.contains(mv.to()) { return false; }
-
-                return true;
+            if mv.is_en_passant() {
+                let occupancies = self.occupancies() ^ from.to_bb() ^ to.to_bb() ^ (to ^ 8).to_bb();
+                let diagonal = self.colored_pieces2(!stm, PieceType::Bishop, PieceType::Queen);
+                let orthogonal = self.colored_pieces2(!stm, PieceType::Rook, PieceType::Queen);
+                let diagonal = bishop_attacks(king, occupancies) & diagonal;
+                let orthogonal = rook_attacks(king, occupancies) & orthogonal;
+                return to == self.en_passant()
+                    && pawn_attacks(from, stm).contains(to)
+                    && (orthogonal | diagonal).is_empty();
             }
-            _ => { //PieceType::King => {
 
-                if mv.is_castling() {
+            let offset = Square::UP[stm];
+            let promotion_rank = if stm == Color::White { Rank::R8 } else { Rank::R1 };
 
-                    let kind = match to {
-                        Square::G1 => CastlingKind::WhiteKingside,
-                        Square::C1 => CastlingKind::WhiteQueenside,
-                        Square::G8 => CastlingKind::BlackKingside,
-                        Square::C8 => CastlingKind::BlackQueenside,
-                        _ => unreachable!(),
-                    };
-
-                    return self.castling().is_allowed(kind)
-                        && (self.castling_path[kind] & self.occupancies()).is_empty()
-                        && (self.castling_threat[kind] & self.all_threats()).is_empty()
-                        && !self.pinned(stm).contains(self.castling_rooks[kind]);
-                } else if mv.is_special() {
-                    return false;
-                }
-
-                return !self.colors(stm).contains(to) &&
-                    (mv.is_capture() == self.colors(!stm).contains(to)) &&
-                    (attacks(piece, from, Bitboard(0)) & !self.all_threats()).contains(to);
+            if mv.is_promotion() != (mv.to().rank() == promotion_rank) {
+                return false;
             }
+
+            if mv.is_capture() {
+                return pawn_attacks(from, stm).contains(to) && self.colors(!stm).contains(to);
+            }
+
+            if mv.is_double_push() {
+                return from.rank() == (if stm == Color::White { Rank::R2 } else { Rank::R7 })
+                    && from.shift(2 * offset) == to
+                    && !self.occupancies().contains(from.shift(offset))
+                    && !self.occupancies().contains(to);
+            }
+
+            return from.shift(offset) == to && !self.occupancies().contains(to);
+        }
+
+        if piece.piece_type() == PieceType::King {
+            if mv.is_castling() {
+                let kind = match to {
+                    Square::G1 => CastlingKind::WhiteKingside,
+                    Square::C1 => CastlingKind::WhiteQueenside,
+                    Square::G8 => CastlingKind::BlackKingside,
+                    Square::C8 => CastlingKind::BlackQueenside,
+                    _ => unreachable!(),
+                };
+
+                return self.castling().is_allowed(kind)
+                    && (self.castling_path[kind] & self.occupancies()).is_empty()
+                    && (self.castling_threat[kind] & self.all_threats()).is_empty()
+                    && !self.pinned(stm).contains(self.castling_rooks[kind]);
+            }
+
+            return !mv.is_special()
+                && !self.colors(stm).contains(to)
+                && (mv.is_capture() == self.colors(!stm).contains(to))
+                && (attacks(piece, from, Bitboard(0)) & !self.all_threats()).contains(to);
+
+        } else {
+            if self.colors(stm).contains(to)
+                || (self.pinned(stm).contains(from) && !ray_pass(king, from).contains(to))
+                || mv.is_special()
+                || (mv.is_capture() != self.colors(!stm).contains(to)) {
+                return false;
+            }
+
+            let mut to_squares = attacks(piece, from, self.occupancies());
+
+            if self.in_check() {
+                if self.checkers().is_multiple() { return false; }
+                to_squares &= self.checkers() | between(king, self.checkers().lsb());
+            }
+
+            return to_squares.contains(mv.to());
         }
     }
 
