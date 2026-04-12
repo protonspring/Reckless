@@ -386,10 +386,9 @@ impl Board {
                     && (orthogonal | diagonal).is_empty();
             }
 
-            let offset = Square::UP[stm];
-            let promotion_rank = if stm == Color::White { Rank::R8 } else { Rank::R1 };
+            let push = Square::UP[stm];
 
-            if mv.is_promotion() != (mv.to().rank() == promotion_rank) {
+            if mv.is_promotion() && !Bitboard::HOME_ROWS[!stm].contains(to) {
                 return false;
             }
 
@@ -399,12 +398,12 @@ impl Board {
 
             if mv.is_double_push() {
                 return from.rank() == (if stm == Color::White { Rank::R2 } else { Rank::R7 })
-                    && from.shift(2 * offset) == to
-                    && !self.occupancies().contains(from.shift(offset))
+                    && from.shift(2 * push) == to
+                    && !self.occupancies().contains(from.shift(push))
                     && !self.occupancies().contains(to);
             }
 
-            return !mv.is_castling() && from.shift(offset) == to && !self.occupancies().contains(to);
+            return !mv.is_castling() && from.shift(push) == to && !self.occupancies().contains(to);
         }
 
         !mv.is_special()
