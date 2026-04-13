@@ -8,9 +8,9 @@ impl super::Board {
     /// indicating that the sequence of captures on a single square, starting with the move,
     /// results in a value greater than or equal to the threshold for the side to move.
     ///
-    /// Promotions and castling always pass this check.
+    /// Queen Promotion captures and castling always pass this check.
     pub fn see(&self, mv: Move, threshold: i32) -> bool {
-        if mv.is_castling() || (mv.is_promotion() && mv.is_capture()) {
+        if mv.is_castling() || (mv.is_promotion() && mv.is_capture() && mv.promo_piece_type() == PieceType::Queen) {
             return true;
         }
 
