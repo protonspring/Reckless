@@ -87,7 +87,7 @@ impl super::Board {
                 let rank = mv.to().relative_to(!stm).rank();
                 if rank == Rank::R8 {
                     //println!("valuable pawn capturing");
-                    balance -= 40;
+                    balance -= 400;
                 }
             }
 
