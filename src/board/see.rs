@@ -112,7 +112,7 @@ impl super::Board {
             //println!("Move: {}-{}", mv.from(), mv.to());
             if rank == Rank::R7 {
                 //println!("increasing");
-                value += 100;
+                value += 10;
             }
         }
         value
