@@ -1,6 +1,6 @@
 use crate::{
     lookup::{bishop_attacks, ray_pass, rook_attacks},
-    types::{Bitboard, Color, Move, PieceType},
+    types::{Bitboard, Color, Move, PieceType, Rank},
 };
 
 impl super::Board {
@@ -16,6 +16,9 @@ impl super::Board {
 
         // In the best case, we win a piece, but still end up with a negative balance
         let mut balance = self.move_value(mv) - threshold;
+
+        // Increase move value if a pawn is about to promote
+
         if balance < 0 {
             return false;
         }
@@ -93,15 +96,24 @@ impl super::Board {
     }
 
     fn move_value(&self, mv: Move) -> i32 {
-        if mv.is_en_passant() {
-            return PieceType::Pawn.value();
-        }
-
         let capture = self.piece_on(mv.to()).piece_type();
         let mut value = capture.value();
 
-        if mv.is_promotion() {
+        if mv.is_en_passant() {
+            return PieceType::Pawn.value();
+        } else if mv.is_promotion() {
             value += mv.promo_piece_type().value() - PieceType::Pawn.value()
+        } else if capture == PieceType::Pawn {
+
+            //increase value if pawn is about to promote
+            let rank = mv.to().relative_to(!self.side_to_move()).rank();
+
+            //println!("{}", self);
+            //println!("Move: {}-{}", mv.from(), mv.to());
+            if rank == Rank::R7 {
+                //println!("increasing");
+                value += 100;
+            }
         }
         value
     }
