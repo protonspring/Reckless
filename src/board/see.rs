@@ -10,7 +10,7 @@ impl super::Board {
     ///
     /// Promotions and castling always pass this check.
     pub fn see(&self, mv: Move, threshold: i32) -> bool {
-        if mv.is_castling() {
+        if mv.is_castling() || (mv.is_promotion() && mv.is_capture()) {
             return true;
         }
 
