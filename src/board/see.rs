@@ -15,7 +15,7 @@ impl super::Board {
         }
 
         // In the best case, we win a piece, but still end up with a negative balance
-        let mut balance = self.move_value(mv) - threshold;
+        let mut balance = self.move_capture_value(mv) - threshold;
         if balance < 0 {
             return false;
         }
@@ -24,7 +24,7 @@ impl super::Board {
         balance -= self.piece_on(mv.from()).value();
 
         if mv.is_promotion() {
-            balance -= mv.promo_piece_type().value();
+            balance += PieceType::Pawn.value() - mv.promo_piece_type().value();
         }
 
         if balance >= 0 {
@@ -92,18 +92,13 @@ impl super::Board {
         stm != self.side_to_move()
     }
 
-    fn move_value(&self, mv: Move) -> i32 {
+    fn move_capture_value(&self, mv: Move) -> i32 {
         if mv.is_en_passant() {
             return PieceType::Pawn.value();
         }
 
         let capture = self.piece_on(mv.to()).piece_type();
-        let mut value = capture.value();
-
-        if mv.is_promotion() {
-            value += mv.promo_piece_type().value() - PieceType::Pawn.value()
-        }
-        value
+        capture.value()
     }
 
     fn least_valuable_attacker(&self, attackers: Bitboard) -> PieceType {
