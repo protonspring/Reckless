@@ -531,10 +531,7 @@ impl Board {
             self.state.key ^= ZOBRIST.en_passant[self.en_passant()];
         }
 
-        if self.side_to_move() == Color::White {
-            self.state.key ^= ZOBRIST.side;
-        }
-
+        self.state.key ^= (!self.side_to_move() as u64) * ZOBRIST.side;
         self.state.key ^= ZOBRIST.castling[self.state.castling];
     }
 
