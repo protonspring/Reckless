@@ -17,8 +17,6 @@ impl super::Board {
         // In the best case, we win a piece, but still end up with a negative balance
         let mut balance = self.move_value(mv) - threshold;
 
-        // Increase move value if a pawn is about to promote
-
         if balance < 0 {
             return false;
         }
@@ -33,6 +31,9 @@ impl super::Board {
         if balance >= 0 {
             return true;
         }
+
+        //println!("{}", self);
+        //println!("Move: {}-{}", mv.from(), mv.to());
 
         // Note: no need to set the "to" square
         let mut occupancies = self.occupancies();
@@ -71,11 +72,25 @@ impl super::Board {
             }
 
             // Make the capture
-            occupancies.clear((self.pieces(attacker) & our_attackers).lsb());
+            let attacker_sq = (self.pieces(attacker) & our_attackers).lsb();
+            occupancies.clear(attacker_sq);
             stm = !stm;
+
+            //println!("attacker from: {}", attacker_sq);
 
             // Assume our piece is going to be captured
             balance = -balance - 1 - attacker.value();
+
+            // If the attacker is a pawn about to promote, then increase value
+            if attacker == PieceType::Pawn {
+
+                let rank = mv.to().relative_to(!stm).rank();
+                if rank == Rank::R8 {
+                    //println!("valuable pawn capturing");
+                    balance -= 40;
+                }
+            }
+
             if balance >= 0 {
                 break;
             }
