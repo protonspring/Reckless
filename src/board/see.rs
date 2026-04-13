@@ -14,6 +14,10 @@ impl super::Board {
             return true;
         }
 
+        if mv.is_promotion() && mv.promo_piece_type() != PieceType::Queen {
+            return false;
+        }
+
         // In the best case, we win a piece, but still end up with a negative balance
         let mut balance = self.move_value(mv) - threshold;
         if balance < 0 {
