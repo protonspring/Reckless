@@ -416,7 +416,9 @@ impl Board {
     /// Roughly 90–95% accurate. Does not account for discovered checks, promotions,
     /// en passant, or checks delivered via castling.
     pub fn is_direct_check(&self, mv: Move) -> bool {
-        self.checking_squares(self.moved_piece(mv).piece_type()).contains(mv.to())
+        let piece_type = if mv.is_promotion() { mv.promo_piece_type() } else { self.moved_piece(mv).piece_type() };
+
+        self.checking_squares(piece_type).contains(mv.to())
     }
 
     pub fn update_threats(&mut self) {
