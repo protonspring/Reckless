@@ -177,7 +177,7 @@ impl MovePicker {
                 }
 
                 if td.board.checking_squares(pt).contains(mv.to()) {
-                    entry.score += 4000;
+                    entry.score += 8000;
                 }
             }
         }
