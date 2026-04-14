@@ -153,32 +153,44 @@ impl MovePicker {
     }
 
     fn score_noisy(&mut self, td: &ThreadData) {
-        let threats = td.board.all_threats();
 
         if td.board.in_check() {
-            for entry in self.list.iter_mut() {
-                let mv = entry.mv;
-                let pt = td.board.piece_on(mv.from()).piece_type();
+            self.score_evasions(td);
+            return;
+        }
 
-                entry.score = 10000 - 1000 * pt as i32;
-            }
-        } else {
-            for entry in self.list.iter_mut() {
-                let mv = entry.mv;
-                let captured =
-                    if entry.mv.is_en_passant() { PieceType::Pawn } else { td.board.piece_on(mv.to()).piece_type() };
+        let threats = td.board.all_threats();
 
-                entry.score =
-                    16 * captured.value() + td.noisy_history.get(threats, td.board.moved_piece(mv), mv.to(), captured);
+        for entry in self.list.iter_mut() {
+            let mv = entry.mv;
+            let captured =
+                if entry.mv.is_en_passant() { PieceType::Pawn } else { td.board.piece_on(mv.to()).piece_type() };
 
-                if mv.is_promotion() && mv.promo_piece_type() == PieceType::Queen {
-                    entry.score += 4000;
-                }
+            entry.score =
+                16 * captured.value() + td.noisy_history.get(threats, td.board.moved_piece(mv), mv.to(), captured);
+
+            if mv.is_promotion() && mv.promo_piece_type() == PieceType::Queen {
+                entry.score += 4000;
             }
         }
     }
 
+    fn score_evasions(&mut self, td: &ThreadData) {
+        for entry in self.list.iter_mut() {
+            let mv = entry.mv;
+            let pt = td.board.piece_on(mv.from()).piece_type();
+
+            entry.score = 10000 - 1000 * pt as i32;
+        }
+    }
+
     fn score_quiet(&mut self, td: &ThreadData, ply: isize) {
+
+        if td.board.in_check() {
+            self.score_evasions(td);
+            return;
+        }
+
         let threats = td.board.all_threats();
         let side = td.board.side_to_move();
 
