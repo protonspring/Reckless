@@ -165,6 +165,7 @@ impl MovePicker {
         } else {
             for entry in self.list.iter_mut() {
                 let mv = entry.mv;
+                let pt = td.board.piece_on(mv.from()).piece_type();
                 let captured =
                     if entry.mv.is_en_passant() { PieceType::Pawn } else { td.board.piece_on(mv.to()).piece_type() };
 
@@ -172,6 +173,10 @@ impl MovePicker {
                     16 * captured.value() + td.noisy_history.get(threats, td.board.moved_piece(mv), mv.to(), captured);
 
                 if mv.is_promotion() && mv.promo_piece_type() == PieceType::Queen {
+                    entry.score += 4000;
+                }
+
+                if td.board.checking_squares(pt).contains(mv.to()) {
                     entry.score += 4000;
                 }
             }
