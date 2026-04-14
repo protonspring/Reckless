@@ -10,7 +10,6 @@ pub enum Stage {
     HashMove,
     GenerateNoisy,
     GoodNoisy,
-    GenerateQuiet,
     Quiet,
     BadNoisy,
 }
