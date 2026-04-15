@@ -2,8 +2,10 @@ use crate::{
     lookup::{bishop_attacks, king_attacks, knight_attacks, pawn_attacks_setwise, rook_attacks},
     search::NodeType,
     thread::ThreadData,
-    types::{ArrayVec, Bitboard, MAX_MOVES, Move, MoveEntry, MoveList, PieceType},
+    types::{Bitboard, Move, MoveEntry, MoveList, PieceType},
 };
+
+use std::collections::VecDeque;
 
 #[derive(Copy, Clone, Eq, PartialEq, PartialOrd)]
 pub enum Stage {
@@ -20,41 +22,37 @@ pub struct MovePicker {
     tt_move: Move,
     threshold: Option<i32>,
     stage: Stage,
-    bad_noisy: ArrayVec<Move, MAX_MOVES>,
-    bad_noisy_idx: usize,
+    bad_noisy: VecDeque<Move>,
 }
 
 impl MovePicker {
-    pub const fn new(tt_move: Move) -> Self {
+    pub fn new(tt_move: Move) -> Self {
         Self {
             list: MoveList::new(),
             tt_move,
             threshold: None,
             stage: if tt_move.is_present() { Stage::HashMove } else { Stage::GenerateNoisy },
-            bad_noisy: ArrayVec::new(),
-            bad_noisy_idx: 0,
+            bad_noisy: VecDeque::with_capacity(32),
         }
     }
 
-    pub const fn new_probcut(threshold: i32) -> Self {
+    pub fn new_probcut(threshold: i32) -> Self {
         Self {
             list: MoveList::new(),
             tt_move: Move::NULL,
             threshold: Some(threshold),
             stage: Stage::GenerateNoisy,
-            bad_noisy: ArrayVec::new(),
-            bad_noisy_idx: 0,
+            bad_noisy: VecDeque::with_capacity(32),
         }
     }
 
-    pub const fn new_qsearch() -> Self {
+    pub fn new_qsearch() -> Self {
         Self {
             list: MoveList::new(),
             tt_move: Move::NULL,
             threshold: None,
             stage: Stage::GenerateNoisy,
-            bad_noisy: ArrayVec::new(),
-            bad_noisy_idx: 0,
+            bad_noisy: VecDeque::with_capacity(32),
         }
     }
 
@@ -86,7 +84,7 @@ impl MovePicker {
 
                 let threshold = self.threshold.unwrap_or_else(|| -entry.score / 45 + 111);
                 if !td.board.see(entry.mv, threshold) {
-                    self.bad_noisy.push(entry.mv);
+                    self.bad_noisy.push_back(entry.mv);
                     continue;
                 }
 
@@ -130,10 +128,8 @@ impl MovePicker {
         }
 
         // Stage::BadNoisy
-        if self.bad_noisy_idx < self.bad_noisy.len() {
-            let mv = self.bad_noisy[self.bad_noisy_idx];
-            self.bad_noisy_idx += 1;
-            return Some(mv);
+        if !self.bad_noisy.is_empty() {
+            return self.bad_noisy.pop_front();
         }
 
         None
