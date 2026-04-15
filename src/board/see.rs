@@ -10,8 +10,8 @@ impl super::Board {
     ///
     /// Promotions and castling always pass this check.
     pub fn see(&self, mv: Move, threshold: i32) -> bool {
-        if mv.is_castling() {
-            return true;
+        if mv.is_castling() || mv.is_promotion() {
+            return threshold <= 0;
         }
 
         // In the best case, we win a piece, but still end up with a negative balance
@@ -22,10 +22,6 @@ impl super::Board {
 
         // In the worst case, we lose a piece, but still end up with a non-negative balance
         balance -= self.piece_on(mv.from()).value();
-
-        if mv.is_promotion() {
-            balance -= mv.promo_piece_type().value();
-        }
 
         if balance >= 0 {
             return true;
@@ -96,14 +92,7 @@ impl super::Board {
         if mv.is_en_passant() {
             return PieceType::Pawn.value();
         }
-
-        let capture = self.piece_on(mv.to()).piece_type();
-        let mut value = capture.value();
-
-        if mv.is_promotion() {
-            value += mv.promo_piece_type().value() - PieceType::Pawn.value()
-        }
-        value
+        self.piece_on(mv.to()).piece_type().value()
     }
 
     fn least_valuable_attacker(&self, attackers: Bitboard) -> PieceType {
