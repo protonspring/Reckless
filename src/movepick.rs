@@ -5,6 +5,8 @@ use crate::{
     types::{ArrayVec, Bitboard, MAX_MOVES, Move, MoveEntry, MoveList, PieceType},
 };
 
+pub const MAX_GOOD_QUIETS:usize = 20;
+
 #[derive(Copy, Clone, Eq, PartialEq, PartialOrd)]
 pub enum Stage {
     HashMove,
@@ -22,6 +24,7 @@ pub struct MovePicker {
     stage: Stage,
     bad_noisy: ArrayVec<Move, MAX_MOVES>,
     bad_noisy_idx: usize,
+    good_quiets: usize,
 }
 
 impl MovePicker {
@@ -33,6 +36,7 @@ impl MovePicker {
             stage: if tt_move.is_present() { Stage::HashMove } else { Stage::GenerateNoisy },
             bad_noisy: ArrayVec::new(),
             bad_noisy_idx: 0,
+            good_quiets: 0,
         }
     }
 
@@ -44,6 +48,7 @@ impl MovePicker {
             stage: Stage::GenerateNoisy,
             bad_noisy: ArrayVec::new(),
             bad_noisy_idx: 0,
+            good_quiets: 0,
         }
     }
 
@@ -55,6 +60,7 @@ impl MovePicker {
             stage: Stage::GenerateNoisy,
             bad_noisy: ArrayVec::new(),
             bad_noisy_idx: 0,
+            good_quiets: 0,
         }
     }
 
@@ -111,7 +117,7 @@ impl MovePicker {
         }
 
         if self.stage == Stage::Quiet {
-            if !skip_quiets {
+            if !skip_quiets && self.good_quiets < MAX_GOOD_QUIETS {
                 while !self.list.is_empty() {
                     let entry = self.get_best_entry();
                     if entry.mv == self.tt_move {
@@ -122,6 +128,7 @@ impl MovePicker {
                         self.score_quiet(td, ply);
                     }
 
+                    self.good_quiets += 1;
                     return Some(entry.mv);
                 }
             }
