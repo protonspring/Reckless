@@ -63,6 +63,10 @@ impl MovePicker {
     }
 
     pub fn next<NODE: NodeType>(&mut self, td: &ThreadData, skip_quiets: bool, ply: isize) -> Option<Move> {
+
+        if self.stage < Stage::Quiet {
+
+
         if self.stage == Stage::HashMove {
             self.stage = Stage::GenerateNoisy;
 
@@ -108,6 +112,7 @@ impl MovePicker {
             self.stage = Stage::Quiet;
             td.board.append_quiet_moves(&mut self.list);
             self.score_quiet(td, ply);
+        }
         }
 
         if self.stage == Stage::Quiet {
