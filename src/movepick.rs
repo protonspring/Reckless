@@ -85,7 +85,7 @@ impl MovePicker {
                 }
 
                 let threshold = self.threshold.unwrap_or_else(|| -entry.score / 45 + 111);
-                if !td.board.see(entry.mv, threshold) {
+                if entry.mv.is_under_promotion() || !td.board.see(entry.mv, threshold) {
                     self.bad_noisy.push(entry.mv);
                     continue;
                 }

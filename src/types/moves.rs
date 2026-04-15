@@ -111,6 +111,10 @@ impl Move {
         PieceType::new(((self.kind() as usize) & 3) + PieceType::Knight as usize)
     }
 
+    pub fn is_under_promotion(self) -> bool {
+        self.is_promotion() && self.promo_piece_type() != PieceType::Queen
+    }
+
     pub fn to_uci(self, board: &Board) -> String {
         // For FRC castling moves are encoded as king capturing rook
         if board.is_frc() && self.is_castling() {
