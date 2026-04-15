@@ -117,10 +117,15 @@ impl MovePicker {
         }
 
         if self.stage == Stage::Quiet {
-            if !skip_quiets && self.good_quiets < MAX_GOOD_QUIETS {
+            if !skip_quiets {
                 while !self.list.is_empty() {
                     let entry = self.get_best_entry();
                     if entry.mv == self.tt_move {
+                        continue;
+                    }
+
+                    if self.good_quiets > MAX_GOOD_QUIETS {
+                        self.bad_noisy.push(entry.mv);
                         continue;
                     }
 
