@@ -543,7 +543,6 @@ fn search<NODE: NodeType>(
             >= beta - 8 * depth + 116 * tt_pv as i32 - 106 * improvement / 1024 + 304
                 - 20 * (td.stack[ply + 1].cutoff_count < 2) as i32
         && ply as i32 >= td.nmp_min_ply
-        && td.board.has_non_pawns()
         && !is_loss(beta)
         && !(tt_bound == Bound::Lower
             && tt_move.is_capture()
@@ -570,7 +569,7 @@ fn search<NODE: NodeType>(
         }
 
         if score >= beta && !is_win(score) {
-            if td.nmp_min_ply > 0 || depth < 16 {
+            if (td.nmp_min_ply > 0 || depth < 16) && td.board.has_non_pawns()  {
                 return score;
             }
 
