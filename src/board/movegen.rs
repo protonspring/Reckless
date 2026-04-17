@@ -3,7 +3,7 @@ use crate::{
         between, bishop_attacks, king_attacks, knight_attacks, queen_attacks, ray_pass, relative_anti_diagonal,
         relative_diagonal, rook_attacks,
     },
-    types::{Bitboard, CastlingKind, File, MoveKind, MoveList, PieceType, Square},
+    types::{Bitboard, CastlingKind, File, Move, MoveKind, MoveList, PieceType, Square},
 };
 
 #[derive(Eq, PartialEq)]
@@ -216,7 +216,11 @@ impl super::Board {
             let right_attacker = right_pawns & !Bitboard::file(File::H) & ep.shift(-up_right);
             let left_attacker = left_pawns & !Bitboard::file(File::A) & ep.shift(-up_left);
             for pawn in right_attacker | left_attacker {
-                list.push(pawn, self.en_passant(), MoveKind::EnPassant);
+                let mv = Move::new(pawn, self.en_passant(), MoveKind::EnPassant);
+
+                if self.is_legal(mv) {
+                    list.push(pawn, self.en_passant(), MoveKind::EnPassant);
+                }
             }
         }
     }

@@ -59,7 +59,6 @@ impl Board {
 
         board.update_threats();
         board.update_hash_keys();
-        board.update_en_passant();
 
         Ok(board)
     }
