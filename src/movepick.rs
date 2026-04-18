@@ -169,7 +169,7 @@ impl MovePicker {
             if !td.board.pinning_space().contains(mv.from())
                 && td.board.pinning_space().contains(mv.to())
                 && attacks(piece, mv.to(), Bitboard(0)).contains(td.board.king_square(!td.board.side_to_move())) {
-                entry.score += 4000;
+                entry.score += 8000;
             }
         }
     }
