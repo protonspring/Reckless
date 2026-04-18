@@ -196,13 +196,14 @@ impl MovePicker {
             let mut n = Bitboard(0);
             let mut b = Bitboard(0);
             let mut q = Bitboard(0);
+            let mut r = Bitboard(0);
             let pawn_offense = pawn_attacks_setwise(td.board.colors(!side), !side) & !threats;
 
             for square in td.board.colored_pieces(!side, PieceType::Knight) & !threats {
-                let b_attacks = bishop_attacks(square, td.board.occupancies());
-                //let r_attacks = rook_attacks(square, td.board.occupancies());
-                b |= b_attacks;
-                //r |= r_attacks;
+                //let b_attacks = bishop_attacks(square, td.board.occupancies());
+                let r_attacks = rook_attacks(square, td.board.occupancies());
+                //b |= b_attacks;
+                r |= r_attacks;
                 //q |= b_attacks | r_attacks;
             }
 
@@ -223,7 +224,7 @@ impl MovePicker {
                 n |= knight_attacks(square);
             }
 
-            [pawn_offense, n & !threats, b & !threats, Bitboard(0), q & !threats, Bitboard(0)]
+            [pawn_offense, n & !threats, b & !threats, r & !threats, q & !threats, Bitboard(0)]
         };
 
         // King ring diag attacks and ortho attacks
