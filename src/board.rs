@@ -38,6 +38,7 @@ struct InternalState {
     all_threats: Bitboard,
     pinned: [Bitboard; Color::NUM],
     pinners: [Bitboard; Color::NUM],
+    pinning_space: Bitboard,
     checkers: Bitboard,
     checking_squares: [Bitboard; PieceType::NUM],
 }
@@ -92,6 +93,10 @@ impl Board {
 
     pub const fn pinned(&self, color: Color) -> Bitboard {
         self.state.pinned[color as usize]
+    }
+
+    pub const fn pinning_space(&self) -> Bitboard {
+        self.state.pinning_space
     }
 
     pub const fn pinners(&self, color: Color) -> Bitboard {
@@ -447,6 +452,11 @@ impl Board {
             | self.piece_threats(PieceType::Rook)
             | self.piece_threats(PieceType::Queen)
             | self.piece_threats(PieceType::King);
+
+        //pinning space
+        let space1 = queen_attacks(self.king_square(!stm), self.occupancies());
+        let occ2 = self.occupancies() & !space1;
+        self.state.pinning_space = queen_attacks(self.king_square(!stm), occ2) & !space1;
 
         let diagonal = self.pieces2(PieceType::Bishop, PieceType::Queen);
         let orthogonal = self.pieces2(PieceType::Rook, PieceType::Queen);
