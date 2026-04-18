@@ -166,10 +166,11 @@ impl MovePicker {
                 + 8000 * (mv.is_promotion() && mv.promo_piece_type() == PieceType::Queen) as i32
                 + (100000 - 10000 * pt as i32) * td.board.in_check() as i32;
 
-            if !td.board.pinning_space().contains(mv.from())
-                && td.board.pinning_space().contains(mv.to())
+            let pinning_space = td.board.pinning_space() & !threats;
+            if !pinning_space.contains(mv.from())
+                && pinning_space.contains(mv.to())
                 && attacks(piece, mv.to(), Bitboard(0)).contains(td.board.king_square(!td.board.side_to_move())) {
-                entry.score += 16000;
+                entry.score += 8000;
             }
         }
     }
