@@ -200,11 +200,11 @@ impl MovePicker {
             let pawn_offense = pawn_attacks_setwise(td.board.colors(!side), !side) & !threats;
 
             for square in td.board.colored_pieces(!side, PieceType::Knight) & !threats {
-                //let b_attacks = bishop_attacks(square, td.board.occupancies());
+                let b_attacks = bishop_attacks(square, td.board.occupancies());
                 let r_attacks = rook_attacks(square, td.board.occupancies());
                 //b |= b_attacks;
-                r |= r_attacks;
-                //q |= b_attacks | r_attacks;
+                //r |= r_attacks;
+                q |= b_attacks | r_attacks;
             }
 
             for square in td.board.colored_pieces(!side, PieceType::Bishop) & !threats {
