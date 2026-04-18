@@ -242,8 +242,9 @@ impl MovePicker {
                 + 5000 * (pt == PieceType::Rook && king_ring_ortho.contains(mv.to())) as i32
                 - 4000 * wall_pawns.contains(mv.from()) as i32;
 
-            if !td.board.pinning_space().contains(mv.from())
-                && td.board.pinning_space().contains(mv.to())
+            let pinning_space = td.board.pinning_space() & !threats;
+            if !pinning_space.contains(mv.from())
+                && pinning_space.contains(mv.to())
                 && attacks(piece, mv.to(), Bitboard(0)).contains(td.board.king_square(!td.board.side_to_move())) {
                 entry.score += 4000;
             }
