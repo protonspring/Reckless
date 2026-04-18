@@ -158,12 +158,19 @@ impl MovePicker {
         for entry in self.list.iter_mut() {
             let mv = entry.mv;
             let captured = td.board.piece_on(mv.capture_sq()).piece_type();
-            let pt = td.board.piece_on(mv.from()).piece_type();
+            let piece = td.board.piece_on(mv.from());
+            let pt = piece.piece_type();
 
             entry.score = 16 * captured.value()
                 + td.noisy_history.get(threats, td.board.moved_piece(mv), mv.to(), captured)
                 + 8000 * (mv.is_promotion() && mv.promo_piece_type() == PieceType::Queen) as i32
                 + (100000 - 10000 * pt as i32) * td.board.in_check() as i32;
+
+            if !td.board.pinning_space().contains(mv.from())
+                && td.board.pinning_space().contains(mv.to())
+                && attacks(piece, mv.to(), Bitboard(0)).contains(td.board.king_square(!td.board.side_to_move())) {
+                entry.score += 4000;
+            }
         }
     }
 
@@ -242,11 +249,6 @@ impl MovePicker {
                 + 5000 * (pt == PieceType::Rook && king_ring_ortho.contains(mv.to())) as i32
                 - 4000 * wall_pawns.contains(mv.from()) as i32;
 
-            if !td.board.pinning_space().contains(mv.from())
-                && td.board.pinning_space().contains(mv.to())
-                && attacks(piece, mv.to(), Bitboard(0)).contains(td.board.king_square(!td.board.side_to_move())) {
-                entry.score += 4000;
-            }
         }
     }
 }
