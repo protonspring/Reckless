@@ -550,7 +550,7 @@ fn search<NODE: NodeType>(
                     + 304)
                     .max(0)
         && ply as i32 >= td.nmp_min_ply
-        && td.board.material() > 600
+        && td.board.material() > 8 * PieceType::Pawn.value()
         && !is_loss(beta)
         && !(tt_bound == Bound::Lower
             && tt_move.is_capture()
