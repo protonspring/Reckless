@@ -23,6 +23,7 @@ pub struct MovePicker {
     stage: Stage,
     bad_noisy: ArrayVec<Move, MAX_MOVES>,
     bad_noisy_idx: usize,
+    queen_under_threat: bool,
 }
 
 impl MovePicker {
@@ -34,6 +35,7 @@ impl MovePicker {
             stage: if tt_move.is_present() { Stage::HashMove } else { Stage::GenerateNoisy },
             bad_noisy: ArrayVec::new(),
             bad_noisy_idx: 0,
+            queen_under_threat: false,
         }
     }
 
@@ -45,6 +47,7 @@ impl MovePicker {
             stage: Stage::GenerateNoisy,
             bad_noisy: ArrayVec::new(),
             bad_noisy_idx: 0,
+            queen_under_threat: false,
         }
     }
 
@@ -56,6 +59,22 @@ impl MovePicker {
             stage: Stage::GenerateNoisy,
             bad_noisy: ArrayVec::new(),
             bad_noisy_idx: 0,
+            queen_under_threat: false,
+        }
+    }
+
+    pub fn determine_queen_threats(&mut self, td: &ThreadData) {
+        let stm = td.board.side_to_move();
+        self.queen_under_threat = false;
+        let queens = td.board.colored_pieces(stm, PieceType::Queen);
+        if !queens.is_empty() {
+            let queen = queens.lsb();
+            let attackers = td.board.attackers_to(queen, td.board.occupancies());
+            let non_queen_attackers = attackers & td.board.colors(!stm) & !td.board.pieces(PieceType::Queen);
+
+            if !non_queen_attackers.is_empty() {
+                self.queen_under_threat = true;
+            }
         }
     }
 
@@ -86,7 +105,16 @@ impl MovePicker {
                 }
 
                 let threshold = self.threshold.unwrap_or_else(|| -entry.score / 45 + 111);
-                if !td.board.see(entry.mv, threshold) {
+
+                // If our queen is under threat and it's not moving, always fail
+                //let no_fix_queen_threat = self.queen_under_threat && !td.board.pieces(PieceType::Queen).contains(entry.mv.from());
+                
+                if (self.queen_under_threat && !td.board.pieces(PieceType::Queen).contains(entry.mv.from())) || !td.board.see(entry.mv, threshold) {
+
+                    //if no_fix_queen_threat {
+                        //println!("{}", td.board);
+                        //println!("Move: {}-{}", entry.mv.from(), entry.mv.to());
+                    //}
                     self.bad_noisy.push(entry.mv);
                     continue;
                 }
