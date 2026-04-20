@@ -206,7 +206,7 @@ impl MovePicker {
             if self.queen_threats.contains(mv.to()) && !td.board.pieces(PieceType::Queen).contains(mv.from()) {
                 //println!("{}", td.board);
                 //println!("Move to: {}-{}", mv.from(), mv.to());
-                entry.score += 8000;
+                entry.score += 16000;
             }
         }
     }
