@@ -108,21 +108,18 @@ impl MovePicker {
         }
 
         if self.stage == Stage::Quiet && !skip_quiets {
-            if !skip_quiets {
-                while !self.list.is_empty() {
-                    let entry = self.get_best_entry();
-                    if entry.mv == self.tt_move {
-                        continue;
-                    }
-
-                    if NODE::ROOT {
-                        self.score_quiet(td, ply);
-                    }
-
-                    return Some(entry.mv);
+            while !self.list.is_empty() {
+                let entry = self.get_best_entry();
+                if entry.mv == self.tt_move {
+                    continue;
                 }
-            }
 
+                if NODE::ROOT {
+                    self.score_quiet(td, ply);
+                }
+
+                return Some(entry.mv);
+            }
         }
 
         self.stage = Stage::BadNoisy;
