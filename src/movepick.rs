@@ -106,10 +106,14 @@ impl MovePicker {
 
                 let threshold = self.threshold.unwrap_or_else(|| -entry.score / 45 + 111);
 
-                // If our queen is under threat and it's not moving, always fail
-                //let no_fix_queen_threat = self.queen_under_threat && !td.board.pieces(PieceType::Queen).contains(entry.mv.from());
+                // If our queen is under threat and it's not moving,
+                // increase threshold.
+
+                let no_fix_queen_threat = self.queen_under_threat && !td.board.pieces(PieceType::Queen).contains(entry.mv.from());
                 
-                if (self.queen_under_threat && !td.board.pieces(PieceType::Queen).contains(entry.mv.from())) || !td.board.see(entry.mv, threshold) {
+                //if (self.queen_under_threat && !td.board.pieces(PieceType::Queen).contains(entry.mv.from())) || !td.board.see(entry.mv, threshold) {
+                let t2 = threshold + 500 * no_fix_queen_threat as i32;
+                if !td.board.see(entry.mv, t2) {
 
                     //if no_fix_queen_threat {
                         //println!("{}", td.board);
