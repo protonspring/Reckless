@@ -10,7 +10,7 @@ pub struct ArrayVec<T: Copy, const N: usize> {
 
 impl<T: Copy, const N: usize> ArrayVec<T, N> {
     pub const fn new() -> Self {
-        let data: [MaybeUninit<T>; N] = unsafe { MaybeUninit::uninit().assume_init() };
+        let data = [const { MaybeUninit::uninit() }; N];
         Self { data, len: 0 }
     }
 
@@ -24,8 +24,7 @@ impl<T: Copy, const N: usize> ArrayVec<T, N> {
 
     pub fn get(&self, index: usize) -> &T {
         debug_assert!(index < self.len);
-
-        unsafe { &*self.data.get_unchecked(index).as_ptr() }
+        &self.get(index)
     }
 
     pub fn push(&mut self, value: T) {
@@ -47,6 +46,8 @@ impl<T: Copy, const N: usize> ArrayVec<T, N> {
     }
 
     pub const fn swap_remove(&mut self, index: usize) -> T {
+        debug_assert!(index < self.len);
+
         unsafe {
             let value = std::ptr::read(self.data[index].as_ptr());
 
@@ -70,7 +71,9 @@ impl<T: Copy, const N: usize> ArrayVec<T, N> {
     where
         F: FnOnce(*mut T) -> usize,
     {
-        self.len += op(self.data.get_unchecked_mut(self.len).as_mut_ptr());
+        let written = op(self.data.get_unchecked_mut(self.len).as_mut_ptr());
+        debug_assert!(self.len + written <= N);
+        self.len += written;
     }
 }
 
@@ -80,6 +83,7 @@ impl<const N: usize> ArrayVec<MoveEntry, N> {
         use std::arch::x86_64::*;
 
         let count = mask.count_ones() as usize;
+        debug_assert!(self.len + count <= N);
         let to_write = _mm512_maskz_compress_epi16(mask, vector);
         let to_write0 = _mm512_cvtepi16_epi64(_mm512_castsi512_si128(to_write));
         _mm512_storeu_si512(self.data.get_unchecked_mut(self.len).as_mut_ptr().cast(), to_write0);
@@ -91,6 +95,7 @@ impl<const N: usize> ArrayVec<MoveEntry, N> {
         use std::arch::x86_64::*;
 
         let count = mask.count_ones() as usize;
+        debug_assert!(self.len + count <= N);
         let to_write = _mm512_maskz_compress_epi16(mask, vector);
         let to_write0 = _mm512_cvtepi16_epi64(_mm512_castsi512_si128(to_write));
         let to_write1 = _mm512_cvtepi16_epi64(_mm512_extracti32x4_epi32::<1>(to_write));
