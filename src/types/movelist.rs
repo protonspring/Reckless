@@ -6,7 +6,7 @@ use super::{ArrayVec, Bitboard, MAX_MOVES, Move, MoveKind, Square};
 #[repr(C)]
 pub struct MoveEntry {
     pub mv: Move,
-    pub score: i32,
+    pub score: i16,
 }
 
 pub struct MoveList {

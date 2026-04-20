@@ -85,7 +85,7 @@ impl MovePicker {
                     continue;
                 }
 
-                let threshold = self.threshold.unwrap_or_else(|| -entry.score / 45 + 111);
+                let threshold = self.threshold.unwrap_or_else(|| -(16 * entry.score as i32) / 45 + 111);
                 if !td.board.see(entry.mv, threshold) {
                     self.bad_noisy.push(entry.mv);
                     continue;
@@ -142,7 +142,7 @@ impl MovePicker {
 
     fn get_best_entry(&mut self) -> MoveEntry {
         let mut best_index = 0;
-        let mut best_score = i32::MIN;
+        let mut best_score = i16::MIN;
 
         for (index, entry) in self.list.iter().enumerate() {
             if entry.score >= best_score {
@@ -161,10 +161,15 @@ impl MovePicker {
             let captured = td.board.type_on(mv.capture_sq());
             let pt = td.board.type_on(mv.from());
 
-            entry.score = 16 * captured.value()
+            let score = 16 * captured.value()
                 + td.noisy_history.get(threats, td.board.moved_piece(mv), mv.to(), captured)
                 + 4000 * (mv.is_promotion() && mv.promo_piece_type() == PieceType::Queen) as i32
                 + (200000 - 20000 * pt as i32) * td.board.in_check() as i32;
+
+            entry.score = (score / 16) as i16;
+            debug_assert!(entry.score < 32000 && entry.score > -32000);
+
+
         }
     }
 
@@ -213,8 +218,7 @@ impl MovePicker {
         for entry in self.list.iter_mut() {
             let mv = entry.mv;
             let pt = td.board.type_on(mv.from());
-
-            entry.score = 2048 * td.quiet_history.get(threats, side, mv) / 1024
+            let score = 2048 * td.quiet_history.get(threats, side, mv) / 1024
                 + 1536 * td.conthist(ply, 1, mv) / 1024
                 + td.conthist(ply, 2, mv)
                 + td.conthist(ply, 4, mv)
@@ -225,6 +229,9 @@ impl MovePicker {
                 + 6158 * offense[pt].contains(mv.to()) as i32
                 + 5000 * (pt == PieceType::Rook && king_file == mv.to().file()) as i32
                 - 4000 * wall_pawns.contains(mv.from()) as i32;
+
+            entry.score = (score / 16) as i16;
+            debug_assert!(entry.score < 32000 && entry.score > -32000);
         }
     }
 }
