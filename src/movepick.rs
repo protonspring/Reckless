@@ -98,20 +98,16 @@ impl MovePicker {
                 return Some(entry.mv);
             }
 
-            if skip_quiets {
-                self.stage = Stage::BadNoisy;
-            } else {
-                self.stage = Stage::GenerateQuiet;
-            }
+            self.stage = Stage::GenerateQuiet;
         }
 
-        if self.stage == Stage::GenerateQuiet {
+        if self.stage == Stage::GenerateQuiet && !skip_quiets {
             self.stage = Stage::Quiet;
             td.board.append_quiet_moves(&mut self.list);
             self.score_quiet(td, ply);
         }
 
-        if self.stage == Stage::Quiet {
+        if self.stage == Stage::Quiet && !skip_quiets {
             if !skip_quiets {
                 while !self.list.is_empty() {
                     let entry = self.get_best_entry();
@@ -127,8 +123,9 @@ impl MovePicker {
                 }
             }
 
-            self.stage = Stage::BadNoisy;
         }
+
+        self.stage = Stage::BadNoisy;
 
         // Stage::BadNoisy
         if self.bad_noisy_idx < self.bad_noisy.len() {
