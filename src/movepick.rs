@@ -112,7 +112,7 @@ impl MovePicker {
                 let no_fix_queen_threat = self.queen_under_threat && !td.board.pieces(PieceType::Queen).contains(entry.mv.from());
                 
                 //if (self.queen_under_threat && !td.board.pieces(PieceType::Queen).contains(entry.mv.from())) || !td.board.see(entry.mv, threshold) {
-                let t2 = threshold + 500 * no_fix_queen_threat as i32;
+                let t2 = threshold + 1000 * no_fix_queen_threat as i32;
                 if !td.board.see(entry.mv, t2) {
 
                     //if no_fix_queen_threat {
