@@ -6,6 +6,7 @@ use super::{ArrayVec, Bitboard, MAX_MOVES, Move, MoveKind, Square};
 #[repr(C)]
 pub struct MoveEntry {
     pub mv: Move,
+    pub padding: i16,
     pub score: i32,
 }
 
@@ -27,7 +28,7 @@ impl MoveList {
     }
 
     pub fn push(&mut self, from: Square, to: Square, kind: MoveKind) {
-        self.inner.push(MoveEntry { mv: Move::new(from, to, kind), score: 0 });
+        self.inner.push(MoveEntry { mv: Move::new(from, to, kind), padding: 0, score: 0 });
     }
 
     #[cfg(not(target_feature = "avx512vbmi2"))]
