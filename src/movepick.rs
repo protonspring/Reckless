@@ -101,28 +101,27 @@ impl MovePicker {
             self.stage = Stage::GenerateQuiet;
         }
 
-        if self.stage == Stage::GenerateQuiet && !skip_quiets {
-            self.stage = Stage::Quiet;
-            td.board.append_quiet_moves(&mut self.list);
-            self.score_quiet(td, ply);
-        }
+        if !skip_quiets {
+            if self.stage == Stage::GenerateQuiet {
+                self.stage = Stage::Quiet;
+                td.board.append_quiet_moves(&mut self.list);
+                self.score_quiet(td, ply);
+            }
 
-        if self.stage == Stage::Quiet && !skip_quiets {
-            if !skip_quiets {
+            if self.stage == Stage::Quiet {
                 while !self.list.is_empty() {
                     let entry = self.get_best_entry();
                     if entry.mv == self.tt_move {
                         continue;
                     }
-
+   
                     if NODE::ROOT {
                         self.score_quiet(td, ply);
                     }
-
+  
                     return Some(entry.mv);
                 }
             }
-
         }
 
         self.stage = Stage::BadNoisy;
