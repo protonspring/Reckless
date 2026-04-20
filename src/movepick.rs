@@ -23,7 +23,7 @@ pub struct MovePicker {
     stage: Stage,
     bad_noisy: ArrayVec<Move, MAX_MOVES>,
     bad_noisy_idx: usize,
-    queen_under_threat: bool,
+    queen_threats: Bitboard,
 }
 
 impl MovePicker {
@@ -35,7 +35,7 @@ impl MovePicker {
             stage: if tt_move.is_present() { Stage::HashMove } else { Stage::GenerateNoisy },
             bad_noisy: ArrayVec::new(),
             bad_noisy_idx: 0,
-            queen_under_threat: false,
+            queen_threats: Bitboard(0),
         }
     }
 
@@ -47,7 +47,7 @@ impl MovePicker {
             stage: Stage::GenerateNoisy,
             bad_noisy: ArrayVec::new(),
             bad_noisy_idx: 0,
-            queen_under_threat: false,
+            queen_threats: Bitboard(0),
         }
     }
 
@@ -59,22 +59,26 @@ impl MovePicker {
             stage: Stage::GenerateNoisy,
             bad_noisy: ArrayVec::new(),
             bad_noisy_idx: 0,
-            queen_under_threat: false,
+            queen_threats: Bitboard(0),
         }
     }
 
     pub fn determine_queen_threats(&mut self, td: &ThreadData) {
         let stm = td.board.side_to_move();
-        self.queen_under_threat = false;
+        self.queen_threats = Bitboard(0);
         let queens = td.board.colored_pieces(stm, PieceType::Queen);
         if !queens.is_empty() {
             let queen = queens.lsb();
             let attackers = td.board.attackers_to(queen, td.board.occupancies());
             let non_queen_attackers = attackers & td.board.colors(!stm) & !td.board.pieces(PieceType::Queen);
 
-            if !non_queen_attackers.is_empty() {
-                self.queen_under_threat = true;
-            }
+            self.queen_threats = non_queen_attackers;
+            //if !self.queen_threats.is_empty() {
+                //self.queen_under_threat = true;
+                //println!("{}", td.board);
+                //println!("{}", self.queen_threats);
+                //println!("Move: {}-{}", entry.mv.from(), entry.mv.to());
+            //}
         }
     }
 
@@ -109,11 +113,11 @@ impl MovePicker {
                 // If our queen is under threat and it's not moving,
                 // increase threshold.
 
-                let no_fix_queen_threat = self.queen_under_threat && !td.board.pieces(PieceType::Queen).contains(entry.mv.from());
+                //let no_fix_queen_threat = self.queen_under_threat && !td.board.pieces(PieceType::Queen).contains(entry.mv.from());
                 
                 //if (self.queen_under_threat && !td.board.pieces(PieceType::Queen).contains(entry.mv.from())) || !td.board.see(entry.mv, threshold) {
-                let t2 = threshold + 1000 * no_fix_queen_threat as i32;
-                if !td.board.see(entry.mv, t2) {
+                //let t2 = threshold + 1000 * no_fix_queen_threat as i32;
+                if !td.board.see(entry.mv, threshold) {
 
                     //if no_fix_queen_threat {
                         //println!("{}", td.board);
@@ -197,6 +201,13 @@ impl MovePicker {
                 + td.noisy_history.get(threats, td.board.moved_piece(mv), mv.to(), captured)
                 + 4000 * (mv.is_promotion() && mv.promo_piece_type() == PieceType::Queen) as i32
                 + (200000 - 20000 * pt as i32) * td.board.in_check() as i32;
+
+            // bonus for other pieces capturing queen threats
+            if self.queen_threats.contains(mv.to()) && !td.board.pieces(PieceType::Queen).contains(mv.from()) {
+                //println!("{}", td.board);
+                //println!("Move to: {}-{}", mv.from(), mv.to());
+                entry.score += 4000;
+            }
         }
     }
 
