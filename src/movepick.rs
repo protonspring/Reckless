@@ -199,7 +199,7 @@ impl MovePicker {
             let q = rook_attacks_setwise(queen_orth_vulnerable, occupancies)
                 | bishop_attacks_setwise(queen_diag_vulnerable, occupancies);
 
-            [p & !threats, n & !threats, b & !threats, r & !threats, q & !threats, Bitboard(0)]
+            [p & !threats, n & !threats, b & !threats, r, q & !threats, Bitboard(0)]
         };
 
         // don't move king wall pawns
