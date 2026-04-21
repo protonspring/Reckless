@@ -85,7 +85,7 @@ impl MovePicker {
                     continue;
                 }
 
-                let threshold = 50 * self.noisy_count;
+                let threshold = 300 * self.noisy_count;
                 if !td.board.see(entry.mv, threshold) {
                     self.bad_noisy.push(entry.mv);
                     continue;
