@@ -202,6 +202,7 @@ impl MovePicker {
         };
 
         let king_file = td.board.king_square(!side).file();
+        let king_rank = td.board.king_square(!side).rank();
 
         // don't move king wall pawns
         let wall_pawns = if Bitboard::HOME_ROWS[side].contains(td.board.king_square(side)) {
@@ -224,6 +225,7 @@ impl MovePicker {
                 - 7584 * threatened[pt].contains(mv.to()) as i32
                 + 6158 * offense[pt].contains(mv.to()) as i32
                 + 5000 * (pt == PieceType::Rook && king_file == mv.to().file()) as i32
+                + 5000 * (pt == PieceType::Rook && king_rank == mv.to().rank()) as i32
                 - 4000 * wall_pawns.contains(mv.from()) as i32;
         }
     }
