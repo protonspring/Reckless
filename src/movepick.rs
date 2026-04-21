@@ -182,6 +182,7 @@ impl MovePicker {
         };
 
         let escape = [0, 7768, 8218, 13424, 20208, 0];
+        let offense_bonus = [ 6158, 6158, 6158, 5000, 6158, 0];
 
         // safe squares where we can attack an opponent piece
         let offense = {
@@ -221,7 +222,7 @@ impl MovePicker {
                 + escape[pt] * threatened[pt].contains(mv.from()) as i32
                 + 9325 * td.board.checking_squares(pt).contains(mv.to()) as i32
                 - 7584 * threatened[pt].contains(mv.to()) as i32
-                + 6158 * offense[pt].contains(mv.to()) as i32
+                + offense_bonus[pt] * offense[pt].contains(mv.to()) as i32
                 - 4000 * wall_pawns.contains(mv.from()) as i32;
         }
     }
