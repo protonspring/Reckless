@@ -239,7 +239,7 @@ impl MovePicker {
                     //println!("{}", td.board);
                     //println!("move: {}-{}", mv.from(), mv.to());
                     //println!("{}", (pawns & king_from_attacks));
-                    entry.score += 4000;
+                    entry.score += 8000;
                 }
             }
         }
