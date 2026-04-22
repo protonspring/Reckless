@@ -204,11 +204,15 @@ impl MovePicker {
         let king_file = td.board.king_square(!side).file();
 
         // don't move king wall pawns
+        let king_from_attacks = king_attacks(td.board.king_square(side));
         let wall_pawns = if Bitboard::HOME_ROWS[side].contains(td.board.king_square(side)) {
-            king_attacks(td.board.king_square(side)) & td.board.pieces(PieceType::Pawn)
+            king_from_attacks & td.board.pieces(PieceType::Pawn)
         } else {
             Bitboard(0)
         };
+
+        //kings like pawns
+        let pawns = td.board.pieces(PieceType::Pawn);
 
         for entry in self.list.iter_mut() {
             let mv = entry.mv;
@@ -225,6 +229,19 @@ impl MovePicker {
                 + 6158 * offense[pt].contains(mv.to()) as i32
                 + 5000 * (pt == PieceType::Rook && king_file == mv.to().file()) as i32
                 - 4000 * wall_pawns.contains(mv.from()) as i32;
+
+
+
+            if pt == PieceType::King {
+                let king_to_attacks = king_attacks(mv.to());
+                if (pawns & king_from_attacks).is_empty()
+                    && !(pawns & king_to_attacks).is_empty() {
+                    //println!("{}", td.board);
+                    //println!("move: {}-{}", mv.from(), mv.to());
+                    //println!("{}", (pawns & king_from_attacks));
+                    entry.score += 4000;
+                }
+            }
         }
     }
 }
