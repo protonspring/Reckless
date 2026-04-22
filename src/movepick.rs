@@ -185,6 +185,8 @@ impl MovePicker {
 
         // safe squares where we can attack an opponent piece
         let offense = {
+            let pawn_offense = pawn_attacks_setwise(td.board.colors(!side), !side)
+                & !td.board.piece_threats(PieceType::Pawn);
             let knight_vulnerable = (td.board.colored_pieces(!side, PieceType::Bishop) & !threats)
                 | td.board.colored_pieces(!side, PieceType::Rook)
                 | td.board.colored_pieces(!side, PieceType::Queen);
@@ -192,13 +194,13 @@ impl MovePicker {
             let queen_orth_vulnerable = td.board.colored_pieces(!side, PieceType::Bishop) & !threats;
             let queen_diag_vulnerable = td.board.colored_pieces(!side, PieceType::Rook) & !threats;
 
-            let p = pawn_attacks_setwise(td.board.colors(!side), !side);
+            //let p = pawn_attacks_setwise(td.board.colors(!side), !side);
             let n = knight_attacks_setwise(knight_vulnerable);
             let b = bishop_attacks_setwise(bishop_vulnerable, occupancies);
             let q = rook_attacks_setwise(queen_orth_vulnerable, occupancies)
                 | bishop_attacks_setwise(queen_diag_vulnerable, occupancies);
 
-            [p & !threats, n & !threats, b & !threats, Bitboard(0), q & !threats, Bitboard(0)]
+            [pawn_offense, n & !threats, b & !threats, Bitboard(0), q & !threats, Bitboard(0)]
         };
 
         let king_file = td.board.king_square(!side).file();
