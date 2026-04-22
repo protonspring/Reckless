@@ -172,11 +172,11 @@ impl MovePicker {
         let threats = td.board.all_threats();
         let side = td.board.side_to_move();
         let occupancies = td.board.occupancies();
+        let pawn_threats = td.board.piece_threats(PieceType::Pawn);
+        let minor_threats =
+            pawn_threats | td.board.piece_threats(PieceType::Knight) | td.board.piece_threats(PieceType::Bishop);
 
         let threatened = {
-            let pawn_threats = td.board.piece_threats(PieceType::Pawn);
-            let minor_threats =
-                pawn_threats | td.board.piece_threats(PieceType::Knight) | td.board.piece_threats(PieceType::Bishop);
             let rook_threats = minor_threats | td.board.piece_threats(PieceType::Rook);
             [Bitboard(0), pawn_threats, pawn_threats, minor_threats, rook_threats, Bitboard(0)]
         };
@@ -185,20 +185,22 @@ impl MovePicker {
 
         // safe squares where we can attack an opponent piece
         let offense = {
-            let knight_vulnerable = (td.board.colored_pieces(!side, PieceType::Bishop) & !threats)
-                | td.board.colored_pieces(!side, PieceType::Rook)
-                | td.board.colored_pieces(!side, PieceType::Queen);
+            //let knight_vulnerable = (td.board.colored_pieces(!side, PieceType::Bishop) & !threats)
+                //| td.board.colored_pieces(!side, PieceType::Rook)
+                //| td.board.colored_pieces(!side, PieceType::Queen);
             let bishop_vulnerable = td.board.colored_pieces(!side, PieceType::Rook);
             let queen_orth_vulnerable = td.board.colored_pieces(!side, PieceType::Bishop) & !threats;
             let queen_diag_vulnerable = td.board.colored_pieces(!side, PieceType::Rook) & !threats;
 
             let p = pawn_attacks_setwise(td.board.colors(!side), !side);
-            let n = knight_attacks_setwise(knight_vulnerable);
+            //let n = knight_attacks_setwise(knight_vulnerable);
+            let n = td.board.checking_squares(PieceType::Knight) |
+                (knight_attacks_setwise(td.board.colored_pieces2(!side, PieceType::Rook, PieceType::Queen)) & !(pawn_threats | minor_threats));
             let b = bishop_attacks_setwise(bishop_vulnerable, occupancies);
             let q = rook_attacks_setwise(queen_orth_vulnerable, occupancies)
                 | bishop_attacks_setwise(queen_diag_vulnerable, occupancies);
 
-            [p & !threats, n & !threats, b & !threats, Bitboard(0), q & !threats, Bitboard(0)]
+            [p & !threats, n, b & !threats, Bitboard(0), q & !threats, Bitboard(0)]
         };
 
         let king_file = td.board.king_square(!side).file();
