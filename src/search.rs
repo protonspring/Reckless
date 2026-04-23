@@ -116,9 +116,9 @@ pub fn start(td: &mut ThreadData, report: Report, thread_count: usize) {
                 }
             }
 
-            let alpha_asp = [0, -2, -4, 2, 4, -2, 2, 4];
+            let alpha_asp = [0, -10, -20, 10, 20, -10, 10, -20];
             let alpha_offset = alpha_asp[td.pv_index % 8];
-            let beta_asp  = [0, -2, -4, 2, 4, 2, -2, -4];
+            let beta_asp  = [0, -10, -20, 10, 20, 10, -10, 20];
             let beta_offset = beta_asp[td.pv_index % 8];
 
             // Aspiration Windows
