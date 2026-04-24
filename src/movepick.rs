@@ -229,7 +229,7 @@ impl MovePicker {
 
             //mobility bonus
             let mobility = attacks(piece, mv.from(), td.board.occupancies()).popcount() as i32;
-            entry.score += 500 * mobility;
+            entry.score += 1000 * mobility;
 
         }
     }
