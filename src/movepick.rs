@@ -171,7 +171,7 @@ impl MovePicker {
                 if (mv.from().file() < File::E) == (mv.from().file() > mv.to().file()) {
                     //println!("{}", td.board);
                     //println!("Move; {}-{}", mv.from(), mv.to());
-                    entry.score -= 2000;
+                    entry.score -= 4000;
                 }
             }
         }
