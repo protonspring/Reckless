@@ -238,7 +238,7 @@ impl MovePicker {
                 //println!("{}", td.board);
                 //println!("Move: {}-{}", mv.from(), mv.to());
                 //println!("{}", passed_space);
-                entry.score += 8000;
+                entry.score += 12000;
             }
         }
     }
