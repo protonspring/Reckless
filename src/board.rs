@@ -1,8 +1,9 @@
 use crate::{
     lookup::{
         attacks, between, bishop_attacks, cuckoo, cuckoo_a, cuckoo_b, h1, h2, king_attacks, knight_attacks,
-        pawn_attacks, pawn_attacks_setwise, queen_attacks, ray_pass, rook_attacks,
+        pawn_attacks, ray_pass, rook_attacks, queen_attacks,
     },
+    setwise::{bishop_attacks_setwise, knight_attacks_setwise, pawn_attacks_setwise, rook_attacks_setwise},
     types::{
         Bitboard, Castling, CastlingKind, Color, File, Move, PAWN_HOME_RANK, PROMO_RANK, Piece, PieceType, Square,
         ZOBRIST,
@@ -38,7 +39,8 @@ struct InternalState {
     all_threats: Bitboard,
     pinned: [Bitboard; Color::NUM],
     pinners: [Bitboard; Color::NUM],
-    pinning_space: Bitboard,
+    diag_pinning_space: Bitboard,
+    ortho_pinning_space: Bitboard,
     checkers: Bitboard,
     checking_squares: [Bitboard; PieceType::NUM],
 }
@@ -95,8 +97,12 @@ impl Board {
         self.state.pinned[color as usize]
     }
 
-    pub const fn pinning_space(&self) -> Bitboard {
-        self.state.pinning_space
+    pub const fn ortho_pinning_space(&self) -> Bitboard {
+        self.state.ortho_pinning_space
+    }
+
+    pub const fn diag_pinning_space(&self) -> Bitboard {
+        self.state.diag_pinning_space
     }
 
     pub const fn pinners(&self, color: Color) -> Bitboard {
@@ -188,6 +194,10 @@ impl Board {
         self.colored_pieces(color, PieceType::King).lsb()
     }
 
+    pub fn type_on(&self, square: Square) -> PieceType {
+        self.mailbox[square].piece_type()
+    }
+
     pub fn piece_on(&self, square: Square) -> Piece {
         self.mailbox[square]
     }
@@ -206,13 +216,13 @@ impl Board {
 
     pub fn add_piece(&mut self, piece: Piece, square: Square) {
         self.mailbox[square] = piece;
-        self.colors[piece.piece_color()].set(square);
+        self.colors[piece.color()].set(square);
         self.pieces[piece.piece_type()].set(square);
     }
 
     pub fn remove_piece(&mut self, piece: Piece, square: Square) {
         self.mailbox[square] = Piece::None;
-        self.colors[piece.piece_color()].clear(square);
+        self.colors[piece.color()].clear(square);
         self.pieces[piece.piece_type()].clear(square);
     }
 
@@ -224,7 +234,7 @@ impl Board {
         if piece.piece_type() == PieceType::Pawn {
             self.state.pawn_key ^= key;
         } else {
-            self.state.non_pawn_keys[piece.piece_color()] ^= key;
+            self.state.non_pawn_keys[piece.color()] ^= key;
         }
     }
 
@@ -417,33 +427,18 @@ impl Board {
         // This "hack" is used to speed up the implementation of `Board::is_legal`.
         let stm = self.side_to_move();
         let occupancies = self.occupancies() ^ self.colored_pieces(stm, PieceType::King);
-        let mut threats = pawn_attacks_setwise(self.colored_pieces(!stm, PieceType::Pawn), !stm);
-        self.state.piece_threats[PieceType::Pawn] = threats;
 
-        threats = Bitboard(0);
-        for square in self.colored_pieces(!stm, PieceType::Knight) {
-            threats |= knight_attacks(square);
-        }
-        self.state.piece_threats[PieceType::Knight] = threats;
-
-        threats = Bitboard(0);
-        for square in self.colored_pieces(!stm, PieceType::Bishop) {
-            threats |= bishop_attacks(square, occupancies);
-        }
-        self.state.piece_threats[PieceType::Bishop] = threats;
-
-        threats = Bitboard(0);
-        for square in self.colored_pieces(!stm, PieceType::Rook) {
-            threats |= rook_attacks(square, occupancies);
-        }
-        self.state.piece_threats[PieceType::Rook] = threats;
-
-        threats = Bitboard(0);
-        for square in self.colored_pieces(!stm, PieceType::Queen) {
-            threats |= queen_attacks(square, occupancies);
-        }
-        self.state.piece_threats[PieceType::Queen] = threats;
-
+        self.state.piece_threats[PieceType::Pawn] =
+            pawn_attacks_setwise(self.colored_pieces(!stm, PieceType::Pawn), !stm);
+        self.state.piece_threats[PieceType::Knight] =
+            knight_attacks_setwise(self.colored_pieces(!stm, PieceType::Knight));
+        self.state.piece_threats[PieceType::Bishop] =
+            bishop_attacks_setwise(self.colored_pieces(!stm, PieceType::Bishop), occupancies);
+        self.state.piece_threats[PieceType::Rook] =
+            rook_attacks_setwise(self.colored_pieces(!stm, PieceType::Rook), occupancies);
+        self.state.piece_threats[PieceType::Queen] =
+            bishop_attacks_setwise(self.colored_pieces(!stm, PieceType::Queen), occupancies)
+                | rook_attacks_setwise(self.colored_pieces(!stm, PieceType::Queen), occupancies);
         self.state.piece_threats[PieceType::King] = king_attacks(self.king_square(!stm));
 
         self.state.all_threats = self.piece_threats(PieceType::Pawn)
@@ -456,7 +451,9 @@ impl Board {
         //pinning space
         let space1 = queen_attacks(self.king_square(!stm), self.occupancies());
         let occ2 = self.occupancies() & !space1;
-        self.state.pinning_space = queen_attacks(self.king_square(!stm), occ2) & !space1;
+        let pinning_space = queen_attacks(self.king_square(!stm), occ2) & !space1;
+        self.state.diag_pinning_space = bishop_attacks(self.king_square(!stm), Bitboard(0)) & pinning_space;
+        self.state.ortho_pinning_space = rook_attacks(self.king_square(!stm), Bitboard(0)) & pinning_space;
 
         let diagonal = self.pieces2(PieceType::Bishop, PieceType::Queen);
         let orthogonal = self.pieces2(PieceType::Rook, PieceType::Queen);
@@ -507,7 +504,7 @@ impl Board {
         for piece in 0..Piece::NUM {
             let piece = Piece::from_index(piece);
 
-            for square in self.colored_pieces(piece.piece_color(), piece.piece_type()) {
+            for square in self.colored_pieces(piece.color(), piece.piece_type()) {
                 self.update_hash(piece, square);
             }
         }

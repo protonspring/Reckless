@@ -58,16 +58,6 @@ pub fn start(td: &mut ThreadData, report: Report, thread_count: usize) {
     td.pv_table.clear(0);
     td.nnue.full_refresh(&td.board);
 
-    td.root_moves = td.board.generate_all_moves().iter().map(|v| RootMove { mv: v.mv, ..Default::default() }).collect();
-
-    td.root_in_tb = false;
-    td.stop_probing_tb = false;
-
-    #[cfg(feature = "syzygy")]
-    if td.board.castling().raw() == 0 && td.board.occupancies().popcount() <= tb::size() {
-        tb::rank_rootmoves(td);
-    }
-
     td.multi_pv = td.multi_pv.min(td.root_moves.len());
 
     let mut average = vec![td.previous_best_score; td.multi_pv];
@@ -373,7 +363,7 @@ fn search<NODE: NodeType>(
     #[cfg(feature = "syzygy")]
     if !NODE::ROOT
         && !excluded
-        && !td.stop_probing_tb
+        && !td.shared.stop_probing_tb.load(Ordering::Relaxed)
         && td.board.halfmove_clock() == 0
         && td.board.castling().raw() == 0
         && td.board.occupancies().popcount() <= tb::size()
@@ -725,7 +715,7 @@ fn search<NODE: NodeType>(
         let history = if is_quiet {
             td.quiet_history.get(td.board.all_threats(), stm, mv) + td.conthist(ply, 1, mv) + td.conthist(ply, 2, mv)
         } else {
-            let captured = td.board.piece_on(mv.to()).piece_type();
+            let captured = td.board.type_on(mv.to());
             td.noisy_history.get(td.board.all_threats(), td.board.moved_piece(mv), mv.to(), captured)
         };
 
@@ -840,6 +830,8 @@ fn search<NODE: NodeType>(
                 reduction += 129;
             }
 
+            reduction += helper_reduction_bias(td);
+
             let reduced_depth =
                 (new_depth - reduction / 1024).clamp(1, new_depth + (move_count <= 3) as i32 + 1) + 2 * NODE::PV as i32;
 
@@ -907,6 +899,8 @@ fn search<NODE: NodeType>(
                 reduction += 130;
             }
 
+            reduction += helper_reduction_bias(td);
+
             let reduced_depth = new_depth - (reduction >= 2864) as i32 - (reduction >= 5585) as i32;
 
             score = -search::<NonPV>(td, -alpha - 1, -alpha, reduced_depth, !cut_node, ply + 1);
@@ -936,6 +930,8 @@ fn search<NODE: NodeType>(
             root_move.nodes += current_nodes - initial_nodes;
 
             if move_count == 1 || score > alpha {
+                root_move.upperbound = false;
+                root_move.lowerbound = false;
                 match score {
                     v if v <= alpha => {
                         root_move.display_score = alpha;
@@ -947,8 +943,6 @@ fn search<NODE: NodeType>(
                     }
                     _ => {
                         root_move.display_score = score;
-                        root_move.upperbound = false;
-                        root_move.lowerbound = false;
                     }
                 }
 
@@ -1029,7 +1023,7 @@ fn search<NODE: NodeType>(
                 td.board.all_threats(),
                 td.board.moved_piece(best_move),
                 best_move.to(),
-                td.board.piece_on(best_move.to()).piece_type(),
+                td.board.type_on(best_move.to()),
                 noisy_bonus,
             );
         } else {
@@ -1043,7 +1037,7 @@ fn search<NODE: NodeType>(
         }
 
         for &mv in noisy_moves.iter() {
-            let captured = td.board.piece_on(mv.to()).piece_type();
+            let captured = td.board.type_on(mv.to());
             td.noisy_history.update(td.board.all_threats(), td.board.moved_piece(mv), mv.to(), captured, -noisy_malus);
         }
 
@@ -1292,7 +1286,7 @@ fn qsearch<NODE: NodeType>(td: &mut ThreadData, mut alpha: i32, beta: i32, ply: 
                 td.board.all_threats(),
                 td.board.moved_piece(best_move),
                 best_move.to(),
-                td.board.piece_on(best_move.to()).piece_type(),
+                td.board.type_on(best_move.to()),
                 bonus,
             );
         } else {
@@ -1369,6 +1363,19 @@ fn update_continuation_histories(td: &mut ThreadData, ply: isize, piece: Piece, 
         if entry.mv.is_present() {
             td.continuation_history.update(entry.conthist, piece, sq, bonus);
         }
+    }
+}
+
+fn helper_reduction_bias(td: &ThreadData) -> i32 {
+    if td.id == 0 {
+        return 0;
+    }
+
+    match td.id % 4 {
+        1 => -96,
+        2 => 96,
+        3 => -48,
+        _ => 48,
     }
 }
 

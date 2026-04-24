@@ -8,10 +8,13 @@ use std::{
     thread::Scope,
 };
 
+#[cfg(feature = "syzygy")]
+use crate::tb;
 use crate::{
     board::Board,
+    numa::NumaReplicatedAccessToken,
     search::{self, Report},
-    thread::{SharedContext, Status, ThreadData},
+    thread::{RootMove, SharedContext, Status, ThreadData},
     time::TimeManager,
 };
 
@@ -31,8 +34,10 @@ impl ThreadPool {
     }
 
     pub fn new(shared: Arc<SharedContext>) -> Self {
+        shared.numa_context.set_thread_count(1);
+
         let workers = make_worker_threads(1);
-        let data = make_thread_data(shared, &workers, Board::starting_position().into());
+        let data = make_thread_data(shared, &workers);
 
         Self { workers, vector: data }
     }
@@ -40,13 +45,14 @@ impl ThreadPool {
     pub fn set_count(&mut self, threads: usize) {
         let threads = threads.clamp(1, ThreadPool::available_threads());
         let shared = self.vector[0].shared.clone();
-        let board = Arc::new(self.vector[0].board.clone());
+
+        shared.numa_context.set_thread_count(threads);
 
         self.workers.drain(..).for_each(WorkerThread::join);
         self.workers = make_worker_threads(threads);
 
         std::mem::drop(self.vector.drain(..));
-        self.vector = make_thread_data(shared, &self.workers, board);
+        self.vector = make_thread_data(shared, &self.workers);
     }
 
     pub fn main_thread(&mut self) -> &mut ThreadData {
@@ -61,18 +67,19 @@ impl ThreadPool {
         self.vector.iter()
     }
 
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut ThreadData> {
-        self.vector.iter_mut()
-    }
-
     pub fn clear(&mut self) {
         let shared = self.vector[0].shared.clone();
 
+        shared.numa_context.set_thread_count(self.workers.len());
+
         std::mem::drop(self.vector.drain(..));
-        self.vector = make_thread_data(shared, &self.workers, Board::starting_position().into());
+        self.vector = make_thread_data(shared, &self.workers);
     }
 
-    pub fn execute_searches(&mut self, time_manager: TimeManager, report: Report, shared: &Arc<SharedContext>) {
+    pub fn execute_searches(
+        &mut self, time_manager: TimeManager, report: Report, multi_pv: usize, board: &Board,
+        shared: &Arc<SharedContext>,
+    ) {
         shared.tt.increment_age();
 
         shared.nodes.reset();
@@ -91,9 +98,24 @@ impl ThreadPool {
             let (t1, rest) = self.vector.split_first_mut().unwrap();
             let (w1, rest_workers) = self.workers.split_first().unwrap();
 
+            t1.shared.root_in_tb.store(false, Ordering::Relaxed);
+            t1.shared.stop_probing_tb.store(false, Ordering::Relaxed);
+
+            t1.board = (*board).clone();
+            t1.root_moves =
+                t1.board.generate_all_moves().iter().map(|v| RootMove { mv: v.mv, ..Default::default() }).collect();
+
+            #[cfg(feature = "syzygy")]
+            if t1.board.castling().raw() == 0 && t1.board.occupancies().popcount() <= tb::size() {
+                tb::rank_rootmoves(t1);
+            }
+
             let tm = time_manager.clone();
+            let root_moves = t1.root_moves.clone();
+
             handlers.push(scope.spawn_into(
                 move || {
+                    t1.multi_pv = multi_pv;
                     t1.time_manager = tm;
 
                     search::start(t1, report, thread_count);
@@ -104,10 +126,13 @@ impl ThreadPool {
 
             for (index, (t, w)) in rest.iter_mut().zip(rest_workers).enumerate() {
                 let tm = time_manager.clone();
+                let root_moves = root_moves.clone();
                 handlers.push(scope.spawn_into(
                     move || {
                         t.id = index + 1;
                         t.time_manager = tm;
+                        t.board = (*board).clone();
+                        t.root_moves = root_moves;
 
                         search::start(t, Report::None, thread_count);
                     },
@@ -224,17 +249,10 @@ impl<'scope, 'env> ScopeExt<'scope, 'env> for Scope<'scope, 'env> {
     }
 }
 
-fn make_worker_thread(id: Option<usize>) -> WorkerThread {
+fn make_worker_thread() -> WorkerThread {
     let (sender, receiver) = make_work_channel();
 
     let handle = std::thread::spawn(move || {
-        #[cfg(feature = "numa")]
-        if let Some(id) = id {
-            crate::numa::bind_thread(id);
-        }
-        #[cfg(not(feature = "numa"))]
-        let _ = id;
-
         while let Ok(work) = receiver.receiver.recv() {
             work();
             let (lock, cvar) = &*receiver.completion_signal;
@@ -249,30 +267,31 @@ fn make_worker_thread(id: Option<usize>) -> WorkerThread {
 }
 
 fn make_worker_threads(num_threads: usize) -> Vec<WorkerThread> {
-    #[cfg(feature = "numa")]
-    {
-        let concurrency = std::thread::available_parallelism().map_or(1, |n| n.get());
-        (0..num_threads).map(|id| make_worker_thread((num_threads >= concurrency / 2).then_some(id))).collect()
-    }
-    #[cfg(not(feature = "numa"))]
-    {
-        (0..num_threads).map(|_| make_worker_thread(None)).collect()
-    }
+    std::iter::repeat_with(make_worker_thread).take(num_threads).collect()
 }
 
-fn make_thread_data(shared: Arc<SharedContext>, worker_threads: &[WorkerThread], board: Arc<Board>) -> Vec<ThreadData> {
+fn make_thread_data(shared: Arc<SharedContext>, worker_threads: &[WorkerThread]) -> Vec<ThreadData> {
     std::thread::scope(|scope| -> Vec<ThreadData> {
+        let cfg = shared.numa_context.get_numa_config();
+        let should_bind = cfg.suggests_binding_threads(worker_threads.len());
+        let numa_nodes = cfg.distribute_threads_among_numa_nodes(worker_threads.len());
+
         let handles = worker_threads
             .iter()
-            .map(|worker| {
+            .enumerate()
+            .map(|(index, worker)| {
                 let (tx, rx) = std::sync::mpsc::channel();
                 let shared = shared.clone();
-                let board = board.clone();
+                let cfg = cfg.clone();
+                let numa_node = numa_nodes[index];
                 let join_handle = scope.spawn_into(
                     move || {
-                        let mut td = Box::new(ThreadData::new(shared));
-                        td.board = (*board).clone();
-                        tx.send(td).unwrap();
+                        let token = if should_bind {
+                            cfg.bind_current_thread_to_numa_node(numa_node)
+                        } else {
+                            NumaReplicatedAccessToken::new(0)
+                        };
+                        tx.send(Box::new(ThreadData::new(shared, token))).unwrap();
                     },
                     worker,
                 );
