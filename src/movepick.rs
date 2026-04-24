@@ -3,7 +3,7 @@ use crate::{
     search::NodeType,
     setwise::{bishop_attacks_setwise, knight_attacks_setwise, pawn_attacks_setwise, rook_attacks_setwise},
     thread::ThreadData,
-    types::{ArrayVec, Bitboard, MAX_MOVES, Move, MoveEntry, MoveList, PieceType},
+    types::{ArrayVec, Bitboard, MAX_MOVES, Move, MoveEntry, MoveList, PieceType, Square},
 };
 
 #[derive(Copy, Clone, Eq, PartialEq, PartialOrd)]
@@ -172,14 +172,22 @@ impl MovePicker {
         let threats = td.board.all_threats();
         let side = td.board.side_to_move();
         let occupancies = td.board.occupancies();
+        let pawn_threats = td.board.piece_threats(PieceType::Pawn);
+        let pawn_support = pawn_attacks_setwise(td.board.colored_pieces(side, PieceType::Pawn), side);
 
         let threatened = {
-            let pawn_threats = td.board.piece_threats(PieceType::Pawn);
             let minor_threats =
                 pawn_threats | td.board.piece_threats(PieceType::Knight) | td.board.piece_threats(PieceType::Bishop);
             let rook_threats = minor_threats | td.board.piece_threats(PieceType::Rook);
             [Bitboard(0), pawn_threats, pawn_threats, minor_threats, rook_threats, Bitboard(0)]
         };
+
+        //outposts
+        let mut passed_space = pawn_threats;
+        passed_space |= passed_space.shift(Square::UP[!side]);
+        passed_space |= passed_space.shift(2 * Square::UP[!side]);
+        passed_space |= passed_space.shift(4 * Square::UP[!side]);
+        passed_space = !passed_space & pawn_support & Bitboard::OUTPOST_RANKS[side];
 
         let escape = [0, 7768, 8218, 13424, 20208, 0];
 
@@ -224,6 +232,14 @@ impl MovePicker {
                 - 7584 * threatened[pt].contains(mv.to()) as i32
                 + 5000 * offense[pt].contains(mv.to()) as i32
                 - 4000 * wall_pawns.contains(mv.from()) as i32;
+
+            if (pt == PieceType::Knight || pt == PieceType::Bishop)
+                && passed_space.contains(mv.to()) {
+                //println!("{}", td.board);
+                //println!("Move: {}-{}", mv.from(), mv.to());
+                //println!("{}", passed_space);
+                entry.score += 4000;
+            }
         }
     }
 }
