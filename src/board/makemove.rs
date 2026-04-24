@@ -15,7 +15,7 @@ impl Board {
         self.update_threats();
 
         if self.en_passant() != Square::None {
-            self.state.key ^= ZOBRIST.en_passant[self.en_passant()];
+            self.state.key ^= ZOBRIST.en_passant;
             self.state.en_passant = Square::None;
         }
     }
@@ -40,7 +40,7 @@ impl Board {
         self.state.key ^= ZOBRIST.castling[self.state.castling] ^ ZOBRIST.side;
 
         if self.en_passant() != Square::None {
-            self.state.key ^= ZOBRIST.en_passant[self.en_passant()];
+            self.state.key ^= ZOBRIST.en_passant;
             self.state.en_passant = Square::None;
         }
 
@@ -80,7 +80,7 @@ impl Board {
         match mv.kind() {
             MoveKind::DoublePush => {
                 self.state.en_passant = to ^ 8;
-                self.state.key ^= ZOBRIST.en_passant[self.en_passant()];
+                self.state.key ^= ZOBRIST.en_passant;
             }
             MoveKind::EnPassant => {
                 let captured = Piece::new(!stm, PieceType::Pawn);

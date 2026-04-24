@@ -493,7 +493,7 @@ impl Board {
         }
 
         if self.en_passant() != Square::None {
-            self.state.key ^= ZOBRIST.en_passant[self.en_passant()];
+            self.state.key ^= ZOBRIST.en_passant;
         }
 
         if self.side_to_move() == Color::White {
@@ -533,7 +533,7 @@ impl Board {
             return;
         }
 
-        self.state.key ^= ZOBRIST.en_passant[self.en_passant()];
+        self.state.key ^= ZOBRIST.en_passant;
         self.state.en_passant = Square::None;
     }
 
