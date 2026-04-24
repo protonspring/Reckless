@@ -1,4 +1,5 @@
 use crate::{
+    lookup::attacks,
     lookup::king_attacks,
     search::NodeType,
     setwise::{bishop_attacks_setwise, knight_attacks_setwise, pawn_attacks_setwise, rook_attacks_setwise},
@@ -212,7 +213,8 @@ impl MovePicker {
 
         for entry in self.list.iter_mut() {
             let mv = entry.mv;
-            let pt = td.board.type_on(mv.from());
+            let piece = td.board.piece_on(mv.from());
+            let pt = piece.piece_type();
 
             entry.score = 2048 * td.quiet_history.get(threats, side, mv) / 1024
                 + 1536 * td.conthist(ply, 1, mv) / 1024
@@ -224,6 +226,11 @@ impl MovePicker {
                 - 7584 * threatened[pt].contains(mv.to()) as i32
                 + 5000 * offense[pt].contains(mv.to()) as i32
                 - 4000 * wall_pawns.contains(mv.from()) as i32;
+
+            //mobility bonus
+            let mobility = attacks(piece, mv.from(), td.board.occupancies()).popcount() as i32;
+            entry.score += 500 * mobility;
+
         }
     }
 }
