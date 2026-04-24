@@ -56,10 +56,10 @@ impl Board {
 
         let captured = self.piece_on(to);
         if captured != Piece::None && !mv.is_castling() {
-            self.remove_piece(piece, from);
+            self.remove_piece(from);
             observer.on_piece_change(self, piece, from, false);
 
-            self.remove_piece(captured, to);
+            self.remove_piece(to);
             self.add_piece(piece, to);
             observer.on_piece_mutate(self, captured, piece, to);
 
@@ -69,7 +69,7 @@ impl Board {
             self.state.captured = Some(captured);
             self.state.recapture_square = to;
         } else if !mv.is_castling() {
-            self.remove_piece(piece, from);
+            self.remove_piece(from);
             self.add_piece(piece, to);
             observer.on_piece_move(self, piece, from, to);
         }
@@ -85,7 +85,7 @@ impl Board {
             MoveKind::EnPassant => {
                 let captured = Piece::new(!stm, PieceType::Pawn);
 
-                self.remove_piece(captured, to ^ 8);
+                self.remove_piece(to ^ 8);
                 observer.on_piece_change(self, captured, to ^ 8, false);
 
                 self.update_hash(captured, to ^ 8);
@@ -96,10 +96,10 @@ impl Board {
                 let (rook_from, rook_to) = self.get_castling_rook(to);
                 let rook = Piece::new(stm, PieceType::Rook);
 
-                self.remove_piece(rook, rook_from);
+                self.remove_piece(rook_from);
                 observer.on_piece_change(self, rook, rook_from, false);
 
-                self.remove_piece(piece, from);
+                self.remove_piece(from);
                 self.add_piece(piece, to);
                 observer.on_piece_move(self, piece, from, to);
 
@@ -112,7 +112,7 @@ impl Board {
             _ if mv.is_promotion() => {
                 let promotion = Piece::new(stm, mv.promo_piece_type());
 
-                self.remove_piece(piece, to);
+                self.remove_piece(to);
                 self.add_piece(promotion, to);
                 observer.on_piece_mutate(self, piece, promotion, to);
 
@@ -165,7 +165,7 @@ impl Board {
 
         if !mv.is_castling() {
             self.add_piece(piece, from);
-            self.remove_piece(piece, to);
+            self.remove_piece(to);
         }
 
         if let Some(piece) = self.state.captured {
@@ -179,14 +179,14 @@ impl Board {
             MoveKind::Castling => {
                 let (rook_from, rook_to) = self.get_castling_rook(to);
 
-                self.remove_piece(Piece::new(stm, PieceType::Rook), rook_to);
-                self.remove_piece(piece, to);
+                let the_rook = self.remove_piece(rook_to);
+                self.remove_piece(to);
 
-                self.add_piece(Piece::new(stm, PieceType::Rook), rook_from);
+                self.add_piece(the_rook, rook_from);
                 self.add_piece(piece, from);
             }
             _ if mv.is_promotion() => {
-                self.remove_piece(piece, from);
+                self.remove_piece(from);
                 self.add_piece(Piece::new(stm, PieceType::Pawn), from);
             }
             _ => (),
