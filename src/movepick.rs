@@ -226,12 +226,12 @@ impl MovePicker {
                 + 5000 * offense[pt].contains(mv.to()) as i32
                 - 4000 * wall_pawns.contains(mv.from()) as i32;
 
-            if (pt == PieceType::Rook || pt == PieceType::Queen)
-                && !td.board.ortho_pinning_space().contains(mv.from())
+            if (pt == PieceType::Bishop || pt == PieceType::Queen)
+                && !td.board.diag_pinning_space().contains(mv.from())
                 && !td.board.all_threats().contains(mv.to())
-                && td.board.ortho_pinning_space().contains(mv.to()) {
+                && td.board.diag_pinning_space().contains(mv.to()) {
 
-                entry.score += 8000;
+                entry.score += 4000;
                 //println!("{}", td.board);
                 //println!("{}", td.board.ortho_pinning_space());
                 //println!("{}", td.board.all_threats());
