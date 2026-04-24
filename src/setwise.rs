@@ -1,65 +1,26 @@
-use crate::types::{Bitboard, Color, File, Rank};
+use crate::types::{Bitboard, Color, File, Rank, Square};
+use crate::lookup::{knight_attacks};
 
 const A: Bitboard = Bitboard::file(File::A);
-const B: Bitboard = Bitboard::file(File::B);
-const G: Bitboard = Bitboard::file(File::G);
 const H: Bitboard = Bitboard::file(File::H);
 const R1: Bitboard = Bitboard::rank(Rank::R1);
-const R2: Bitboard = Bitboard::rank(Rank::R2);
-const R7: Bitboard = Bitboard::rank(Rank::R7);
 const R8: Bitboard = Bitboard::rank(Rank::R8);
 
 pub fn pawn_attacks_setwise(bb: Bitboard, color: Color) -> Bitboard {
-    let (up_right, up_left) = match color {
-        Color::White => (9, 7),
-        Color::Black => (-7, -9),
-    };
-
+    let up_right = Square::UP[color] + Square::RIGHT;
+    let up_left = Square::UP[color] + Square::LEFT;
     let right_attacks = (bb & !Bitboard::file(File::H)).shift(up_right);
     let left_attacks = (bb & !Bitboard::file(File::A)).shift(up_left);
 
     right_attacks | left_attacks
 }
 
-#[cfg(not(target_feature = "avx2"))]
-#[inline]
 pub fn knight_attacks_setwise(bb: Bitboard) -> Bitboard {
-    (bb & !(A | B | R8)).shift(6)
-        | (bb & !(A | R7 | R8)).shift(15)
-        | (bb & !(H | R7 | R8)).shift(17)
-        | (bb & !(G | H | R8)).shift(10)
-        | (bb & !(G | H | R1)).shift(-6)
-        | (bb & !(H | R1 | R2)).shift(-15)
-        | (bb & !(A | R1 | R2)).shift(-17)
-        | (bb & !(A | B | R1)).shift(-10)
-}
-
-#[cfg(target_feature = "avx2")]
-#[inline]
-pub fn knight_attacks_setwise(bb: Bitboard) -> Bitboard {
-    use core::arch::x86_64::*;
-
-    unsafe {
-        let mask_a = _mm256_set_epi64x(
-            !(A | B | R8).0 as i64,
-            !(A | R7 | R8).0 as i64,
-            !(H | R7 | R8).0 as i64,
-            !(G | H | R8).0 as i64,
-        );
-        let mask_b = _mm256_set_epi64x(
-            !(G | H | R1).0 as i64,
-            !(H | R1 | R2).0 as i64,
-            !(A | R1 | R2).0 as i64,
-            !(A | B | R1).0 as i64,
-        );
-
-        let bb = _mm256_set1_epi64x(bb.0 as i64);
-        let a = _mm256_and_si256(bb, mask_a);
-        let b = _mm256_and_si256(bb, mask_b);
-        let a = _mm256_sllv_epi64(a, _mm256_set_epi64x(6, 15, 17, 10));
-        let b = _mm256_srlv_epi64(b, _mm256_set_epi64x(6, 15, 17, 10));
-        fold_to_bitboard(_mm256_or_si256(a, b))
+    let mut attacks = Bitboard(0);
+    for knight in bb {
+        attacks |= knight_attacks(knight);
     }
+    attacks
 }
 
 #[cfg(not(target_feature = "avx2"))]
