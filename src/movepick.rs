@@ -1,5 +1,5 @@
 use crate::{
-    lookup::{king_attacks},
+    lookup::king_attacks,
     search::NodeType,
     setwise::{bishop_attacks_setwise, knight_attacks_setwise, pawn_attacks_setwise, rook_attacks_setwise},
     thread::ThreadData,
