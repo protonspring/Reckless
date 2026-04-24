@@ -3,7 +3,7 @@ use crate::{
     search::NodeType,
     setwise::{bishop_attacks_setwise, knight_attacks_setwise, pawn_attacks_setwise, rook_attacks_setwise},
     thread::ThreadData,
-    types::{ArrayVec, Bitboard, MAX_MOVES, Move, MoveEntry, MoveList, PieceType},
+    types::{ArrayVec, Bitboard, File, MAX_MOVES, Move, MoveEntry, MoveList, PieceType},
 };
 
 #[derive(Copy, Clone, Eq, PartialEq, PartialOrd)]
@@ -165,6 +165,15 @@ impl MovePicker {
                 + td.noisy_history.get(threats, td.board.moved_piece(mv), mv.to(), captured)
                 + 4000 * (mv.is_promotion() && mv.promo_piece_type() == PieceType::Queen) as i32
                 + (200000 - 20000 * pt as i32) * td.board.in_check() as i32;
+
+            // penalize pawn capturing pawn outward
+            if pt == PieceType::Pawn && captured == PieceType::Pawn {
+                if (mv.from().file() < File::E) == (mv.from().file() > mv.to().file()) {
+                    //println!("{}", td.board);
+                    //println!("Move; {}-{}", mv.from(), mv.to());
+                    entry.score -= 2000;
+                }
+            }
         }
     }
 
