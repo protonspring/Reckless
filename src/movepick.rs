@@ -173,7 +173,7 @@ impl MovePicker {
         let side = td.board.side_to_move();
         let occupancies = td.board.occupancies();
         let pawn_threats = td.board.piece_threats(PieceType::Pawn);
-        let pawn_support = pawn_attacks_setwise(td.board.colored_pieces(side, PieceType::Pawn), side);
+        //let pawn_support = pawn_attacks_setwise(td.board.colored_pieces(side, PieceType::Pawn), side);
 
         let threatened = {
             let minor_threats =
@@ -183,11 +183,11 @@ impl MovePicker {
         };
 
         //outposts
-        let mut passed_space = pawn_threats;
+        let mut passed_space = td.board.colored_pieces(!side, PieceType::Pawn) | pawn_threats;
         passed_space |= passed_space.shift(Square::UP[!side]);
         passed_space |= passed_space.shift(2 * Square::UP[!side]);
         passed_space |= passed_space.shift(4 * Square::UP[!side]);
-        passed_space = !passed_space & pawn_support & Bitboard::OUTPOST_RANKS[side];
+        passed_space = !passed_space;
 
         let escape = [0, 7768, 8218, 13424, 20208, 0];
 
@@ -233,12 +233,13 @@ impl MovePicker {
                 + 5000 * offense[pt].contains(mv.to()) as i32
                 - 4000 * wall_pawns.contains(mv.from()) as i32;
 
-            if (pt == PieceType::Knight || pt == PieceType::Bishop)
+            if pt == PieceType::Pawn
+                && !threats.contains(mv.to())
                 && passed_space.contains(mv.to()) {
                 //println!("{}", td.board);
                 //println!("Move: {}-{}", mv.from(), mv.to());
                 //println!("{}", passed_space);
-                entry.score += 8000;
+                entry.score += 4000;
             }
         }
     }
