@@ -231,7 +231,7 @@ impl MovePicker {
                 && !td.board.all_threats().contains(mv.to())
                 && td.board.diag_pinning_space().contains(mv.to()) {
 
-                entry.score += 4000;
+                entry.score += 8000;
                 //println!("{}", td.board);
                 //println!("{}", td.board.ortho_pinning_space());
                 //println!("{}", td.board.all_threats());
