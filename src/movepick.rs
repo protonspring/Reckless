@@ -232,7 +232,7 @@ impl MovePicker {
                     //println!("Move: {}-{}", mv.from(), mv.to());
                     //println!("from dist: {}", mv.from().distance_from(my_king));
                     //println!("to dist: {}", mv.to().distance_from(my_king));
-                    entry.score += 4000;
+                    entry.score += 2000;
                 }
             }
         }
