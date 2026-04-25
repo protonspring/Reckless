@@ -234,12 +234,12 @@ impl MovePicker {
                 + 5000 * offense[pt].contains(mv.to()) as i32
                 - 4000 * wall_pawns.contains(mv.from()) as i32;
 
-            if !passed_pawns.is_empty() && pt == PieceType::King {
+            if !passed_pawns.is_empty() && pt == PieceType::Knight {
                 let passed_pawn = passed_pawns.lsb();
                 if mv.to().distance_from(passed_pawn) < mv.from().distance_from(passed_pawn) {
                     //println!("{}", td.board);
                     //println!("Move: {}-{}", mv.from(), mv.to());
-                    entry.score += 5000;
+                    entry.score += 2000;
                 }
             }
         }
