@@ -2,6 +2,7 @@ use std::ops::{Add, BitXor, BitXorAssign, Div, Index, IndexMut};
 
 use super::Bitboard;
 use crate::types::{Color, File, Rank};
+use libc::abs;
 
 /// Represents a square on a bitboard corresponding to the [Little-Endian Rank-File Mapping][LERFM].
 ///
@@ -57,6 +58,19 @@ impl Square {
         match color {
             Color::White => self,
             Color::Black => self.flip_rank(),
+        }
+    }
+
+    pub fn distance_from(self, square: Square) -> i8 {
+        unsafe {
+            //println!("square: {}", self);
+            //println!("square from: {}", square);
+            let file_dist = abs(self.file() as i32 - square.file() as i32) as i8;
+            let rank_dist = abs(self.rank() as i32 - square.rank() as i32) as i8;
+            //println!("file_dist: {}", file_dist);
+            //println!("rank_dist: {}", rank_dist);
+            //println!("returning: {}", file_dist.min(rank_dist));
+            file_dist.max(rank_dist)
         }
     }
 

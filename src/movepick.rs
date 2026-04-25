@@ -204,8 +204,9 @@ impl MovePicker {
         };
 
         // don't move king wall pawns
-        let wall_pawns = if Bitboard::HOME_ROWS[side].contains(td.board.king_square(side)) {
-            king_attacks(td.board.king_square(side)) & td.board.pieces(PieceType::Pawn)
+        let my_king = td.board.king_square(side);
+        let wall_pawns = if Bitboard::HOME_ROWS[side].contains(my_king) {
+            king_attacks(my_king) & td.board.pieces(PieceType::Pawn)
         } else {
             Bitboard(0)
         };
@@ -224,6 +225,16 @@ impl MovePicker {
                 - 7584 * threatened[pt].contains(mv.to()) as i32
                 + 5000 * offense[pt].contains(mv.to()) as i32
                 - 4000 * wall_pawns.contains(mv.from()) as i32;
+
+            if pt == PieceType::Knight {
+                if mv.to().distance_from(my_king) < mv.from().distance_from(my_king) {
+                    //println!("{}", td.board);
+                    //println!("Move: {}-{}", mv.from(), mv.to());
+                    //println!("from dist: {}", mv.from().distance_from(my_king));
+                    //println!("to dist: {}", mv.to().distance_from(my_king));
+                    entry.score += 2000;
+                }
+            }
         }
     }
 }
