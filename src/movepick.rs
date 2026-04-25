@@ -226,7 +226,7 @@ impl MovePicker {
                 + 5000 * offense[pt].contains(mv.to()) as i32
                 - 4000 * wall_pawns.contains(mv.from()) as i32;
 
-            if pt == PieceType::Knight {
+            if pt == PieceType::Bishop {
                 if mv.to().distance_from(my_king) < mv.from().distance_from(my_king) {
                     //println!("{}", td.board);
                     //println!("Move: {}-{}", mv.from(), mv.to());
