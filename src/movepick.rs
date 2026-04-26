@@ -169,6 +169,9 @@ impl MovePicker {
     }
 
     fn score_quiet(&mut self, td: &ThreadData, ply: isize) {
+
+        let mut move_count = 0;
+
         let threats = td.board.all_threats();
         let side = td.board.side_to_move();
         let occupancies = td.board.occupancies();
@@ -211,6 +214,7 @@ impl MovePicker {
         };
 
         for entry in self.list.iter_mut() {
+            move_count += 1;
             let mv = entry.mv;
             let pt = td.board.type_on(mv.from());
 
@@ -224,6 +228,10 @@ impl MovePicker {
                 - 7584 * threatened[pt].contains(mv.to()) as i32
                 + 5000 * offense[pt].contains(mv.to()) as i32
                 - 4000 * wall_pawns.contains(mv.from()) as i32;
+
+            if move_count == td.id {
+                entry.score += 1000;
+            }
         }
     }
 }
