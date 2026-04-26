@@ -210,6 +210,16 @@ impl MovePicker {
             Bitboard(0)
         };
 
+        // Rooks on open files
+        let mut open_files = td.board.pieces(PieceType::Pawn);
+        open_files |= open_files.shift(8);
+        open_files |= open_files.shift(16);
+        open_files |= open_files.shift(32);
+        open_files |= open_files.shift(-8);
+        open_files |= open_files.shift(-16);
+        open_files |= open_files.shift(-32);
+        open_files = !open_files;
+
         for entry in self.list.iter_mut() {
             let mv = entry.mv;
             let pt = td.board.type_on(mv.from());
@@ -224,6 +234,16 @@ impl MovePicker {
                 - 7584 * threatened[pt].contains(mv.to()) as i32
                 + 5000 * offense[pt].contains(mv.to()) as i32
                 - 4000 * wall_pawns.contains(mv.from()) as i32;
+
+            if pt == PieceType::Rook
+                && !open_files.contains(mv.from())
+                && open_files.contains(mv.to())
+                && !threats.contains(mv.to()) {
+                //println!("{}", td.board);
+                //println!("{}", open_files);
+                //println!("Move: {}-{}", mv.from(), mv.to());
+                entry.score += 2000;
+            }
         }
     }
 }
