@@ -242,7 +242,7 @@ impl MovePicker {
                 //println!("{}", td.board);
                 //println!("{}", open_files);
                 //println!("Move: {}-{}", mv.from(), mv.to());
-                entry.score += 4000;
+                entry.score += 8000;
             }
         }
     }
