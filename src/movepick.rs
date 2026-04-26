@@ -37,22 +37,11 @@ impl MovePicker {
         }
     }
 
-    pub const fn new_probcut(threshold: i32) -> Self {
+    pub const fn new_nonmain(threshold: Option<i32>) -> Self {
         Self {
             list: MoveList::new(),
             tt_move: Move::NULL,
-            threshold: Some(threshold),
-            stage: Stage::GenerateNoisy,
-            bad_noisy: ArrayVec::new(),
-            bad_noisy_idx: 0,
-        }
-    }
-
-    pub const fn new_qsearch() -> Self {
-        Self {
-            list: MoveList::new(),
-            tt_move: Move::NULL,
-            threshold: None,
+            threshold: threshold,
             stage: Stage::GenerateNoisy,
             bad_noisy: ArrayVec::new(),
             bad_noisy_idx: 0,
