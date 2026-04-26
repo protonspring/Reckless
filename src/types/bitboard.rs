@@ -42,10 +42,12 @@ impl Bitboard {
     }
 
     pub const fn lsb(self) -> Square {
+        debug_assert!(self.0 != 0);
         Square::new(self.0.trailing_zeros() as u8)
     }
 
     pub const fn msb(self) -> Square {
+        debug_assert!(self.0 != 0);
         Square::new(63 - self.0.leading_zeros() as u8)
     }
 
