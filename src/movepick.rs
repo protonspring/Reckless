@@ -229,7 +229,7 @@ impl MovePicker {
                 + 5000 * offense[pt].contains(mv.to()) as i32
                 - 4000 * wall_pawns.contains(mv.from()) as i32;
 
-            if move_count == td.id {
+            if (move_count % 8) == td.id {
                 entry.score += 1000;
             }
         }
