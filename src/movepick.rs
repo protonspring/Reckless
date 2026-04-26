@@ -230,7 +230,7 @@ impl MovePicker {
                 - 4000 * wall_pawns.contains(mv.from()) as i32;
 
             if (move_count % 8) == td.id {
-                entry.score += 333;
+                entry.score += 550;
             }
         }
     }
