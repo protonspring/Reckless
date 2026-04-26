@@ -167,7 +167,7 @@ impl MovePicker {
                 + (200000 - 20000 * pt as i32) * td.board.in_check() as i32;
 
             //add some noise
-            entry.score += ((td.nodes() as u64 + 32 * td.id as u64) % 2048) as i32;
+            entry.score += ((td.nodes() as u64 + 64 * td.id as u64) % 256) as i32;
         }
     }
 
