@@ -229,7 +229,7 @@ impl MovePicker {
             //Minors behind pawns
             if pt == PieceType::Knight || pt == PieceType::Bishop {
                 if behind_pawns.contains(mv.to()) {
-                    entry.score += 4000;
+                    entry.score += 8000;
                 }
             }
         }
