@@ -224,6 +224,15 @@ impl MovePicker {
                 - 7584 * threatened[pt].contains(mv.to()) as i32
                 + 5000 * offense[pt].contains(mv.to()) as i32
                 - 4000 * wall_pawns.contains(mv.from()) as i32;
+
+            //Bonus for kings moving to attack
+            if pt == PieceType::King {
+                if !(king_attacks(mv.to()) & td.board.colors(!side)).is_empty() {
+                    //println!("{}", td.board);
+                    //println!("Move: {}-{}", mv.from(), mv.to());
+                    entry.score += 2000;
+                }
+            }
         }
     }
 }
