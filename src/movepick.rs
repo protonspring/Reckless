@@ -230,7 +230,7 @@ impl MovePicker {
                 if !(king_attacks(mv.to()) & td.board.colors(!side)).is_empty() {
                     //println!("{}", td.board);
                     //println!("Move: {}-{}", mv.from(), mv.to());
-                    entry.score += 2000;
+                    entry.score += 4000;
                 }
             }
         }
