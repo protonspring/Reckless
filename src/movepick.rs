@@ -185,7 +185,7 @@ impl MovePicker {
 
         // safe squares where we can attack an opponent piece
         let offense = {
-            let knight_vulnerable = (td.board.colored_pieces(!side, PieceType::Bishop) & !threats)
+            let knight_vulnerable = (td.board.colored_pieces2(!side, PieceType::Bishop, PieceType::Pawn) & !threats)
                 | td.board.colored_pieces(!side, PieceType::Rook)
                 | td.board.colored_pieces(!side, PieceType::Queen);
             let bishop_vulnerable = td.board.colored_pieces(!side, PieceType::Rook);
