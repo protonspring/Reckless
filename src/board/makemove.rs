@@ -69,12 +69,12 @@ impl Board {
 
             if mv.is_en_passant() {
                 let captured = Piece::new(!stm, PieceType::Pawn);
-                self.remove_piece(captured, to ^ 8);
+                self.remove_piece(captured, mv.capture_sq());
                 observer.on_piece_change(self, captured, to ^ 8, false);
                 self.update_hash(captured, to ^ 8);
                 self.state.material -= captured.value();
             } else {
-                let captured = self.piece_on(to);
+                let captured = self.piece_on(mv.capture_sq());
                 if captured != Piece::None {
                     self.state.halfmove_clock = 0;
                     self.remove_piece(captured, to);
@@ -100,13 +100,6 @@ impl Board {
                     self.state.en_passant = to ^ 8;
                     self.state.key ^= ZOBRIST.en_passant[self.en_passant()];
                 }
-                //MoveKind::EnPassant => {
-                    //let captured = Piece::new(!stm, PieceType::Pawn);
-                    //self.remove_piece(captured, to ^ 8);
-                    //observer.on_piece_change(self, captured, to ^ 8, false);
-                    //self.update_hash(captured, to ^ 8);
-                    //self.state.material -= captured.value();
-                //}
                 _ if mv.is_promotion() => {
                     let promotion = Piece::new(stm, mv.promo_piece_type());
 
