@@ -231,7 +231,7 @@ impl MovePicker {
             if pt == PieceType::Rook {
                 let rook_attacks = rook_attacks(mv.to(), td.board.occupancies());
                 if rook_attacks.popcount() < 4 {
-                    entry.score -= 2000;
+                    entry.score -= 4000;
                 }
             }
         }
