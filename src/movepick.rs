@@ -155,6 +155,7 @@ impl MovePicker {
 
     fn score_noisy(&mut self, td: &ThreadData) {
         let threats = td.board.all_threats();
+        let pawn_threats = td.board.piece_threats(PieceType::Pawn);
 
         for entry in self.list.iter_mut() {
             let mv = entry.mv;
@@ -165,6 +166,11 @@ impl MovePicker {
                 + td.noisy_history.get(threats, td.board.moved_piece(mv), mv.to(), captured)
                 + 4000 * (mv.is_promotion() && mv.promo_piece_type() == PieceType::Queen) as i32
                 + (200000 - 20000 * pt as i32) * td.board.in_check() as i32;
+
+            //capturing a lesser piece protected by a pawn is rarely good
+            if pt > captured && pawn_threats.contains(mv.to()) {
+                entry.score -= 4000;
+            }
         }
     }
 
