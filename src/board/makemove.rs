@@ -74,11 +74,8 @@ impl Board {
                 observer.on_piece_change(self, captured, mv.capture_sq(), false);
                 self.update_hash(captured, mv.capture_sq());
                 self.state.material -= captured.value();
-
-                if !mv.is_en_passant() {
-                    self.state.captured = Some(captured);
-                    self.state.recapture_square = mv.capture_sq(); //to;
-                }
+                self.state.captured = Some(captured);
+                self.state.recapture_square = to;
             }
             self.remove_piece(piece, from);
             self.add_piece(piece, to);
@@ -112,7 +109,6 @@ impl Board {
         }
 
         self.side_to_move = !self.side_to_move;
-
         self.state.castling.raw &= self.castling_rights[from] & self.castling_rights[to];
         self.state.key ^= ZOBRIST.castling[self.state.castling];
 
@@ -159,24 +155,17 @@ impl Board {
             self.add_piece(piece, mv.capture_sq());
         }
 
-        match mv.kind() {
-            MoveKind::EnPassant => {
-                self.add_piece(Piece::new(!stm, PieceType::Pawn), mv.capture_sq());
-            }
-            MoveKind::Castling => {
-                let (rook_from, rook_to) = self.get_castling_rook(to);
+        if mv.is_castling() {
+            let (rook_from, rook_to) = self.get_castling_rook(to);
 
-                self.remove_piece(Piece::new(stm, PieceType::Rook), rook_to);
-                self.remove_piece(piece, to);
+            self.remove_piece(Piece::new(stm, PieceType::Rook), rook_to);
+            self.remove_piece(piece, to);
 
-                self.add_piece(Piece::new(stm, PieceType::Rook), rook_from);
-                self.add_piece(piece, from);
-            }
-            _ if mv.is_promotion() => {
-                self.remove_piece(piece, from);
-                self.add_piece(Piece::new(stm, PieceType::Pawn), from);
-            }
-            _ => (),
+            self.add_piece(Piece::new(stm, PieceType::Rook), rook_from);
+            self.add_piece(piece, from);
+        } else if mv.is_promotion() {
+            self.remove_piece(piece, from);
+            self.add_piece(Piece::new(stm, PieceType::Pawn), from);
         }
 
         self.state = self.state_stack.pop().unwrap();
