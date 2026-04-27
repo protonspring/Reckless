@@ -156,12 +156,12 @@ impl Board {
         }
 
         if let Some(piece) = self.state.captured {
-            self.add_piece(piece, to);
+            self.add_piece(piece, mv.capture_sq());
         }
 
         match mv.kind() {
             MoveKind::EnPassant => {
-                self.add_piece(Piece::new(!stm, PieceType::Pawn), to ^ 8);
+                self.add_piece(Piece::new(!stm, PieceType::Pawn), mv.capture_sq());
             }
             MoveKind::Castling => {
                 let (rook_from, rook_to) = self.get_castling_rook(to);
