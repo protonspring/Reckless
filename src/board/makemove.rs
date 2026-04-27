@@ -74,10 +74,10 @@ impl Board {
                 observer.on_piece_change(self, captured, mv.capture_sq(), false);
                 self.update_hash(captured, mv.capture_sq());
                 self.state.material -= captured.value();
+                self.state.recapture_square = to;
 
                 if !mv.is_en_passant() {
                     self.state.captured = Some(captured);
-                    self.state.recapture_square = mv.capture_sq(); //to;
                 }
             }
             self.remove_piece(piece, from);
