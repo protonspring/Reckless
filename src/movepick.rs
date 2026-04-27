@@ -155,6 +155,14 @@ impl MovePicker {
 
     fn score_noisy(&mut self, td: &ThreadData) {
         let threats = td.board.all_threats();
+        let side = td.board.side_to_move();
+
+        // don't move king wall pawns
+        let wall_pawns = if Bitboard::HOME_ROWS[side].contains(td.board.king_square(side)) {
+            king_attacks(td.board.king_square(side)) & td.board.pieces(PieceType::Pawn)
+        } else {
+            Bitboard(0)
+        };
 
         for entry in self.list.iter_mut() {
             let mv = entry.mv;
@@ -164,7 +172,8 @@ impl MovePicker {
             entry.score = 16 * captured.value()
                 + td.noisy_history.get(threats, td.board.moved_piece(mv), mv.to(), captured)
                 + 4000 * (mv.is_promotion() && mv.promo_piece_type() == PieceType::Queen) as i32
-                + (200000 - 20000 * pt as i32) * td.board.in_check() as i32;
+                + (200000 - 20000 * pt as i32) * td.board.in_check() as i32
+                - 4000 * wall_pawns.contains(mv.from()) as i32;
         }
     }
 
