@@ -77,6 +77,7 @@ impl Board {
                 self.state.captured = Some(captured);
                 self.state.recapture_square = to;
             }
+
             self.remove_piece(piece, from);
             self.add_piece(piece, to);
             observer.on_piece_move(self, piece, from, to);
