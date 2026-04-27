@@ -54,16 +54,17 @@ impl Board {
         }
         self.state.plies_from_null += 1;
 
-        let captured = self.piece_on(to);
-        if captured != Piece::None && !mv.is_castling() {
+        if mv.is_capture() {
+            let cap_sq = mv.capture_sq();
+            let captured = self.piece_on(cap_sq);
             self.remove_piece(piece, from);
             observer.on_piece_change(self, piece, from, false);
-
-            self.remove_piece(captured, to);
+            self.remove_piece(captured, cap_sq);
+            observer.on_piece_change(self, captured, cap_sq, false);
             self.add_piece(piece, to);
-            observer.on_piece_mutate(self, captured, piece, to);
+            observer.on_piece_change(self, piece, to, true);
 
-            self.update_hash(captured, to);
+            self.update_hash(captured, cap_sq);
 
             self.state.material -= captured.value();
             self.state.captured = Some(captured);
@@ -81,16 +82,6 @@ impl Board {
             MoveKind::DoublePush => {
                 self.state.en_passant = to ^ 8;
                 self.state.key ^= ZOBRIST.en_passant[self.en_passant()];
-            }
-            MoveKind::EnPassant => {
-                let captured = Piece::new(!stm, PieceType::Pawn);
-
-                self.remove_piece(captured, to ^ 8);
-                observer.on_piece_change(self, captured, to ^ 8, false);
-
-                self.update_hash(captured, to ^ 8);
-
-                self.state.material -= captured.value();
             }
             MoveKind::Castling => {
                 let (rook_from, rook_to) = self.get_castling_rook(to);
@@ -169,13 +160,10 @@ impl Board {
         }
 
         if let Some(piece) = self.state.captured {
-            self.add_piece(piece, to);
+            self.add_piece(piece, mv.capture_sq());
         }
 
         match mv.kind() {
-            MoveKind::EnPassant => {
-                self.add_piece(Piece::new(!stm, PieceType::Pawn), to ^ 8);
-            }
             MoveKind::Castling => {
                 let (rook_from, rook_to) = self.get_castling_rook(to);
 
