@@ -70,15 +70,13 @@ impl Board {
             if mv.is_capture() {
                 self.state.halfmove_clock = 0;
                 let captured = self.piece_on(mv.capture_sq());
-                self.remove_piece(captured, mv.capture_sq());
-                observer.on_piece_change(self, captured, mv.capture_sq(), false);
-                self.update_hash(captured, mv.capture_sq());
+                let cap_sq = mv.capture_sq();
+                self.remove_piece(captured, cap_sq);
+                observer.on_piece_change(self, captured, cap_sq, false);
+                self.update_hash(captured, cap_sq);
                 self.state.material -= captured.value();
                 self.state.recapture_square = to;
-
-                if !mv.is_en_passant() {
-                    self.state.captured = Some(captured);
-                }
+                self.state.captured = Some(captured);
             }
             self.remove_piece(piece, from);
             self.add_piece(piece, to);
@@ -160,9 +158,6 @@ impl Board {
         }
 
         match mv.kind() {
-            MoveKind::EnPassant => {
-                self.add_piece(Piece::new(!stm, PieceType::Pawn), mv.capture_sq());
-            }
             MoveKind::Castling => {
                 let (rook_from, rook_to) = self.get_castling_rook(to);
 
