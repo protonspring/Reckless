@@ -229,10 +229,8 @@ impl MovePicker {
             //try colors only
             // flat values, or scale by # of squares
             if pt == PieceType::Rook {
-                let rook_attacks = rook_attacks(mv.to(), td.board.occupancies());
-                if rook_attacks.popcount() < 4 {
-                    entry.score -= 8000;
-                }
+                let rook_attacks = rook_attacks(mv.to(), td.board.colors(side));
+                    entry.score -= 500 * (10 - rook_attacks.popcount() as i32);
             }
         }
     }
