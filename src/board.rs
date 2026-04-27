@@ -442,9 +442,6 @@ impl Board {
             | self.piece_threats(PieceType::Queen)
             | self.piece_threats(PieceType::King);
 
-        let diagonal = self.pieces2(PieceType::Bishop, PieceType::Queen);
-        let orthogonal = self.pieces2(PieceType::Rook, PieceType::Queen);
-
         self.state.pinned = [Bitboard::default(); 2];
         self.state.pinners = [Bitboard::default(); 2];
 
@@ -463,8 +460,10 @@ impl Board {
                     self.checking_squares(PieceType::Bishop) | self.checking_squares(PieceType::Rook);
             }
 
-            let diagonal = diagonal & bishop_attacks(king, self.colors(!color)) & self.colors(!color);
-            let orthogonal = orthogonal & rook_attacks(king, self.colors(!color)) & self.colors(!color);
+            let diagonal = bishop_attacks(king, self.colors(!color))
+                & self.colored_pieces2(!color, PieceType::Bishop, PieceType::Queen);
+            let orthogonal = rook_attacks(king, self.colors(!color))
+                & self.colored_pieces2(!color, PieceType::Rook, PieceType::Queen);
 
             for square in diagonal | orthogonal {
                 let blockers = between(king, square) & self.colors(color);
