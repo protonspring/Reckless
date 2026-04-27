@@ -1,5 +1,5 @@
 use crate::{
-    lookup::king_attacks,
+    lookup::{king_attacks, rook_attacks},
     search::NodeType,
     setwise::{bishop_attacks_setwise, knight_attacks_setwise, pawn_attacks_setwise, rook_attacks_setwise},
     thread::ThreadData,
@@ -224,6 +224,16 @@ impl MovePicker {
                 - 7584 * threatened[pt].contains(mv.to()) as i32
                 + 5000 * offense[pt].contains(mv.to()) as i32
                 - 4000 * wall_pawns.contains(mv.from()) as i32;
+
+            //rook mobility
+            //try colors only
+            // flat values, or scale by # of squares
+            if pt == PieceType::Rook {
+                let rook_attacks = rook_attacks(mv.to(), td.board.occupancies());
+                if rook_attacks.popcount() < 4 {
+                    entry.score -= 2000;
+                }
+            }
         }
     }
 }
