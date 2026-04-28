@@ -160,36 +160,24 @@ impl Board {
 
         let from = mv.from();
         let to = mv.to();
-        let piece = self.piece_on(to);
+        let mut piece = self.piece_on(to);
         let stm = self.side_to_move;
 
-        if !mv.is_castling() {
-            self.add_piece(piece, from);
+        if mv.is_castling() {
+            let (rook_from, rook_to) = self.get_castling_rook(to);
+            self.remove_piece(Piece::new(stm, PieceType::Rook), rook_to);
             self.remove_piece(piece, to);
-        }
+            self.add_piece(Piece::new(stm, PieceType::Rook), rook_from);
+            self.add_piece(piece, from);
+        } else {
+            self.remove_piece(piece, to);
+            piece = if mv.is_promotion() { Piece::new(stm, PieceType::Pawn) } else { piece };
+            self.add_piece(piece, from);
 
-        if let Some(piece) = self.state.captured {
-            self.add_piece(piece, to);
-        }
-
-        match mv.kind() {
-            MoveKind::EnPassant => {
-                self.add_piece(Piece::new(!stm, PieceType::Pawn), to ^ 8);
+            if mv.is_capture() {
+                let captured = if mv.is_en_passant() { Piece::new(!stm, PieceType::Pawn) } else { self.state.captured.unwrap() };
+                self.add_piece(captured, mv.capture_sq());
             }
-            MoveKind::Castling => {
-                let (rook_from, rook_to) = self.get_castling_rook(to);
-
-                self.remove_piece(Piece::new(stm, PieceType::Rook), rook_to);
-                self.remove_piece(piece, to);
-
-                self.add_piece(Piece::new(stm, PieceType::Rook), rook_from);
-                self.add_piece(piece, from);
-            }
-            _ if mv.is_promotion() => {
-                self.remove_piece(piece, from);
-                self.add_piece(Piece::new(stm, PieceType::Pawn), from);
-            }
-            _ => (),
         }
 
         self.state = self.state_stack.pop().unwrap();
