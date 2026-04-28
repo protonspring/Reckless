@@ -175,8 +175,11 @@ impl Board {
             self.add_piece(piece, from);
 
             if mv.is_capture() {
-                let captured = if mv.is_en_passant() { Piece::new(!stm, PieceType::Pawn) } else { self.state.captured.unwrap() };
-                self.add_piece(captured, mv.capture_sq());
+                if mv.is_en_passant() {
+                    self.add_piece(Piece::new(!stm, PieceType::Pawn), to ^ 8);
+                } else {
+                    self.add_piece(self.state.captured.unwrap(), to);
+                }
             }
         }
 
