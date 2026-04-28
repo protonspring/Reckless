@@ -1,37 +1,28 @@
-use crate::types::{Bitboard, Color, File, Rank};
+use crate::types::{Bitboard, Color, File, Square};
 
 const A: Bitboard = Bitboard::file(File::A);
 const B: Bitboard = Bitboard::file(File::B);
 const G: Bitboard = Bitboard::file(File::G);
 const H: Bitboard = Bitboard::file(File::H);
-const R1: Bitboard = Bitboard::rank(Rank::R1);
-const R2: Bitboard = Bitboard::rank(Rank::R2);
-const R7: Bitboard = Bitboard::rank(Rank::R7);
-const R8: Bitboard = Bitboard::rank(Rank::R8);
 
 pub fn pawn_attacks_setwise(bb: Bitboard, color: Color) -> Bitboard {
-    let (up_right, up_left) = match color {
-        Color::White => (9, 7),
-        Color::Black => (-7, -9),
-    };
+    let up_right = Square::UP[color] + Square::RIGHT;
+    let up_left = Square::UP[color] + Square::LEFT;
 
-    let right_attacks = (bb & !Bitboard::file(File::H)).shift(up_right);
-    let left_attacks = (bb & !Bitboard::file(File::A)).shift(up_left);
-
-    right_attacks | left_attacks
+    (bb & !H).shift(up_right) | (bb & !A).shift(up_left)
 }
 
 #[cfg(not(target_feature = "avx2"))]
 #[inline]
 pub fn knight_attacks_setwise(bb: Bitboard) -> Bitboard {
-    (bb & !(A | B | R8)).shift(6)
-        | (bb & !(A | R7 | R8)).shift(15)
-        | (bb & !(H | R7 | R8)).shift(17)
-        | (bb & !(G | H | R8)).shift(10)
-        | (bb & !(G | H | R1)).shift(-6)
-        | (bb & !(H | R1 | R2)).shift(-15)
-        | (bb & !(A | R1 | R2)).shift(-17)
-        | (bb & !(A | B | R1)).shift(-10)
+    (bb & !(A | B)).shift(6)
+        | (bb & !A).shift(15)
+        | (bb & !H).shift(17)
+        | (bb & !(G | H)).shift(10)
+        | (bb & !(G | H)).shift(-6)
+        | (bb & !H).shift(-15)
+        | (bb & !A).shift(-17)
+        | (bb & !(A | B)).shift(-10)
 }
 
 #[cfg(target_feature = "avx2")]
@@ -41,16 +32,16 @@ pub fn knight_attacks_setwise(bb: Bitboard) -> Bitboard {
 
     unsafe {
         let mask_a = _mm256_set_epi64x(
-            !(A | B | R8).0 as i64,
-            !(A | R7 | R8).0 as i64,
-            !(H | R7 | R8).0 as i64,
-            !(G | H | R8).0 as i64,
+            !(A | B).0 as i64,
+            !A.0 as i64,
+            !H.0 as i64,
+            !(G | H).0 as i64,
         );
         let mask_b = _mm256_set_epi64x(
-            !(G | H | R1).0 as i64,
-            !(H | R1 | R2).0 as i64,
-            !(A | R1 | R2).0 as i64,
-            !(A | B | R1).0 as i64,
+            !(G | H).0 as i64,
+            !H.0 as i64,
+            !A.0 as i64,
+            !(A | B).0 as i64,
         );
 
         let bb = _mm256_set1_epi64x(bb.0 as i64);
@@ -80,7 +71,7 @@ pub fn bishop_attacks_setwise(bb: Bitboard, occupancies: Bitboard) -> Bitboard {
     use std::arch::x86_64::*;
 
     unsafe {
-        let mask = _mm256_set_epi64x(!(R8 | H).0 as i64, !(R8 | A).0 as i64, !(R1 | H).0 as i64, !(R1 | A).0 as i64);
+        let mask = _mm256_set_epi64x(!H.0 as i64, !A.0 as i64, !H.0 as i64, !A.0 as i64);
 
         let generate = _mm256_set1_epi64x(bb.0 as i64);
         let propagate = _mm256_and_si256(_mm256_set1_epi64x(!occupancies.0 as i64), mask);
@@ -113,7 +104,7 @@ pub fn rook_attacks_setwise(bb: Bitboard, occupancies: Bitboard) -> Bitboard {
     use std::arch::x86_64::*;
 
     unsafe {
-        let mask = _mm256_set_epi64x(!R8.0 as i64, !H.0 as i64, !A.0 as i64, !R1.0 as i64);
+        let mask = _mm256_set_epi64x(!0 as i64, !H.0 as i64, !A.0 as i64, !0 as i64);
 
         let generate = _mm256_set1_epi64x(bb.0 as i64);
         let propagate = _mm256_and_si256(_mm256_set1_epi64x(!occupancies.0 as i64), mask);
