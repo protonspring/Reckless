@@ -54,21 +54,16 @@ impl Board {
         }
         self.state.plies_from_null += 1;
 
-        let captured = self.piece_on(to);
-        if captured != Piece::None && !mv.is_castling() {
-            self.remove_piece(piece, from);
-            observer.on_piece_change(self, piece, from, false);
-
-            self.remove_piece(captured, to);
-            self.add_piece(piece, to);
-            observer.on_piece_mutate(self, captured, piece, to);
-
-            self.update_hash(captured, to);
-
-            self.state.material -= captured.value();
-            self.state.captured = Some(captured);
-            self.state.recapture_square = to;
-        } else if !mv.is_castling() {
+        if !mv.is_castling() {
+            let captured = self.piece_on(to);
+            if captured != Piece::None && !mv.is_castling() {
+                self.remove_piece(captured, to);
+                observer.on_piece_change(self, captured, to, false);
+                self.update_hash(captured, to);
+                self.state.material -= captured.value();
+                self.state.captured = Some(captured);
+                self.state.recapture_square = to;
+            }
             self.remove_piece(piece, from);
             self.add_piece(piece, to);
             observer.on_piece_move(self, piece, from, to);
