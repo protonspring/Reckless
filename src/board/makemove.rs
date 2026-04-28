@@ -56,7 +56,7 @@ impl Board {
 
         if !mv.is_castling() {
             let captured = self.piece_on(to);
-            if captured != Piece::None && !mv.is_castling() {
+            if captured != Piece::None {
                 self.remove_piece(captured, to);
                 observer.on_piece_change(self, captured, to, false);
                 self.update_hash(captured, to);
