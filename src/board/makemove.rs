@@ -31,7 +31,7 @@ impl Board {
     pub fn make_move<T: BoardObserver>(&mut self, mv: Move, observer: &mut T) {
         let from = mv.from();
         let to = mv.to();
-        let piece = self.piece_on(from);
+        let piece = self.remove_piece(from);
         let pt = piece.piece_type();
         let stm = self.side_to_move;
 
@@ -56,7 +56,6 @@ impl Board {
 
         let captured = self.piece_on(to);
         if !mv.is_castling() {
-            self.remove_piece(from);
             if captured != Piece::None {
                 observer.on_piece_change(self, piece, from, false);
 
@@ -95,7 +94,6 @@ impl Board {
 
                 observer.on_piece_change(self, rook, rook_from, false);
 
-                self.remove_piece(from);
                 self.add_piece(piece, to);
                 observer.on_piece_move(self, piece, from, to);
 
