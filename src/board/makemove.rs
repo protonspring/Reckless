@@ -54,12 +54,11 @@ impl Board {
         }
         self.state.plies_from_null += 1;
 
-        let captured = self.piece_on(to);
         if !mv.is_castling() {
-            if captured != Piece::None {
+            if self.piece_on(to) != Piece::None {
                 observer.on_piece_change(self, piece, from, false);
 
-                self.remove_piece(to);
+                let captured = self.remove_piece(to);
                 observer.on_piece_mutate(self, captured, piece, to);
 
                 self.update_hash(captured, to);
