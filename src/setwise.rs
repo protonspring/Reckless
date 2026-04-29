@@ -1,4 +1,4 @@
-use crate::types::{Bitboard, Color, File, Rank};
+use crate::types::{Bitboard, Color, File, Rank, Square};
 
 const A: Bitboard = Bitboard::file(File::A);
 const B: Bitboard = Bitboard::file(File::B);
@@ -10,11 +10,8 @@ const R7: Bitboard = Bitboard::rank(Rank::R7);
 const R8: Bitboard = Bitboard::rank(Rank::R8);
 
 pub fn pawn_attacks_setwise(bb: Bitboard, color: Color) -> Bitboard {
-    let (up_right, up_left) = match color {
-        Color::White => (9, 7),
-        Color::Black => (-7, -9),
-    };
-
+    let up_right = Square::UP[color] + Square::RIGHT;
+    let up_left = Square::UP[color] + Square::LEFT;
     (bb & !H).shift(up_right) | (bb & !A).shift(up_left)
 }
 
