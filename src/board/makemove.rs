@@ -156,16 +156,15 @@ impl Board {
 
         let from = mv.from();
         let to = mv.to();
-        let piece = self.piece_on(to);
+        let piece = self.remove_piece(to);
         let stm = self.side_to_move;
 
         if !mv.is_castling() {
             self.add_piece(piece, from);
-            self.remove_piece(to);
         }
 
-        if let Some(piece) = self.state.captured {
-            self.add_piece(piece, to);
+        if let Some(captured) = self.state.captured {
+            self.add_piece(captured, to);
         }
 
         match mv.kind() {
@@ -174,10 +173,7 @@ impl Board {
             }
             MoveKind::Castling => {
                 let (rook_from, rook_to) = self.get_castling_rook(to);
-
                 let the_rook = self.remove_piece(rook_to);
-                self.remove_piece(to);
-
                 self.add_piece(the_rook, rook_from);
                 self.add_piece(piece, from);
             }
