@@ -83,20 +83,15 @@ impl Board {
                 self.state.key ^= ZOBRIST.en_passant[self.en_passant()];
             }
             MoveKind::EnPassant => {
-                let captured = Piece::new(!stm, PieceType::Pawn);
-
-                self.remove_piece(to ^ 8);
+                let captured = self.remove_piece(to ^ 8); //Piece::new(!stm, PieceType::Pawn);
                 observer.on_piece_change(self, captured, to ^ 8, false);
-
                 self.update_hash(captured, to ^ 8);
-
                 self.state.material -= captured.value();
             }
             MoveKind::Castling => {
                 let (rook_from, rook_to) = self.get_castling_rook(to);
-                let rook = Piece::new(stm, PieceType::Rook);
+                let rook = self.remove_piece(rook_from); //Piece::new(stm, PieceType::Rook);
 
-                self.remove_piece(rook_from);
                 observer.on_piece_change(self, rook, rook_from, false);
 
                 self.remove_piece(from);
