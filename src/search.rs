@@ -8,7 +8,7 @@ use crate::{
     time::Limits,
     transposition::{Bound, TtDepth},
     types::{
-        ArrayVec, Color, MAX_PLY, Move, Piece, PieceType, Score, Square, draw, is_decisive, is_loss, is_valid, is_win,
+        Color, MAX_PLY, Move, Piece, PieceType, Score, Square, draw, is_decisive, is_loss, is_valid, is_win,
         mate_in, mated_in,
     },
 };
@@ -678,8 +678,8 @@ fn search<NODE: NodeType>(
     let mut best_move = Move::NULL;
     let mut bound = Bound::Upper;
 
-    let mut quiet_moves = ArrayVec::<Move, 32>::new();
-    let mut noisy_moves = ArrayVec::<Move, 32>::new();
+    let mut quiet_moves = Vec::<Move>::with_capacity(32);
+    let mut noisy_moves = Vec::<Move>::with_capacity(32);
 
     let mut move_count = 0;
     let mut move_picker = MovePicker::new(tt_move);
