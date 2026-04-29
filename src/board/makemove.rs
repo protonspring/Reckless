@@ -69,7 +69,7 @@ impl Board {
             self.state.captured = Some(captured);
             self.state.recapture_square = to;
         } else if !mv.is_castling() {
-            self.remove_piece(piece, from);
+            self.remove_piece2(from);
             self.add_piece(piece, to);
             observer.on_piece_move(self, piece, from, to);
         }
@@ -85,7 +85,7 @@ impl Board {
             MoveKind::EnPassant => {
                 let captured = Piece::new(!stm, PieceType::Pawn);
 
-                self.remove_piece(captured, to ^ 8);
+                self.remove_piece2(to ^ 8);
                 observer.on_piece_change(self, captured, to ^ 8, false);
 
                 self.update_hash(captured, to ^ 8);
@@ -96,10 +96,10 @@ impl Board {
                 let (rook_from, rook_to) = self.get_castling_rook(to);
                 let rook = Piece::new(stm, PieceType::Rook);
 
-                self.remove_piece(rook, rook_from);
+                self.remove_piece2(rook_from);
                 observer.on_piece_change(self, rook, rook_from, false);
 
-                self.remove_piece(piece, from);
+                self.remove_piece2(from);
                 self.add_piece(piece, to);
                 observer.on_piece_move(self, piece, from, to);
 
