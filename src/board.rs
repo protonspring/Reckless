@@ -214,19 +214,13 @@ impl Board {
         self.pieces[piece.piece_type()].set(square);
     }
 
-    pub fn remove_piece2(&mut self, square: Square) -> Piece {
+    pub fn remove_piece(&mut self, square: Square) -> Piece {
         let piece = self.mailbox[square];
         self.mailbox[square] = Piece::None;
         self.colors[piece.color()].clear(square);
         self.pieces[piece.piece_type()].clear(square);
         piece
     }
-
-    //pub fn remove_piece(&mut self, piece: Piece, square: Square) {
-        //self.mailbox[square] = Piece::None;
-        //self.colors[piece.color()].clear(square);
-        //self.pieces[piece.piece_type()].clear(square);
-    //}
 
     pub fn update_hash(&mut self, piece: Piece, square: Square) {
         let key = ZOBRIST.pieces[piece][square];
