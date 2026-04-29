@@ -1,9 +1,11 @@
 use crate::types::{Bitboard, Color, Piece, PieceType, Square, ZOBRIST};
+use crate::setwise::pawn_attacks_setwise;
 
 include!(concat!(env!("OUT_DIR"), "/lookup.rs"));
 
 static mut BETWEEN: [[Bitboard; 64]; 64] = [[Bitboard(0); 64]; 64];
 static mut RAY_PASS: [[Bitboard; 64]; 64] = [[Bitboard(0); 64]; 64];
+static mut COLOR_PAWN_MAPS: [[Bitboard; 64]; 2] = [[Bitboard(0); 64]; 2];
 
 static mut CUCKOO: [u64; 0x2000] = [0; 0x2000];
 static mut A: [Square; 0x2000] = [Square::None; 0x2000];
@@ -33,6 +35,14 @@ unsafe fn init_luts() {
                 RAY_PASS[a][b] = bishop_attacks(a, Bitboard(0)) & bishop_attacks(b, a.to_bb());
                 RAY_PASS[a][b].set(b);
             }
+        }
+    }
+
+    for color in [Color::White, Color::Black] {
+        for square in 0..64 {
+            let square = Square::new(square);
+            COLOR_PAWN_MAPS[color][square] = pawn_attacks_setwise(square.to_bb(), color);
+
         }
     }
 }
@@ -145,12 +155,7 @@ pub fn attacks(piece: Piece, square: Square, occupancies: Bitboard) -> Bitboard 
 }
 
 pub fn pawn_attacks(square: Square, color: Color) -> Bitboard {
-    unsafe {
-        match color {
-            Color::White => Bitboard(*WHITE_PAWN_MAP.get_unchecked(square as usize)),
-            Color::Black => Bitboard(*BLACK_PAWN_MAP.get_unchecked(square as usize)),
-        }
-    }
+    unsafe { COLOR_PAWN_MAPS[color][square as usize] }
 }
 
 pub fn king_attacks(square: Square) -> Bitboard {
