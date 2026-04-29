@@ -678,8 +678,8 @@ fn search<NODE: NodeType>(
     let mut best_move = Move::NULL;
     let mut bound = Bound::Upper;
 
-    let mut quiet_moves = Vec::<Move>::with_capacity(32);
-    let mut noisy_moves = Vec::<Move>::with_capacity(32);
+    let mut quiet_moves = Vec::<Move>::with_capacity(64);
+    let mut noisy_moves = Vec::<Move>::with_capacity(64);
 
     let mut move_count = 0;
     let mut move_picker = MovePicker::new(tt_move);
@@ -981,7 +981,7 @@ fn search<NODE: NodeType>(
             }
         }
 
-        if mv != best_move && move_count < 32 {
+        if mv != best_move {
             if is_quiet {
                 quiet_moves.push(mv);
             } else {
