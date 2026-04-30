@@ -529,16 +529,10 @@ impl Board {
     /// We verify is self.state.enpassant is valid, and remove it if it is not.
     /// This must be called after pinners and checkers have been updated.
     fn update_en_passant(&mut self) {
-        if self.en_passant() == Square::None {
-            return;
+        if self.en_passant() != Square::None && !self.is_en_passant_valid() {
+            self.state.key ^= ZOBRIST.en_passant[self.en_passant()];
+            self.state.en_passant = Square::None;
         }
-
-        if self.is_en_passant_valid() {
-            return;
-        }
-
-        self.state.key ^= ZOBRIST.en_passant[self.en_passant()];
-        self.state.en_passant = Square::None;
     }
 
     pub fn get_castling_rook(&self, king_to: Square) -> (Square, Square) {
