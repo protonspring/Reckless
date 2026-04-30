@@ -228,7 +228,7 @@ impl MovePicker {
                 if !pinner_ray.contains(mv.to()) {
                     //println!("{}", td.board);
                     //println!("move: {}-{}", mv.from(), mv.to());
-                    entry.score += 2000;
+                    entry.score += 4000;
                 }
             }
         }
