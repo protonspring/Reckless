@@ -1,5 +1,5 @@
 use crate::{
-    lookup::king_attacks,
+    lookup::{king_attacks, ray_pass},
     search::NodeType,
     setwise::{bishop_attacks_setwise, knight_attacks_setwise, pawn_attacks_setwise, rook_attacks_setwise},
     thread::ThreadData,
@@ -219,6 +219,18 @@ impl MovePicker {
                 - 7584 * threatened[pt].contains(mv.to()) as i32
                 + 5000 * offense[pt].contains(mv.to()) as i32
                 - 4000 * wall_pawns.contains(mv.from()) as i32;
+
+            //bonus for moving the king if there are pinners.
+            if pt == PieceType::King && !td.board.pinners(!side).is_empty() {
+                let pinner = td.board.pinners(!side).lsb();
+                let pinner_ray = ray_pass(pinner, td.board.king_square(side));
+
+                if !pinner_ray.contains(mv.to()) {
+                    //println!("{}", td.board);
+                    //println!("move: {}-{}", mv.from(), mv.to());
+                    entry.score += 2000;
+                }
+            }
         }
     }
 }
