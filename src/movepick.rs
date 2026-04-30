@@ -165,7 +165,7 @@ impl MovePicker {
             if td.board.pinners(!side).contains(mv.to()) {
                 //println!("{}", td.board);
                 //println!("pinner capture: {}-{}", mv.from(), mv.to());
-                entry.score += 2000;
+                entry.score += 4000;
             }
         }
     }
