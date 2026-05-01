@@ -160,6 +160,16 @@ impl MovePicker {
                 + td.noisy_history.get(threats, td.board.moved_piece(mv), mv.to(), captured)
                 + 4000 * (mv.is_promotion() && mv.promo_piece_type() == PieceType::Queen) as i32
                 + (200000 - 20000 * pt as i32) * td.board.in_check() as i32;
+
+            if mv.is_promotion() && mv.promo_piece_type() == PieceType::Knight {
+                if td.board.checking_squares(PieceType::Knight).contains(mv.to()) {
+                    entry.score += 4000;
+                    //println!("knight promo");
+                    //println!("{}", td.board);
+                    //println!("to {}", mv.to());
+                    //println!("{}", td.board.checking_squares(PieceType::Knight));
+                }
+            }
         }
     }
 
