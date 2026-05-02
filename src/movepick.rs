@@ -168,19 +168,18 @@ impl MovePicker {
         let side = td.board.side_to_move();
         let occupancies = td.board.occupancies();
 
-        let occ_no_queens = td.board.occupancies() ^ td.board.colored_pieces(!side, PieceType::Queen);
-        let queen_threats = bishop_attacks_setwise(td.board.colored_pieces(!side, PieceType::Bishop), occ_no_queens)
-            | rook_attacks_setwise(td.board.colored_pieces(!side, PieceType::Rook), occ_no_queens);
-
         let threatened = {
             let pawn_threats = td.board.piece_threats(PieceType::Pawn);
             let minor_threats =
                 pawn_threats | td.board.piece_threats(PieceType::Knight) | td.board.piece_threats(PieceType::Bishop);
             let rook_threats = minor_threats | td.board.piece_threats(PieceType::Rook);
-            [Bitboard(0), pawn_threats, pawn_threats, minor_threats, queen_threats | rook_threats, Bitboard(0)]
+            [Bitboard(0), pawn_threats, pawn_threats, minor_threats, rook_threats, Bitboard(0)]
         };
 
         let escape = [0, 7768, 8218, 13424, 20208, 0];
+
+        let king_offense = td.board.colors(!side) & !threats; //any hanging piece
+        //println!("{}", td.board);
 
         // safe squares where we can attack an opponent piece
         let offense = {
@@ -223,6 +222,15 @@ impl MovePicker {
                 - 7584 * threatened[pt].contains(mv.to()) as i32
                 + 5000 * offense[pt].contains(mv.to()) as i32
                 - 4000 * wall_pawns.contains(mv.from()) as i32;
+
+            // for adding new attacks on hanging pieces
+            if pt == PieceType::King
+                && (king_attacks(mv.from()) & king_offense).is_empty()
+                && !(king_attacks(mv.to()) & king_offense).is_empty() {
+                //println!("{}", td.board);
+                //println!("king to: {}", mv.to());
+                entry.score += 4000;
+            }
         }
     }
 }
