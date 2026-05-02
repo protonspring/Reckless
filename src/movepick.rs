@@ -229,7 +229,7 @@ impl MovePicker {
                 && !(king_attacks(mv.to()) & king_offense).is_empty() {
                 //println!("{}", td.board);
                 //println!("king to: {}", mv.to());
-                entry.score += 4000;
+                entry.score += 8000;
             }
         }
     }
