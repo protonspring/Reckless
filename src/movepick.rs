@@ -227,9 +227,7 @@ impl MovePicker {
             if pt == PieceType::King
                 && (king_attacks(mv.from()) & king_offense).is_empty()
                 && !(king_attacks(mv.to()) & king_offense).is_empty() {
-                //println!("{}", td.board);
-                //println!("king to: {}", mv.to());
-                entry.score += 8000;
+                entry.score += 16000;
             }
         }
     }
