@@ -224,12 +224,16 @@ impl MovePicker {
 
             // for adding new attacks on hanging pieces
             if pt == PieceType::King
-                && td.board.material() < 4000
+                //&& td.board.material() < 4000
                 && (king_attacks(mv.from()) & king_offense).is_empty()
                 && !(king_attacks(mv.to()) & king_offense).is_empty() {
                 //println!("{}", td.board);
                 //println!("king to: {}", mv.to());
-                entry.score += 4000;
+                let material_scale = (10000 - td.board.material()).max(0); // / 10000;
+                let bonus = 6000 * material_scale / 10000;
+                //println!("scale: {}", material_scale);
+                //println!("bonus: {}", bonus);
+                entry.score += bonus; //8000 * material_scale / 10000;
             }
         }
     }
