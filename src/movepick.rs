@@ -237,7 +237,7 @@ impl MovePicker {
                 if (old_attacks & push_passed).is_empty() && !(new_attacks & push_passed).is_empty() {
                     //println!("{}", td.board);
                     //println!("move: {}-{}", mv.from(), mv.to());
-                    entry.score += 2000;
+                    entry.score += 7000;
                 }
             }
         }
