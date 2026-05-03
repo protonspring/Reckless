@@ -213,7 +213,7 @@ impl MovePicker {
                 - 7584 * threatened[pt].contains(mv.to()) as i32
                 + 5000 * offense[pt].contains(mv.to()) as i32;
 
-            if td.board.material() > 4000 {
+            if td.board.material() > 2500 {
                 // don't move king wall pawns
                 let wall_pawns = if Bitboard::HOME_ROWS[side].contains(td.board.king_square(side)) {
                     king_attacks(td.board.king_square(side)) & td.board.pieces(PieceType::Pawn)
