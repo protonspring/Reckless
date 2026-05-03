@@ -234,7 +234,7 @@ impl MovePicker {
                 if mv.to().distance_from(passed_pawn) < mv.from().distance_from(passed_pawn) {
                     //println!("{}", td.board);
                     //println!("Move: {}-{}", mv.from(), mv.to());
-                    entry.score += 3000;
+                    entry.score += 6000;
                 }
             }
         }
