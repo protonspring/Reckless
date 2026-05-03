@@ -229,7 +229,7 @@ impl MovePicker {
                 + 5000 * offense[pt].contains(mv.to()) as i32
                 - 4000 * wall_pawns.contains(mv.from()) as i32;
 
-            if td.board.material() < 2000 && !passed_pawns.is_empty() && pt == PieceType::King {
+            if td.board.material() < 2500 && !passed_pawns.is_empty() && pt == PieceType::King {
                 let passed_pawn = if side == Color::White { passed_pawns.msb() } else { passed_pawns.lsb() };
                 if mv.to().distance_from(passed_pawn) < mv.from().distance_from(passed_pawn) {
                     //println!("{}", td.board);
