@@ -179,7 +179,6 @@ impl MovePicker {
         let escape = [0, 7768, 8218, 13424, 20208, 0];
 
         let king_offense = td.board.colors(!side) & !threats; //any hanging piece
-        //println!("{}", td.board);
 
         // safe squares where we can attack an opponent piece
         let offense = {
@@ -225,6 +224,7 @@ impl MovePicker {
 
             // for adding new attacks on hanging pieces
             if pt == PieceType::King
+                && td.board.material() < 4000
                 && (king_attacks(mv.from()) & king_offense).is_empty()
                 && !(king_attacks(mv.to()) & king_offense).is_empty() {
                 //println!("{}", td.board);
