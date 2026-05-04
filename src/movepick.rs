@@ -167,7 +167,7 @@ impl MovePicker {
             if seven_rank_pawns.contains(mv.to()) {
                 //println!("{}", td.board);
                 //println!("Move: {}-{}", mv.from(), mv.to());
-                entry.score += 3000;
+                entry.score += 6000;
             }
         }
     }
