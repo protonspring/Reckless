@@ -206,14 +206,14 @@ impl MovePicker {
             Bitboard(0)
         };
 
-        // passed pawns
-        let mut passed_space = td.board.colored_pieces(!side, PieceType::Pawn) | pawn_threats;
-        passed_space |= passed_space.shift(Square::UP[!side]);
-        passed_space |= passed_space.shift(2 * Square::UP[!side]);
-        passed_space |= passed_space.shift(4 * Square::UP[!side]);
+        // block enemy passed pawns
+        let mut passed_space = td.board.colored_pieces(side, PieceType::Pawn) | pawn_threats;
+        passed_space |= passed_space.shift(Square::UP[side]);
+        passed_space |= passed_space.shift(2 * Square::UP[side]);
+        passed_space |= passed_space.shift(4 * Square::UP[side]);
         passed_space = !passed_space;
-        let passed_pawns = Bitboard::ADVANCED[side] & td.board.colored_pieces(side, PieceType::Pawn) & passed_space;
-        let push_passed = passed_pawns.shift(Square::UP[side]);
+        let passed_pawns = Bitboard::ADVANCED[!side] & td.board.colored_pieces(!side, PieceType::Pawn) & passed_space;
+        let push_passed = passed_pawns.shift(Square::UP[!side]);
 
         for entry in self.list.iter_mut() {
             let mv = entry.mv;
@@ -230,12 +230,11 @@ impl MovePicker {
                 + 5000 * offense[pt].contains(mv.to()) as i32
                 - 4000 * wall_pawns.contains(mv.from()) as i32;
 
-            if !passed_pawns.is_empty() && pt == PieceType::Knight {
-                let new_attacks = knight_attacks(mv.to());
-                if !(new_attacks & push_passed).is_empty() {
+            if !passed_pawns.is_empty() && (pt == PieceType::Knight || pt == PieceType::Bishop) {
+                if push_passed.contains(mv.to()) {
                     //println!("{}", td.board);
                     //println!("Move: {}-{}", mv.from(), mv.to());
-                    entry.score += 4000;
+                    entry.score += 2000;
                 }
             }
         }
