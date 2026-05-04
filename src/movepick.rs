@@ -160,6 +160,15 @@ impl MovePicker {
                 + td.noisy_history.get(threats, td.board.moved_piece(mv), mv.to(), captured)
                 + 4000 * (mv.is_promotion() && mv.promo_piece_type() == PieceType::Queen) as i32
                 + (200000 - 20000 * pt as i32) * td.board.in_check() as i32;
+
+            //bonus for capturing a pawn on the 7th rank
+            let stm = td.board.side_to_move();
+            let seven_rank_pawns = td.board.pieces(PieceType::Pawn) & Bitboard::SEVENTH_RANK[!stm];
+            if seven_rank_pawns.contains(mv.to()) {
+                //println!("{}", td.board);
+                //println!("Move: {}-{}", mv.from(), mv.to());
+                entry.score += 3000;
+            }
         }
     }
 
