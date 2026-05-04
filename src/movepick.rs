@@ -1,9 +1,9 @@
 use crate::{
-    lookup::king_attacks,
+    lookup::{king_attacks, knight_attacks},
     search::NodeType,
     setwise::{bishop_attacks_setwise, knight_attacks_setwise, pawn_attacks_setwise, rook_attacks_setwise},
     thread::ThreadData,
-    types::{ArrayVec, Bitboard, Color, MAX_MOVES, Move, MoveEntry, MoveList, PieceType, Square},
+    types::{ArrayVec, Bitboard, MAX_MOVES, Move, MoveEntry, MoveList, PieceType, Square},
 };
 
 #[derive(Copy, Clone, Eq, PartialEq, PartialOrd)]
@@ -213,6 +213,7 @@ impl MovePicker {
         passed_space |= passed_space.shift(4 * Square::UP[!side]);
         passed_space = !passed_space;
         let passed_pawns = Bitboard::ADVANCED[side] & td.board.colored_pieces(side, PieceType::Pawn) & passed_space;
+        let push_passed = passed_pawns.shift(Square::UP[side]);
 
         for entry in self.list.iter_mut() {
             let mv = entry.mv;
@@ -229,9 +230,9 @@ impl MovePicker {
                 + 5000 * offense[pt].contains(mv.to()) as i32
                 - 4000 * wall_pawns.contains(mv.from()) as i32;
 
-            if !passed_pawns.is_empty() && pt == PieceType::King {
-                let passed_pawn = if side == Color::White { passed_pawns.msb() } else { passed_pawns.lsb() };
-                if mv.to().distance_from(passed_pawn) < mv.from().distance_from(passed_pawn) {
+            if !passed_pawns.is_empty() && pt == PieceType::Knight {
+                let new_attacks = knight_attacks(mv.to());
+                if !(new_attacks & push_passed).is_empty() {
                     //println!("{}", td.board);
                     //println!("Move: {}-{}", mv.from(), mv.to());
                     entry.score += 4000;
