@@ -234,7 +234,7 @@ impl MovePicker {
                 if push_passed.contains(mv.to()) {
                     //println!("{}", td.board);
                     //println!("Move: {}-{}", mv.from(), mv.to());
-                    entry.score += 2000;
+                    entry.score += 4000;
                 }
             }
         }
