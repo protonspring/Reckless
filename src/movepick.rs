@@ -220,7 +220,7 @@ impl MovePicker {
                 - 7584 * threatened[pt].contains(mv.to()) as i32
                 + 5000 * offense[pt].contains(mv.to()) as i32
                 - 4000 * wall_pawns.contains(mv.from()) as i32
-                + 4000 * dbl_threats.contains(mv.from()) as i32;
+                + 12000 * dbl_threats.contains(mv.from()) as i32;
         }
     }
 }
