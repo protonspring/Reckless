@@ -205,7 +205,7 @@ impl MovePicker {
             Bitboard(0)
         };
 
-        let checking_bonus = [12000, 9000, 9000, 5000, 3000, 0];
+        let checking_bonus = [9000, 6000, 6000, 3000, 1000, 0];
 
         for entry in self.list.iter_mut() {
             let mv = entry.mv;
