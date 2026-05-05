@@ -168,13 +168,14 @@ impl MovePicker {
         let side = td.board.side_to_move();
         let occupancies = td.board.occupancies();
 
-        let threatened = {
-            let pawn_threats = td.board.piece_threats(PieceType::Pawn);
-            let minor_threats =
-                pawn_threats | td.board.piece_threats(PieceType::Knight) | td.board.piece_threats(PieceType::Bishop);
-            let rook_threats = minor_threats | td.board.piece_threats(PieceType::Rook);
-            [Bitboard(0), pawn_threats, pawn_threats, minor_threats, rook_threats, Bitboard(0)]
-        };
+        let pawn_threats = td.board.piece_threats(PieceType::Pawn);
+        let minor_threats = td.board.piece_threats(PieceType::Knight) | td.board.piece_threats(PieceType::Bishop);
+        let rook_threats = td.board.piece_threats(PieceType::Rook);
+
+        let dbl_threats = (pawn_threats & minor_threats) | (pawn_threats & rook_threats)
+                        | (minor_threats & rook_threats);
+
+        let threatened = [Bitboard(0), pawn_threats, pawn_threats, pawn_threats | minor_threats, pawn_threats | minor_threats | rook_threats, Bitboard(0)];
 
         let escape = [0, 7768, 8218, 13424, 20208, 0];
 
@@ -218,7 +219,8 @@ impl MovePicker {
                 + 9325 * td.board.checking_squares(pt).contains(mv.to()) as i32
                 - 7584 * threatened[pt].contains(mv.to()) as i32
                 + 5000 * offense[pt].contains(mv.to()) as i32
-                - 4000 * wall_pawns.contains(mv.from()) as i32;
+                - 4000 * wall_pawns.contains(mv.from()) as i32
+                - 8000 * dbl_threats.contains(mv.from()) as i32;
         }
     }
 }
