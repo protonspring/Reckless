@@ -225,7 +225,8 @@ impl MovePicker {
 
             // for adding new attacks on hanging pieces
             if pt == PieceType::King
-                && (king_attacks(mv.from()) & king_offense).is_empty()
+                && td.board.material() < 2500
+                //&& (king_attacks(mv.from()) & king_offense).is_empty()
                 && !(king_attacks(mv.to()) & king_offense).is_empty() {
                 //println!("{}", td.board);
                 //println!("king to: {}", mv.to());
