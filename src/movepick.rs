@@ -3,7 +3,7 @@ use crate::{
     search::NodeType,
     setwise::{bishop_attacks_setwise, knight_attacks_setwise, pawn_attacks_setwise, rook_attacks_setwise},
     thread::ThreadData,
-    types::{ArrayVec, Bitboard, MAX_MOVES, Move, MoveEntry, MoveList, PieceType},
+    types::{ArrayVec, Bitboard, MAX_MOVES, Move, MoveEntry, MoveList, PieceType, Square},
 };
 
 #[derive(Copy, Clone, Eq, PartialEq, PartialOrd)]
@@ -199,12 +199,9 @@ impl MovePicker {
         };
 
         // don't move king wall pawns
-        let my_king = td.board.king_square(side);
-        let wall_pawns = if Bitboard::HOME_ROWS[side].contains(my_king) {
-            king_attacks(my_king) & td.board.pieces(PieceType::Pawn)
-        } else {
-            Bitboard(0)
-        };
+        let king_attacks = king_attacks(td.board.king_square(side));
+        let wall_pawns = king_attacks & king_attacks.shift(Square::UP[side])
+            & td.board.pieces(PieceType::Pawn);
 
         for entry in self.list.iter_mut() {
             let mv = entry.mv;
