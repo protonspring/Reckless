@@ -199,7 +199,7 @@ impl MovePicker {
         };
 
         // don't move king wall pawns
-        let king_attacks = king_attacks(td.board.king_square(side));
+        let king_attacks = td.board.king_square(side).to_bb() | king_attacks(td.board.king_square(side));
         let wall_pawns = king_attacks & king_attacks.shift(Square::UP[side])
             & td.board.pieces(PieceType::Pawn);
 
