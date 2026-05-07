@@ -26,8 +26,8 @@ impl MoveList {
         self.inner.is_empty()
     }
 
-    pub fn max_entry(&self) -> usize {
-        self.iter().enumerate().max_by_key(|&(_idx, entry) | entry.score).map(|(idx, _entry)| idx).expect("REASON")
+    pub fn remove_max_entry(&mut self) -> MoveEntry {
+        self.remove(self.iter().enumerate().max_by_key(|&(_idx, entry) | entry.score).map(|(idx, _entry)| idx).expect("REASON"))
     }
 
     pub fn push(&mut self, from: Square, to: Square, kind: MoveKind) {

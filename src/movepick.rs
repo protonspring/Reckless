@@ -79,7 +79,7 @@ impl MovePicker {
 
         if self.stage == Stage::GoodNoisy {
             while !self.list.is_empty() {
-                let entry = self.list.remove(self.list.max_entry());
+                let entry = self.list.remove_max_entry();
                 if entry.mv == self.tt_move {
                     continue;
                 }
@@ -109,7 +109,7 @@ impl MovePicker {
         if self.stage == Stage::Quiet {
             if !skip_quiets {
                 while !self.list.is_empty() {
-                    let entry = self.list.remove(self.list.max_entry());
+                    let entry = self.list.remove_max_entry();
                     if entry.mv == self.tt_move {
                         continue;
                     }
