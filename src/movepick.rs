@@ -3,7 +3,7 @@ use crate::{
     search::NodeType,
     setwise::{bishop_attacks_setwise, knight_attacks_setwise, pawn_attacks_setwise, rook_attacks_setwise},
     thread::ThreadData,
-    types::{ArrayVec, Bitboard, MAX_MOVES, Move, MoveEntry, MoveList, PieceType},
+    types::{Bitboard, MAX_MOVES, Move, MoveEntry, MoveList, PieceType},
 };
 
 #[derive(Copy, Clone, Eq, PartialEq, PartialOrd)]
@@ -20,40 +20,40 @@ pub struct MovePicker {
     tt_move: Move,
     threshold: Option<i32>,
     stage: Stage,
-    bad_noisy: ArrayVec<Move, MAX_MOVES>,
+    bad_noisy: Vec<Move>,
     bad_noisy_idx: usize,
 }
 
 impl MovePicker {
-    pub const fn new(tt_move: Move) -> Self {
+    pub fn new(tt_move: Move) -> Self {
         Self {
             list: MoveList::new(),
             tt_move,
             threshold: None,
             stage: if tt_move.is_present() { Stage::HashMove } else { Stage::GenerateNoisy },
-            bad_noisy: ArrayVec::new(),
+            bad_noisy: Vec::with_capacity(MAX_MOVES),
             bad_noisy_idx: 0,
         }
     }
 
-    pub const fn new_probcut(threshold: i32) -> Self {
+    pub fn new_probcut(threshold: i32) -> Self {
         Self {
             list: MoveList::new(),
             tt_move: Move::NULL,
             threshold: Some(threshold),
             stage: Stage::GenerateNoisy,
-            bad_noisy: ArrayVec::new(),
+            bad_noisy: Vec::with_capacity(MAX_MOVES),
             bad_noisy_idx: 0,
         }
     }
 
-    pub const fn new_qsearch() -> Self {
+    pub fn new_qsearch() -> Self {
         Self {
             list: MoveList::new(),
             tt_move: Move::NULL,
             threshold: None,
             stage: Stage::GenerateNoisy,
-            bad_noisy: ArrayVec::new(),
+            bad_noisy: Vec::with_capacity(MAX_MOVES),
             bad_noisy_idx: 0,
         }
     }
@@ -127,9 +127,11 @@ impl MovePicker {
 
         // Stage::BadNoisy
         if self.bad_noisy_idx < self.bad_noisy.len() {
-            let mv = self.bad_noisy[self.bad_noisy_idx];
-            self.bad_noisy_idx += 1;
-            return Some(mv);
+            unsafe {
+                let mv = self.bad_noisy.get_unchecked(self.bad_noisy_idx);
+                self.bad_noisy_idx += 1;
+                return Some(*mv);
+            }
         }
 
         None
