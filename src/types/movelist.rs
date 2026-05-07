@@ -26,6 +26,19 @@ impl MoveList {
         self.inner.is_empty()
     }
 
+    pub fn max_entry(&self) -> usize {
+        let mut best_index = 0;
+        let mut best_score = i32::MIN;
+
+        for (index, entry) in self.iter().enumerate() {
+            if entry.score >= best_score {
+                best_index = index;
+                best_score = entry.score;
+            }
+        }
+        best_index
+    }
+
     pub fn push(&mut self, from: Square, to: Square, kind: MoveKind) {
         self.inner.push(MoveEntry { mv: Move::new(from, to, kind), score: 0 });
     }
