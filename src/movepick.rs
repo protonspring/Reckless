@@ -84,10 +84,13 @@ impl MovePicker {
                     continue;
                 }
 
-                let threshold = self.threshold.unwrap_or_else(|| -entry.score / 45 + 111);
-                if !td.board.see(entry.mv, threshold) {
-                    self.bad_noisy.push(entry.mv);
-                    continue;
+                if td.board.all_threats().contains(entry.mv.to()) {
+
+                    let threshold = self.threshold.unwrap_or_else(|| -entry.score / 45 + 111);
+                    if !td.board.see(entry.mv, threshold) {
+                        self.bad_noisy.push(entry.mv);
+                        continue;
+                    }
                 }
 
                 if NODE::ROOT {
