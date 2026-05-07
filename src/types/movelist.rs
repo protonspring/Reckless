@@ -27,7 +27,7 @@ impl MoveList {
     }
 
     pub fn remove_max_entry(&mut self) -> MoveEntry {
-        self.remove(self.iter().enumerate().max_by_key(|&(_idx, entry) | entry.score).map(|(idx, _entry)| idx).expect("REASON"))
+        self.inner.swap_remove(self.iter().enumerate().max_by_key(|&(_idx, entry) | entry.score).map(|(idx, _entry)| idx).expect("REASON"))
     }
 
     pub fn push(&mut self, from: Square, to: Square, kind: MoveKind) {
@@ -124,10 +124,6 @@ impl MoveList {
 
     pub fn iter_mut(&mut self) -> std::slice::IterMut<'_, MoveEntry> {
         self.inner.iter_mut()
-    }
-
-    pub const fn remove(&mut self, index: usize) -> MoveEntry {
-        self.inner.swap_remove(index)
     }
 }
 
