@@ -107,8 +107,6 @@ impl MovePicker {
                 return Some(entry.mv);
             }
 
-            self.bad_noisy_idx = 0;
-
             if skip_quiets {
                 self.stage = Stage::BadNoisy;
             } else {
