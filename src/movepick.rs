@@ -23,22 +23,20 @@ pub struct MovePicker {
     threshold: Option<i32>,
     stage: Stage,
     bad_noisy: [MaybeUninit<Move>; MAX_MOVES],
+    bad_noisy_cnt: usize,
     bad_noisy_idx: usize,
 }
 
 impl MovePicker {
     pub fn new(tt_move: Move) -> Self {
         let bad_noisy: [MaybeUninit<Move>; MAX_MOVES] = unsafe { MaybeUninit::uninit().assume_init() };
-        //let data: [MaybeUninit<Move>; MAX_MOVES] = unsafe { MaybeUninit::uninit().assume_init() };
         Self {
             list: MoveList::new(),
             tt_move,
             threshold: None,
             stage: if tt_move.is_present() { Stage::HashMove } else { Stage::GenerateNoisy },
-            //bad_noisy: Vec::with_capacity(MAX_MOVES),
-            //bad_noisy: [MaybeUninit<Move>; MAX_MOVES] = unsafe { MaybeUninit::uninit().assume_init() },
-            //bad_noisy: [MaybeUninit::<Move>; MAX_MOVES] = unsafe { MaybeUninit::uninit().assume_init() },
             bad_noisy,
+            bad_noisy_cnt: 0,
             bad_noisy_idx: 0,
         }
     }
@@ -50,9 +48,8 @@ impl MovePicker {
             tt_move: Move::NULL,
             threshold: Some(threshold),
             stage: Stage::GenerateNoisy,
-            //bad_noisy: Vec::with_capacity(MAX_MOVES),
-            //bad_noisy: [Move; MAX_MOVES] = unsafe { MaybeUninit::uninit().assume_init() },
             bad_noisy,
+            bad_noisy_cnt: 0,
             bad_noisy_idx: 0,
         }
     }
@@ -64,9 +61,8 @@ impl MovePicker {
             tt_move: Move::NULL,
             threshold: None,
             stage: Stage::GenerateNoisy,
-            //bad_noisy: Vec::with_capacity(MAX_MOVES),
-            //bad_noisy: [Move; MAX_MOVES] = unsafe { MaybeUninit::uninit().assume_init() },
             bad_noisy,
+            bad_noisy_cnt: 0,
             bad_noisy_idx: 0,
         }
     }
@@ -99,9 +95,8 @@ impl MovePicker {
 
                 let threshold = self.threshold.unwrap_or_else(|| -entry.score / 45 + 111);
                 if !td.board.see(entry.mv, threshold) {
-                    //self.bad_noisy.push(entry.mv);
-                    unsafe { self.bad_noisy[self.bad_noisy_idx].as_mut_ptr().write(entry.mv) };
-                    self.bad_noisy_idx += 1;
+                    unsafe { self.bad_noisy[self.bad_noisy_cnt].as_mut_ptr().write(entry.mv) };
+                    self.bad_noisy_cnt += 1;
                     continue;
                 }
 
@@ -143,7 +138,7 @@ impl MovePicker {
         }
 
         // Stage::BadNoisy
-        if self.bad_noisy_idx < self.bad_noisy.len() {
+        if self.bad_noisy_idx < self.bad_noisy_cnt {
             unsafe {
                 let mv = self.bad_noisy.get_unchecked(self.bad_noisy_idx).as_ptr();
                 self.bad_noisy_idx += 1;
