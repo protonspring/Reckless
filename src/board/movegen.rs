@@ -191,15 +191,9 @@ impl super::Board {
         &self, list: &mut MoveList, target: Bitboard, pinned: Bitboard, pawns: Bitboard, seventh_rank: Bitboard,
     ) {
         let stm = self.side_to_move();
-        //let up_right = Square::UP[stm] + Square::RIGHT;
-        //let up_left = Square::UP[stm] + Square::LEFT;
         let pawn_dirs = [Square::UP[stm] + Square::RIGHT, Square::UP[stm] + Square::LEFT];
-        //let left_shift_mask = !Bitboard::file(File::A);
-        //let right_shift_mask = !Bitboard::file(File::H);
         let shift_masks = [!Bitboard::file(File::H), !Bitboard::file(File::A)];
-
         let mut movable_pawns = [pawns & !pinned, pawns & !pinned];
-        //let mut right_pawns = pawns & !pinned;
 
         for i in 0..2 {
             for pinned_pawn in pawns & pinned {
@@ -208,13 +202,16 @@ impl super::Board {
                     movable_pawns[i] |= pinned_pawn.to_bb();
                 } 
             }
+
+            let promos = (movable_pawns[i] & seventh_rank & shift_masks[i]).shift(pawn_dirs[i]) & self.colors(!stm);
+            list.push_promotion_capture_setwise(pawn_dirs[i], promos & target);
         }
 
-        let right = (movable_pawns[0] & seventh_rank & shift_masks[0]).shift(pawn_dirs[0]) & self.colors(!stm);
-        let left = (movable_pawns[1] & seventh_rank & shift_masks[1]).shift(pawn_dirs[1]) & self.colors(!stm);
+        //let right = (movable_pawns[0] & seventh_rank & shift_masks[0]).shift(pawn_dirs[0]) & self.colors(!stm);
+        //let left = (movable_pawns[1] & seventh_rank & shift_masks[1]).shift(pawn_dirs[1]) & self.colors(!stm);
 
-        list.push_promotion_capture_setwise(pawn_dirs[0], right & target);
-        list.push_promotion_capture_setwise(pawn_dirs[1], left & target);
+        //list.push_promotion_capture_setwise(pawn_dirs[0], right & target);
+        //list.push_promotion_capture_setwise(pawn_dirs[1], left & target);
 
         let right_captures =
             (movable_pawns[0] & !seventh_rank & shift_masks[0]).shift(pawn_dirs[0]) & self.colors(!stm);
