@@ -32,13 +32,6 @@ pub fn generate_pawn_map() -> [[u64; 64]; 2] {
     ]
 }
 
-pub fn generate_diagonal_tables() -> [[u64; 64]; 2] {
-    [
-        generate_map(|square| sliding_attacks(square, 0, &[9, -9])),
-        generate_map(|square| sliding_attacks(square, 0, &[7, -7])),
-    ]
-}
-
 pub fn generate_rook_map() -> Vec<u64> {
     generate_sliding_map(ROOK_MAP_SIZE, &ROOK_MAGICS, &[8, -8, 1, -1])
 }

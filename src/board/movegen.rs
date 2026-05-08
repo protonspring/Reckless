@@ -1,7 +1,6 @@
 use crate::{
     lookup::{
-        between, bishop_attacks, king_attacks, knight_attacks, queen_attacks, ray_pass, relative_anti_diagonal,
-        relative_diagonal, rook_attacks,
+        between, bishop_attacks, king_attacks, knight_attacks, queen_attacks, ray_pass, rook_attacks,
     },
     types::{Bitboard, CastlingKind, File, MoveKind, MoveList, PieceType, Square},
 };
