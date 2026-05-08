@@ -143,14 +143,13 @@ impl super::Board {
 
     fn collect_pawn_moves<T: MoveGenerator>(&self, list: &mut MoveList, target: Bitboard) {
         let stm = self.side_to_move();
-        let pinned = self.pinned(stm);
-        let pawns = self.colored_pieces(self.side_to_move(), PieceType::Pawn);
-        let seventh_rank = Bitboard::SEVENTH_RANK[self.side_to_move()];
+        let pawns = self.colored_pieces(stm, PieceType::Pawn);
+        let seventh_rank = Bitboard::SEVENTH_RANK[stm];
 
-        self.collect_pawn_pushes::<T>(list, target, pinned, pawns, seventh_rank);
+        self.collect_pawn_pushes::<T>(list, target, pawns, seventh_rank);
 
         if T::KIND == Kind::Noisy {
-            self.collect_pawn_captures(list, target, pinned, pawns, seventh_rank);
+            self.collect_pawn_captures(list, target, pawns, seventh_rank);
         }
     }
 
@@ -159,9 +158,10 @@ impl super::Board {
     }
 
     fn collect_pawn_pushes<T: MoveGenerator>(
-        &self, list: &mut MoveList, target: Bitboard, pinned: Bitboard, pawns: Bitboard, seventh_rank: Bitboard,
+        &self, list: &mut MoveList, target: Bitboard, pawns: Bitboard, seventh_rank: Bitboard,
     ) {
         let stm = self.side_to_move();
+        let pinned = self.pinned(stm);
         let up = Square::UP[stm];
         let third_rank = Bitboard::THIRD_RANK[stm];
         let empty = !self.occupancies();
@@ -188,9 +188,10 @@ impl super::Board {
     }
 
     fn collect_pawn_captures(
-        &self, list: &mut MoveList, target: Bitboard, pinned: Bitboard, pawns: Bitboard, seventh_rank: Bitboard,
+        &self, list: &mut MoveList, target: Bitboard, pawns: Bitboard, seventh_rank: Bitboard,
     ) {
         let stm = self.side_to_move();
+        let pinned = self.pinned(stm);
         let up_right = Square::UP[stm] + Square::RIGHT;
         let up_left = Square::UP[stm] + Square::LEFT;
         let right_pin_mask = relative_diagonal(stm, self.king_square(stm));
