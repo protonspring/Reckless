@@ -216,8 +216,9 @@ impl super::Board {
         for i in 0..2 {
             if self.en_passant() != Square::None {
                 let ep = self.en_passant();
-                if (movable_pawns[i] & shift_masks[i]).contains(ep.shift(-pawn_dirs[i])) {
-                    list.push(ep.shift(-pawn_dirs[i]), self.en_passant(), MoveKind::EnPassant);
+                let attacker = ep.shift(-pawn_dirs[i]);
+                if (movable_pawns[i] & shift_masks[i]).contains(attacker) {
+                    list.push(attacker, self.en_passant(), MoveKind::EnPassant);
                 }
             }
         }
