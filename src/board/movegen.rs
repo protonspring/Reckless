@@ -192,7 +192,7 @@ impl super::Board {
         let stm = self.side_to_move();
         let pawn_dirs = [Square::UP[stm] + Square::RIGHT, Square::UP[stm] + Square::LEFT];
         let shift_masks = [!Bitboard::file(File::H), !Bitboard::file(File::A)];
-        let mut movable_pawns = [pawns & !pinned, pawns & !pinned];
+        let mut movable_pawns = [pawns & !pinned & shift_masks[0], pawns & !pinned & shift_masks[1]];
 
         for i in 0..2 {
             for pinned_pawn in pawns & pinned & shift_masks[i] {
@@ -202,17 +202,17 @@ impl super::Board {
                 } 
             }
 
-            let promos = (movable_pawns[i] & seventh_rank & shift_masks[i]).shift(pawn_dirs[i]) & self.colors(!stm);
+            let promos = (movable_pawns[i] & seventh_rank).shift(pawn_dirs[i]) & self.colors(!stm);
             list.push_promotion_capture_setwise(pawn_dirs[i], promos & target);
 
-            let captures = (movable_pawns[i] & !seventh_rank & shift_masks[i]).shift(pawn_dirs[i]) & self.colors(!stm);
+            let captures = (movable_pawns[i] & !seventh_rank).shift(pawn_dirs[i]) & self.colors(!stm);
     
             list.push_pawns_setwise(pawn_dirs[i], captures & target, MoveKind::Capture);
 
             if self.en_passant() != Square::None {
                 let ep = self.en_passant();
                 let attacker = ep.shift(-pawn_dirs[i]);
-                if (movable_pawns[i] & shift_masks[i]).contains(attacker) {
+                if (movable_pawns[i]).contains(attacker) {
                     list.push(attacker, self.en_passant(), MoveKind::EnPassant);
                 }
             }
