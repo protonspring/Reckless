@@ -200,19 +200,14 @@ impl super::Board {
 
         let mut movable_pawns = [pawns & !pinned, pawns & !pinned];
         //let mut right_pawns = pawns & !pinned;
-        for pinned_pawn in pawns & pinned {
-            let king_ray = ray_pass(self.king_square(stm), pinned_pawn);
-            if king_ray.contains(pinned_pawn) == king_ray.contains(pinned_pawn.shift(pawn_dirs[0])) {
-                movable_pawns[0] |= pinned_pawn.to_bb();
-            } 
-        }
 
-        //let mut left_pawns = pawns & !pinned;
-        for pinned_pawn in pawns & pinned {
-            let king_ray = ray_pass(self.king_square(stm), pinned_pawn);
-            if king_ray.contains(pinned_pawn) == king_ray.contains(pinned_pawn.shift(pawn_dirs[1])) {
-                movable_pawns[1] |= pinned_pawn.to_bb();
-            } 
+        for i in 0..2 {
+            for pinned_pawn in pawns & pinned {
+                let king_ray = ray_pass(self.king_square(stm), pinned_pawn);
+                if king_ray.contains(pinned_pawn) == king_ray.contains(pinned_pawn.shift(pawn_dirs[i])) {
+                    movable_pawns[i] |= pinned_pawn.to_bb();
+                } 
+            }
         }
 
         let right = (movable_pawns[0] & seventh_rank & shift_masks[0]).shift(pawn_dirs[0]) & self.colors(!stm);
