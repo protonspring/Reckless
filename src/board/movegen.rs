@@ -207,18 +207,11 @@ impl super::Board {
             list.push_promotion_capture_setwise(pawn_dirs[i], promos & target);
         }
 
-        //let right = (movable_pawns[0] & seventh_rank & shift_masks[0]).shift(pawn_dirs[0]) & self.colors(!stm);
-        //let left = (movable_pawns[1] & seventh_rank & shift_masks[1]).shift(pawn_dirs[1]) & self.colors(!stm);
-
-        //list.push_promotion_capture_setwise(pawn_dirs[0], right & target);
-        //list.push_promotion_capture_setwise(pawn_dirs[1], left & target);
-
-        let right_captures =
-            (movable_pawns[0] & !seventh_rank & shift_masks[0]).shift(pawn_dirs[0]) & self.colors(!stm);
-        let left_captures = (movable_pawns[1] & !seventh_rank & shift_masks[1]).shift(pawn_dirs[1]) & self.colors(!stm);
-
-        list.push_pawns_setwise(pawn_dirs[0], right_captures & target, MoveKind::Capture);
-        list.push_pawns_setwise(pawn_dirs[1], left_captures & target, MoveKind::Capture);
+        for i in 0..2 {
+            let captures = (movable_pawns[i] & !seventh_rank & shift_masks[i]).shift(pawn_dirs[i]) & self.colors(!stm);
+    
+            list.push_pawns_setwise(pawn_dirs[i], captures & target, MoveKind::Capture);
+        }
 
         if self.en_passant() != Square::None {
             let ep = self.en_passant().to_bb();
