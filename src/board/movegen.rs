@@ -213,12 +213,13 @@ impl super::Board {
             list.push_pawns_setwise(pawn_dirs[i], captures & target, MoveKind::Capture);
         }
 
-        if self.en_passant() != Square::None {
-            let ep = self.en_passant().to_bb();
-            let right_attacker = movable_pawns[0] & !Bitboard::file(File::H) & ep.shift(-pawn_dirs[0]);
-            let left_attacker = movable_pawns[1] & !Bitboard::file(File::A) & ep.shift(-pawn_dirs[1]);
-            for pawn in right_attacker | left_attacker {
-                list.push(pawn, self.en_passant(), MoveKind::EnPassant);
+        for i in 0..2 {
+            if self.en_passant() != Square::None {
+                let ep = self.en_passant().to_bb();
+                let attacker = movable_pawns[i] & shift_masks[i] & ep.shift(-pawn_dirs[i]);
+                for pawn in attacker {
+                    list.push(pawn, self.en_passant(), MoveKind::EnPassant);
+                }
             }
         }
     }
