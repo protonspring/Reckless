@@ -193,6 +193,8 @@ impl super::Board {
         let stm = self.side_to_move();
         let up_right = Square::UP[stm] + Square::RIGHT;
         let up_left = Square::UP[stm] + Square::LEFT;
+        let left_shift_mask = !Bitboard::file(File::A);
+        let right_shift_mask = !Bitboard::file(File::H);
         //let left_pin_mask = relative_anti_diagonal(stm, self.king_square(stm));
 
         let mut right_pawns = pawns & !pinned;
@@ -214,18 +216,22 @@ impl super::Board {
         //let right_pawns = Self::movable_pawns(pinned, pawns, right_pin_mask);
         //let left_pawns = Self::movable_pawns(pinned, pawns, left_pin_mask);
 
-        let right = (right_pawns & seventh_rank & !Bitboard::file(File::H)).shift(up_right) & self.colors(!stm);
-        let left = (left_pawns & seventh_rank & !Bitboard::file(File::A)).shift(up_left) & self.colors(!stm);
+        let right = (right_pawns & seventh_rank & right_shift_mask).shift(up_right) & self.colors(!stm);
+        let left = (left_pawns & seventh_rank & left_shift_mask).shift(up_left) & self.colors(!stm);
 
         list.push_promotion_capture_setwise(up_right, right & target);
         list.push_promotion_capture_setwise(up_left, left & target);
 
         let right_captures =
-            (right_pawns & !seventh_rank & !Bitboard::file(File::H)).shift(up_right) & self.colors(!stm);
-        let left_captures = (left_pawns & !seventh_rank & !Bitboard::file(File::A)).shift(up_left) & self.colors(!stm);
+            (right_pawns & !seventh_rank & right_shift_mask).shift(up_right) & self.colors(!stm);
+        let left_captures = (left_pawns & !seventh_rank & left_shift_mask).shift(up_left) & self.colors(!stm);
 
         list.push_pawns_setwise(up_right, right_captures & target, MoveKind::Capture);
         list.push_pawns_setwise(up_left, left_captures & target, MoveKind::Capture);
+
+
+
+
 
         if self.en_passant() != Square::None {
             let ep = self.en_passant().to_bb();
