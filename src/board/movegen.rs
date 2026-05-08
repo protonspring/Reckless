@@ -205,15 +205,11 @@ impl super::Board {
 
             let promos = (movable_pawns[i] & seventh_rank & shift_masks[i]).shift(pawn_dirs[i]) & self.colors(!stm);
             list.push_promotion_capture_setwise(pawn_dirs[i], promos & target);
-        }
 
-        for i in 0..2 {
             let captures = (movable_pawns[i] & !seventh_rank & shift_masks[i]).shift(pawn_dirs[i]) & self.colors(!stm);
     
             list.push_pawns_setwise(pawn_dirs[i], captures & target, MoveKind::Capture);
-        }
 
-        for i in 0..2 {
             if self.en_passant() != Square::None {
                 let ep = self.en_passant();
                 let attacker = ep.shift(-pawn_dirs[i]);
