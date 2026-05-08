@@ -72,23 +72,21 @@ impl super::Board {
             Bitboard::ALL
         };
 
-        let pinned = self.pinned(self.side_to_move());
-
-        self.collect_pawn_moves::<T>(list, target, pinned);
+        self.collect_pawn_moves::<T>(list, target);
 
         let knights = self.colored_pieces(stm, PieceType::Knight);
         let bishops = self.colored_pieces(stm, PieceType::Bishop);
         let rooks = self.colored_pieces(stm, PieceType::Rook);
         let queens = self.colored_pieces(stm, PieceType::Queen);
 
-        self.collect_unpinned::<T, _>(list, target, knights & !pinned, knight_attacks);
-        self.collect_unpinned::<T, _>(list, target, bishops & !pinned, |sq| bishop_attacks(sq, occupancies));
-        self.collect_unpinned::<T, _>(list, target, rooks & !pinned, |sq| rook_attacks(sq, occupancies));
-        self.collect_unpinned::<T, _>(list, target, queens & !pinned, |sq| queen_attacks(sq, occupancies));
+        self.collect_unpinned::<T, _>(list, target, knights, knight_attacks);
+        self.collect_unpinned::<T, _>(list, target, bishops, |sq| bishop_attacks(sq, occupancies));
+        self.collect_unpinned::<T, _>(list, target, rooks, |sq| rook_attacks(sq, occupancies));
+        self.collect_unpinned::<T, _>(list, target, queens, |sq| queen_attacks(sq, occupancies));
 
-        self.collect_pinned::<T, _>(list, target, bishops & pinned, |sq| bishop_attacks(sq, occupancies));
-        self.collect_pinned::<T, _>(list, target, rooks & pinned, |sq| rook_attacks(sq, occupancies));
-        self.collect_pinned::<T, _>(list, target, queens & pinned, |sq| queen_attacks(sq, occupancies));
+        self.collect_pinned::<T, _>(list, target, bishops, |sq| bishop_attacks(sq, occupancies));
+        self.collect_pinned::<T, _>(list, target, rooks, |sq| rook_attacks(sq, occupancies));
+        self.collect_pinned::<T, _>(list, target, queens, |sq| queen_attacks(sq, occupancies));
 
         if T::KIND == Kind::Quiet {
             self.collect_castling(list);
@@ -99,7 +97,7 @@ impl super::Board {
         &self, list: &mut MoveList, target: Bitboard, bb: Bitboard, attacks: F,
     ) {
         let stm = self.side_to_move();
-        for from in bb {
+        for from in bb & !self.pinned(stm) {
             if T::KIND == Kind::Noisy {
                 list.push_setwise(from, attacks(from) & target & self.colors(!stm), MoveKind::Capture);
             }
@@ -112,9 +110,9 @@ impl super::Board {
     fn collect_pinned<T: MoveGenerator, F: Fn(Square) -> Bitboard>(
         &self, list: &mut MoveList, target: Bitboard, bb: Bitboard, attacks: F,
     ) {
-        let king = self.king_square(self.side_to_move());
         let stm = self.side_to_move();
-        for from in bb {
+        let king = self.king_square(self.side_to_move());
+        for from in bb & self.pinned(stm) {
             let pin_mask = ray_pass(king, from);
             if T::KIND == Kind::Noisy {
                 list.push_setwise(from, attacks(from) & target & self.colors(!stm) & pin_mask, MoveKind::Capture);
@@ -143,7 +141,9 @@ impl super::Board {
         }
     }
 
-    fn collect_pawn_moves<T: MoveGenerator>(&self, list: &mut MoveList, target: Bitboard, pinned: Bitboard) {
+    fn collect_pawn_moves<T: MoveGenerator>(&self, list: &mut MoveList, target: Bitboard) {
+        let stm = self.side_to_move();
+        let pinned = self.pinned(stm);
         let pawns = self.colored_pieces(self.side_to_move(), PieceType::Pawn);
         let seventh_rank = Bitboard::SEVENTH_RANK[self.side_to_move()];
 
