@@ -146,6 +146,16 @@ impl MovePicker {
 
     fn score_noisy(&mut self, td: &ThreadData) {
         let threats = td.board.all_threats();
+        let pawn_threats = td.board.piece_threats(PieceType::Pawn);
+
+        let threatened = {
+            let minor_threats =
+                pawn_threats | td.board.piece_threats(PieceType::Knight) | td.board.piece_threats(PieceType::Bishop);
+            let rook_threats = minor_threats | td.board.piece_threats(PieceType::Rook);
+            [Bitboard(0), pawn_threats, pawn_threats, minor_threats, rook_threats, Bitboard(0)]
+        };
+
+        let escape = [0, 7768, 8218, 13424, 20208, 0];
 
         for entry in self.list.iter_mut() {
             let mv = entry.mv;
@@ -155,7 +165,8 @@ impl MovePicker {
             entry.score = 16 * captured.value()
                 + td.noisy_history.get(threats, td.board.moved_piece(mv), mv.to(), captured)
                 + 4000 * (mv.is_promotion() && mv.promo_piece_type() == PieceType::Queen) as i32
-                + (200000 - 20000 * pt as i32) * td.board.in_check() as i32;
+                + (200000 - 20000 * pt as i32) * td.board.in_check() as i32
+                + escape[pt] * threatened[pt].contains(mv.from()) as i32;
         }
     }
 
@@ -163,6 +174,7 @@ impl MovePicker {
         let threats = td.board.all_threats();
         let side = td.board.side_to_move();
         let occupancies = td.board.occupancies();
+
         let pawn_threats = td.board.piece_threats(PieceType::Pawn);
 
         let threatened = {
