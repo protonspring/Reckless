@@ -155,7 +155,7 @@ impl MovePicker {
             [Bitboard(0), pawn_threats, pawn_threats, minor_threats, rook_threats, Bitboard(0)]
         };
 
-        let escape = [0, 7768, 8218, 13424, 20208, 0];
+        let escape = [0, 3700, 4100, 06500, 10100, 0];
 
         for entry in self.list.iter_mut() {
             let mv = entry.mv;
