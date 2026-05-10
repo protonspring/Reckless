@@ -193,10 +193,24 @@ impl super::Board {
         let stm = self.side_to_move();
         let up_right = Square::UP[stm] + Square::RIGHT;
         let up_left = Square::UP[stm] + Square::LEFT;
-        let right_pin_mask = relative_diagonal(stm, self.king_square(stm));
-        let left_pin_mask = relative_diagonal(!stm, self.king_square(stm));
-        let right_pawns = Self::movable_pawns(pinned, pawns, right_pin_mask);
-        let left_pawns = Self::movable_pawns(pinned, pawns, left_pin_mask);
+        let king_sq = self.king_square(stm);
+
+        //let right_pin_mask = relative_diagonal(stm, self.king_square(stm));
+        //let left_pin_mask = relative_diagonal(!stm, self.king_square(stm));
+        //let right_pawns = Self::movable_pawns(pinned, pawns, right_pin_mask);
+        //let left_pawns = Self::movable_pawns(pinned, pawns, left_pin_mask);
+
+        let mut right_pawns = pawns & !pinned;
+        let mut left_pawns = pawns & !pinned;
+
+        for pawn in pawns & pinned {
+            if ray_pass(king_sq, pawn).contains(pawn.shift(up_right)) {
+                right_pawns |= pawn.to_bb();
+            }
+            if ray_pass(king_sq, pawn).contains(pawn.shift(up_left)) {
+                left_pawns |= pawn.to_bb();
+            }
+        }
 
         let right = (right_pawns & seventh_rank & !Bitboard::file(File::H)).shift(up_right) & self.colors(!stm);
         let left = (left_pawns & seventh_rank & !Bitboard::file(File::A)).shift(up_left) & self.colors(!stm);
