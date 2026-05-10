@@ -22,6 +22,8 @@ pub struct MovePicker {
     stage: Stage,
     bad_noisy: ArrayVec<Move, MAX_MOVES>,
     bad_noisy_idx: usize,
+    tt_was_noisy: bool,
+    tt_was_quiet: bool,
 }
 
 impl MovePicker {
@@ -33,6 +35,8 @@ impl MovePicker {
             stage: if tt_move.is_present() { Stage::HashMove } else { Stage::GenerateNoisy },
             bad_noisy: ArrayVec::new(),
             bad_noisy_idx: 0,
+            tt_was_noisy: if tt_move.is_present() && tt_move.is_noisy() { true } else { false },
+            tt_was_quiet: if tt_move.is_present() && !tt_move.is_noisy() { true } else { false },
         }
     }
 
@@ -52,7 +56,10 @@ impl MovePicker {
         if self.stage == Stage::GenerateNoisy {
             self.stage = Stage::GoodNoisy;
             td.board.append_noisy_moves(&mut self.list);
-            self.remove_tt();
+
+            if self.tt_was_noisy {
+                self.remove_tt();
+            }
             self.score_noisy(td);
         }
 
@@ -77,7 +84,10 @@ impl MovePicker {
             } else {
                 self.stage = Stage::Quiet;
                 td.board.append_quiet_moves(&mut self.list);
-                self.remove_tt();
+
+                if self.tt_was_quiet {
+                    self.remove_tt();
+                }
                 self.score_quiet(td, ply);
             }
         }
