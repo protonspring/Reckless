@@ -95,9 +95,8 @@ impl MovePicker {
 
         // Stage::BadNoisy
         if self.bad_noisy_idx < self.bad_noisy.len() {
-            let mv = self.bad_noisy[self.bad_noisy_idx];
             self.bad_noisy_idx += 1;
-            return Some(mv);
+            return Some(self.bad_noisy[self.bad_noisy_idx - 1]);
         }
 
         None
