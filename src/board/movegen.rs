@@ -54,7 +54,7 @@ impl super::Board {
 
     fn generate_moves<T: MoveGenerator>(&self, list: &mut MoveList) {
         let stm = self.side_to_move();
-        self.collect_unpinned::<T, _>(
+        self.collect::<T, _>(
             list,
             !self.all_threats(),
             self.colored_pieces(stm, PieceType::King),
@@ -81,46 +81,38 @@ impl super::Board {
         let rooks = self.colored_pieces(stm, PieceType::Rook);
         let queens = self.colored_pieces(stm, PieceType::Queen);
 
-        self.collect_unpinned::<T, _>(list, target, knights & !pinned, knight_attacks);
-        self.collect_unpinned::<T, _>(list, target, bishops & !pinned, |sq| bishop_attacks(sq, occupancies));
-        self.collect_unpinned::<T, _>(list, target, rooks & !pinned, |sq| rook_attacks(sq, occupancies));
-        self.collect_unpinned::<T, _>(list, target, queens & !pinned, |sq| queen_attacks(sq, occupancies));
-
-        self.collect_pinned::<T, _>(list, target, bishops & pinned, |sq| bishop_attacks(sq, occupancies));
-        self.collect_pinned::<T, _>(list, target, rooks & pinned, |sq| rook_attacks(sq, occupancies));
-        self.collect_pinned::<T, _>(list, target, queens & pinned, |sq| queen_attacks(sq, occupancies));
+        self.collect::<T, _>(list, target, knights, knight_attacks);
+        self.collect::<T, _>(list, target, bishops, |sq| bishop_attacks(sq, occupancies));
+        self.collect::<T, _>(list, target, rooks, |sq| rook_attacks(sq, occupancies));
+        self.collect::<T, _>(list, target, queens, |sq| queen_attacks(sq, occupancies));
 
         if T::KIND == Kind::Quiet {
             self.collect_castling(list);
         }
     }
 
-    fn collect_unpinned<T: MoveGenerator, F: Fn(Square) -> Bitboard>(
-        &self, list: &mut MoveList, target: Bitboard, bb: Bitboard, attacks: F,
-    ) {
-        let stm = self.side_to_move();
-        for from in bb {
-            if T::KIND == Kind::Noisy {
-                list.push_setwise(from, attacks(from) & target & self.colors(!stm), MoveKind::Capture);
-            }
-            if T::KIND == Kind::Quiet {
-                list.push_setwise(from, attacks(from) & target & !self.occupancies(), MoveKind::Normal);
-            }
-        }
-    }
-
-    fn collect_pinned<T: MoveGenerator, F: Fn(Square) -> Bitboard>(
+    fn collect<T: MoveGenerator, F: Fn(Square) -> Bitboard>(
         &self, list: &mut MoveList, target: Bitboard, bb: Bitboard, attacks: F,
     ) {
         let king = self.king_square(self.side_to_move());
         let stm = self.side_to_move();
-        for from in bb {
+
+        for from in bb & self.pinned(stm) {
             let pin_mask = ray_pass(king, from);
             if T::KIND == Kind::Noisy {
                 list.push_setwise(from, attacks(from) & target & self.colors(!stm) & pin_mask, MoveKind::Capture);
             }
             if T::KIND == Kind::Quiet {
                 list.push_setwise(from, attacks(from) & target & !self.occupancies() & pin_mask, MoveKind::Normal);
+            }
+        }
+
+        for from in bb & !self.pinned(stm) {
+            if T::KIND == Kind::Noisy {
+                list.push_setwise(from, attacks(from) & target & self.colors(!stm), MoveKind::Capture);
+            }
+            if T::KIND == Kind::Quiet {
+                list.push_setwise(from, attacks(from) & target & !self.occupancies(), MoveKind::Normal);
             }
         }
     }
