@@ -77,8 +77,6 @@ fn write(mut buf: BufWriter<File>) -> Result<(), std::io::Error> {
         };
     }
 
-    write_map!("DIAGONALS", "[u64; 64]", maps::generate_diagonal_tables());
-
     write_map!("KING_MAP", "u64", maps::generate_king_map());
     write_map!("KNIGHT_MAP", "u64", maps::generate_knight_map());
 
