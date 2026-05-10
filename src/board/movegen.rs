@@ -1,6 +1,6 @@
 use crate::{
     lookup::{
-        between, bishop_attacks, king_attacks, knight_attacks, queen_attacks, ray_pass, relative_anti_diagonal,
+        between, bishop_attacks, king_attacks, knight_attacks, queen_attacks, ray_pass,
         relative_diagonal, rook_attacks,
     },
     types::{Bitboard, CastlingKind, File, MoveKind, MoveList, PieceType, Square},
@@ -194,7 +194,7 @@ impl super::Board {
         let up_right = Square::UP[stm] + Square::RIGHT;
         let up_left = Square::UP[stm] + Square::LEFT;
         let right_pin_mask = relative_diagonal(stm, self.king_square(stm));
-        let left_pin_mask = relative_anti_diagonal(stm, self.king_square(stm));
+        let left_pin_mask = relative_diagonal(!stm, self.king_square(stm));
         let right_pawns = Self::movable_pawns(pinned, pawns, right_pin_mask);
         let left_pawns = Self::movable_pawns(pinned, pawns, left_pin_mask);
 
