@@ -209,14 +209,14 @@ impl MovePicker {
                 if pt == PieceType::Knight {
                     let new_attacks = knight_attacks(mv.to());
                     if !(new_attacks & push_passed).is_empty() {
-                        entry.score += 2000;
+                        entry.score += 6000;
                     }
                 }
 
                 if td.board.pieces(PieceType::Queen).is_empty() && pt == PieceType::King {
                     let passed_pawn = if side == Color::White { passed_pawns.msb() } else { passed_pawns.lsb() };
                     if mv.to().distance_from(passed_pawn) < mv.from().distance_from(passed_pawn) {
-                        entry.score += 1500;
+                        entry.score += 4500;
                     }
                 }
             }
