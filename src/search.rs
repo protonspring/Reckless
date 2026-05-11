@@ -762,6 +762,10 @@ fn search<NODE: NodeType>(
                 break;
             }
 
+            if !NODE::ROOT && !is_loss(best_score) && !in_check && is_quiet && depth < 5 && history < -1024 * depth {
+                continue;
+            }
+
             // Static Exchange Evaluation Pruning (SEE Pruning)
             let threshold = if is_quiet {
                 (-17 * depth * depth + 52 * depth - 21 * history / 1024 + 20).min(0)
@@ -860,9 +864,8 @@ fn search<NODE: NodeType>(
         }
         // Full Depth Search (FDS)
         else if !NODE::PV || move_count >= 2 {
-            let mut reduction = 232 * (move_count.ilog2() * depth.ilog2()) as i32;
+            let mut reduction = 232 * depth.ilog2() as i32;
 
-            reduction -= 48 * move_count;
             reduction -= 2408 * correction_value.abs() / 1024;
 
             if is_quiet {
