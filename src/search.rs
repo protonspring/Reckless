@@ -546,7 +546,8 @@ fn search<NODE: NodeType>(
     {
         debug_assert_ne!(td.stack[ply - 1].mv, Move::NULL);
 
-        let r = (5335 + 260 * depth + 493 * (estimated_score - beta).clamp(0, 1003) / 128) / 1024;
+        let r =
+            (4311 + 1024 * improving as i32 + 260 * depth + 493 * (estimated_score - beta).clamp(0, 1003) / 128) / 1024;
 
         td.stack[ply].conthist = td.stack.sentinel().conthist;
         td.stack[ply].contcorrhist = td.stack.sentinel().contcorrhist;
@@ -591,7 +592,7 @@ fn search<NODE: NodeType>(
         && if is_valid(tt_score) { tt_score >= probcut_beta && !is_decisive(tt_score) } else { eval >= beta }
         && !tt_move.is_quiet()
     {
-        let mut move_picker = MovePicker::new_probcut(probcut_beta - eval);
+        let mut move_picker = MovePicker::new(Move::NULL, Some(probcut_beta - eval));
 
         while let Some(mv) = move_picker.next::<NODE>(td, true, ply) {
             if move_picker.stage() == Stage::BadNoisy {
@@ -692,7 +693,7 @@ fn search<NODE: NodeType>(
     let mut noisy_moves = ArrayVec::<Move, 32>::new();
 
     let mut move_count = 0;
-    let mut move_picker = MovePicker::new(tt_move);
+    let mut move_picker = MovePicker::new(tt_move, None);
     let mut skip_quiets = false;
     let mut current_search_count = 0;
     let mut tt_move_score = Score::NONE;
@@ -848,7 +849,7 @@ fn search<NODE: NodeType>(
             if score > alpha {
                 if !NODE::ROOT {
                     new_depth += (score > best_score + 61) as i32;
-                    new_depth -= (score < best_score + 5 + reduced_depth) as i32;
+                    new_depth -= (score < best_score + 8) as i32;
                 }
 
                 if new_depth > reduced_depth {
@@ -859,9 +860,8 @@ fn search<NODE: NodeType>(
         }
         // Full Depth Search (FDS)
         else if !NODE::PV || move_count >= 2 {
-            let mut reduction = 232 * (move_count.ilog2() * depth.ilog2()) as i32;
+            let mut reduction = 232 * depth.ilog2() as i32;
 
-            reduction -= 48 * move_count;
             reduction -= 2408 * correction_value.abs() / 1024;
 
             if is_quiet {
@@ -1222,7 +1222,7 @@ fn qsearch<NODE: NodeType>(td: &mut ThreadData, mut alpha: i32, beta: i32, ply: 
     let mut best_move = Move::NULL;
 
     let mut move_count = 0;
-    let mut move_picker = MovePicker::new_qsearch();
+    let mut move_picker = MovePicker::new(Move::NULL, None);
 
     let skip_quiets = |best_score| !in_check || !is_loss(best_score);
 
