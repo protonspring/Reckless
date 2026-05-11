@@ -70,32 +70,23 @@ impl Move {
     }
 
     pub const fn is_noisy(self) -> bool {
-        matches!(
-            self.kind(),
-            MoveKind::Capture
-                | MoveKind::EnPassant
-                | MoveKind::PromotionQ
-                | MoveKind::PromotionCaptureN
-                | MoveKind::PromotionCaptureB
-                | MoveKind::PromotionCaptureR
-                | MoveKind::PromotionCaptureQ
-        )
+        (self.0 & (7 << 12)) > (2 << 12)
     }
 
     pub const fn is_special(self) -> bool {
-        (self.kind() as u8 & 11) != 0
+        (self.0 & 0b1011_0000_0000_0000) != 0
     }
 
     pub const fn is_capture(self) -> bool {
-        (self.0 >> 14) & 1 != 0
+        self.0 & (1 << 14) != 0
     }
 
     pub const fn is_promotion(self) -> bool {
-        (self.0 >> 15) != 0
+        self.0 & (1 << 15) != 0
     }
 
     pub const fn is_en_passant(self) -> bool {
-        matches!(self.kind(), MoveKind::EnPassant)
+        (self.0 >> 12) == MoveKind::EnPassant as u16
     }
 
     pub fn capture_sq(self) -> Square {
@@ -103,11 +94,11 @@ impl Move {
     }
 
     pub const fn is_castling(self) -> bool {
-        matches!(self.kind(), MoveKind::Castling)
+        (self.0 >> 12) == MoveKind::Castling as u16
     }
 
     pub const fn is_double_push(self) -> bool {
-        matches!(self.kind(), MoveKind::DoublePush)
+        (self.0 >> 12) == MoveKind::DoublePush as u16
     }
 
     pub const fn promo_piece_type(self) -> PieceType {
