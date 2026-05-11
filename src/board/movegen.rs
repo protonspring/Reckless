@@ -57,6 +57,7 @@ impl super::Board {
         self.collect::<T, _>(
             list,
             !self.all_threats(),
+            Bitboard(0),
             self.colored_pieces(stm, PieceType::King),
             king_attacks,
         );
@@ -81,10 +82,10 @@ impl super::Board {
         let rooks = self.colored_pieces(stm, PieceType::Rook);
         let queens = self.colored_pieces(stm, PieceType::Queen);
 
-        self.collect::<T, _>(list, target, knights, knight_attacks);
-        self.collect::<T, _>(list, target, bishops, |sq| bishop_attacks(sq, occupancies));
-        self.collect::<T, _>(list, target, rooks, |sq| rook_attacks(sq, occupancies));
-        self.collect::<T, _>(list, target, queens, |sq| queen_attacks(sq, occupancies));
+        self.collect::<T, _>(list, target, pinned, knights, knight_attacks);
+        self.collect::<T, _>(list, target, pinned, bishops, |sq| bishop_attacks(sq, occupancies));
+        self.collect::<T, _>(list, target, pinned, rooks, |sq| rook_attacks(sq, occupancies));
+        self.collect::<T, _>(list, target, pinned, queens, |sq| queen_attacks(sq, occupancies));
 
         if T::KIND == Kind::Quiet {
             self.collect_castling(list);
@@ -92,12 +93,12 @@ impl super::Board {
     }
 
     fn collect<T: MoveGenerator, F: Fn(Square) -> Bitboard>(
-        &self, list: &mut MoveList, target: Bitboard, bb: Bitboard, attacks: F,
+        &self, list: &mut MoveList, target: Bitboard, pinned: Bitboard, bb: Bitboard, attacks: F,
     ) {
         let king = self.king_square(self.side_to_move());
         let stm = self.side_to_move();
 
-        for from in bb & self.pinned(stm) {
+        for from in bb & pinned {
             let pin_mask = ray_pass(king, from);
             if T::KIND == Kind::Noisy {
                 list.push_setwise(from, attacks(from) & target & self.colors(!stm) & pin_mask, MoveKind::Capture);
@@ -107,7 +108,7 @@ impl super::Board {
             }
         }
 
-        for from in bb & !self.pinned(stm) {
+        for from in bb & !pinned {
             if T::KIND == Kind::Noisy {
                 list.push_setwise(from, attacks(from) & target & self.colors(!stm), MoveKind::Capture);
             }
