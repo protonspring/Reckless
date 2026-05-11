@@ -1,6 +1,6 @@
 use std::ops::Index;
 
-use super::{ArrayVec, Bitboard, MAX_MOVES, Move, MoveKind, Square};
+use super::{ArrayVec, Bitboard, MAX_MOVES, Move, Square};
 
 #[derive(Copy, Clone)]
 #[repr(C)]
@@ -26,19 +26,19 @@ impl MoveList {
         self.inner.is_empty()
     }
 
-    pub fn push(&mut self, from: Square, to: Square, kind: MoveKind) {
+    pub fn push(&mut self, from: Square, to: Square, kind: u16) {
         self.inner.push(MoveEntry { mv: Move::new(from, to, kind), score: 0 });
     }
 
     #[cfg(not(target_feature = "avx512vbmi2"))]
-    pub fn push_setwise(&mut self, from: Square, to_bb: Bitboard, kind: MoveKind) {
+    pub fn push_setwise(&mut self, from: Square, to_bb: Bitboard, kind: u16) {
         for to in to_bb {
             self.push(from, to, kind);
         }
     }
 
     #[cfg(target_feature = "avx512vbmi2")]
-    pub fn push_setwise(&mut self, from: Square, to_bb: Bitboard, kind: MoveKind) {
+    pub fn push_setwise(&mut self, from: Square, to_bb: Bitboard, kind: u16) {
         if !to_bb.is_empty() {
             use std::{arch::x86_64::*, mem::transmute};
 
@@ -46,14 +46,14 @@ impl MoveList {
                 let template0: __m512i = transmute({
                     let mut template0: [Move; 32] = [Move::NULL; 32];
                     for (i, e) in template0.iter_mut().enumerate() {
-                        *e = Move::new(Square::new(0u8), Square::new(i as u8), transmute::<u8, MoveKind>(0u8));
+                        *e = Move::new(Square::new(0u8), Square::new(i as u8), transmute::<u8, u16>(0u8));
                     }
                     template0
                 });
                 let template1: __m512i = transmute({
                     let mut template1: [Move; 32] = [Move::NULL; 32];
                     for (i, e) in template1.iter_mut().enumerate() {
-                        *e = Move::new(Square::new(0u8), Square::new(32 + i as u8), transmute::<u8, MoveKind>(0u8));
+                        *e = Move::new(Square::new(0u8), Square::new(32 + i as u8), transmute::<u8, u16>(0u8));
                     }
                     template1
                 });
@@ -67,14 +67,14 @@ impl MoveList {
     }
 
     #[cfg(not(target_feature = "avx512vbmi2"))]
-    pub fn push_pawns_setwise(&mut self, offset: i8, to_bb: Bitboard, kind: MoveKind) {
+    pub fn push_pawns_setwise(&mut self, offset: i8, to_bb: Bitboard, kind: u16) {
         for to in to_bb {
             self.push(to.shift(-offset), to, kind);
         }
     }
 
     #[cfg(target_feature = "avx512vbmi2")]
-    pub fn push_pawns_setwise(&mut self, offset: i8, to_bb: Bitboard, kind: MoveKind) {
+    pub fn push_pawns_setwise(&mut self, offset: i8, to_bb: Bitboard, kind: u16) {
         if !to_bb.is_empty() {
             use std::{arch::x86_64::*, mem::transmute};
 
@@ -83,7 +83,7 @@ impl MoveList {
                     let mut template0: [Move; 32] = [Move::NULL; 32];
                     for (i, e) in template0.iter_mut().enumerate() {
                         let sq = Square::new(i as u8);
-                        *e = Move::new(sq, sq, transmute::<u8, MoveKind>(0u8));
+                        *e = Move::new(sq, sq, transmute::<u8, u16>(0u8));
                     }
                     template0
                 });
@@ -91,7 +91,7 @@ impl MoveList {
                     let mut template1: [Move; 32] = [Move::NULL; 32];
                     for (i, e) in template1.iter_mut().enumerate() {
                         let sq = Square::new(32u8 + i as u8);
-                        *e = Move::new(sq, sq, transmute::<u8, MoveKind>(0u8));
+                        *e = Move::new(sq, sq, transmute::<u8, u16>(0u8));
                     }
                     template1
                 });
@@ -107,10 +107,10 @@ impl MoveList {
 
     pub fn push_promotion_capture_setwise(&mut self, offset: i8, to_bb: Bitboard) {
         if !to_bb.is_empty() {
-            self.push_pawns_setwise(offset, to_bb, MoveKind::PromotionCaptureQ);
-            self.push_pawns_setwise(offset, to_bb, MoveKind::PromotionCaptureR);
-            self.push_pawns_setwise(offset, to_bb, MoveKind::PromotionCaptureB);
-            self.push_pawns_setwise(offset, to_bb, MoveKind::PromotionCaptureN);
+            self.push_pawns_setwise(offset, to_bb, Move::PromotionCaptureQ);
+            self.push_pawns_setwise(offset, to_bb, Move::PromotionCaptureR);
+            self.push_pawns_setwise(offset, to_bb, Move::PromotionCaptureB);
+            self.push_pawns_setwise(offset, to_bb, Move::PromotionCaptureN);
         }
     }
 

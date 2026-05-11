@@ -3,7 +3,7 @@ use crate::{
         between, bishop_attacks, king_attacks, knight_attacks, queen_attacks, ray_pass, relative_anti_diagonal,
         relative_diagonal, rook_attacks,
     },
-    types::{Bitboard, CastlingKind, File, MoveKind, MoveList, PieceType, Square},
+    types::{Bitboard, CastlingKind, File, Move, MoveList, PieceType, Square},
 };
 
 #[derive(Eq, PartialEq)]
@@ -101,10 +101,10 @@ impl super::Board {
         let stm = self.side_to_move();
         for from in bb {
             if T::KIND == Kind::Noisy {
-                list.push_setwise(from, attacks(from) & target & self.colors(!stm), MoveKind::Capture);
+                list.push_setwise(from, attacks(from) & target & self.colors(!stm), Move::Capture);
             }
             if T::KIND == Kind::Quiet {
-                list.push_setwise(from, attacks(from) & target & !self.occupancies(), MoveKind::Normal);
+                list.push_setwise(from, attacks(from) & target & !self.occupancies(), Move::Normal);
             }
         }
     }
@@ -117,10 +117,10 @@ impl super::Board {
         for from in bb {
             let pin_mask = ray_pass(king, from);
             if T::KIND == Kind::Noisy {
-                list.push_setwise(from, attacks(from) & target & self.colors(!stm) & pin_mask, MoveKind::Capture);
+                list.push_setwise(from, attacks(from) & target & self.colors(!stm) & pin_mask, Move::Capture);
             }
             if T::KIND == Kind::Quiet {
-                list.push_setwise(from, attacks(from) & target & !self.occupancies() & pin_mask, MoveKind::Normal);
+                list.push_setwise(from, attacks(from) & target & !self.occupancies() & pin_mask, Move::Normal);
             }
         }
     }
@@ -139,7 +139,7 @@ impl super::Board {
             && !self.pinned(stm).contains(self.castling_rooks[kind])
         {
             let king = self.king_square(self.side_to_move());
-            list.push(king, kind.landing_square(), MoveKind::Castling);
+            list.push(king, kind.landing_square(), Move::Castling);
         }
     }
 
@@ -172,18 +172,18 @@ impl super::Board {
             let single_pushes = non_promotions.shift(up) & empty;
             let double_pushes = (single_pushes & third_rank).shift(up) & empty;
 
-            list.push_pawns_setwise(up, single_pushes & target, MoveKind::Normal);
-            list.push_pawns_setwise(up * 2, double_pushes & target, MoveKind::DoublePush);
+            list.push_pawns_setwise(up, single_pushes & target, Move::Normal);
+            list.push_pawns_setwise(up * 2, double_pushes & target, Move::DoublePush);
         }
 
         let promotions = (pawns & seventh_rank).shift(up) & empty;
         if T::KIND == Kind::Noisy {
-            list.push_pawns_setwise(up, promotions & target, MoveKind::PromotionQ);
+            list.push_pawns_setwise(up, promotions & target, Move::PromotionQ);
         }
         if T::KIND == Kind::Quiet {
-            list.push_pawns_setwise(up, promotions & target, MoveKind::PromotionR);
-            list.push_pawns_setwise(up, promotions & target, MoveKind::PromotionB);
-            list.push_pawns_setwise(up, promotions & target, MoveKind::PromotionN);
+            list.push_pawns_setwise(up, promotions & target, Move::PromotionR);
+            list.push_pawns_setwise(up, promotions & target, Move::PromotionB);
+            list.push_pawns_setwise(up, promotions & target, Move::PromotionN);
         }
     }
 
@@ -208,15 +208,15 @@ impl super::Board {
             (right_pawns & !seventh_rank & !Bitboard::file(File::H)).shift(up_right) & self.colors(!stm);
         let left_captures = (left_pawns & !seventh_rank & !Bitboard::file(File::A)).shift(up_left) & self.colors(!stm);
 
-        list.push_pawns_setwise(up_right, right_captures & target, MoveKind::Capture);
-        list.push_pawns_setwise(up_left, left_captures & target, MoveKind::Capture);
+        list.push_pawns_setwise(up_right, right_captures & target, Move::Capture);
+        list.push_pawns_setwise(up_left, left_captures & target, Move::Capture);
 
         if self.en_passant() != Square::None {
             let ep = self.en_passant().to_bb();
             let right_attacker = right_pawns & !Bitboard::file(File::H) & ep.shift(-up_right);
             let left_attacker = left_pawns & !Bitboard::file(File::A) & ep.shift(-up_left);
             for pawn in right_attacker | left_attacker {
-                list.push(pawn, self.en_passant(), MoveKind::EnPassant);
+                list.push(pawn, self.en_passant(), Move::EnPassant);
             }
         }
     }

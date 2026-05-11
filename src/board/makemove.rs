@@ -1,5 +1,5 @@
 use super::{Board, BoardObserver};
-use crate::types::{Move, MoveKind, Piece, PieceType, Square, ZOBRIST};
+use crate::types::{Move, Piece, PieceType, Square, ZOBRIST};
 
 impl Board {
     pub fn make_null_move(&mut self) {
@@ -47,7 +47,7 @@ impl Board {
         self.state.captured = None;
         self.state.recapture_square = Square::None;
 
-        if mv.kind() == MoveKind::Capture || pt == PieceType::Pawn {
+        if mv.kind() == Move::Capture || pt == PieceType::Pawn {
             self.state.halfmove_clock = 0;
         } else {
             self.state.halfmove_clock += 1;
@@ -78,11 +78,11 @@ impl Board {
         self.update_hash(piece, to);
 
         match mv.kind() {
-            MoveKind::DoublePush => {
+            Move::DoublePush => {
                 self.state.en_passant = to ^ 8;
                 self.state.key ^= ZOBRIST.en_passant[self.en_passant()];
             }
-            MoveKind::EnPassant => {
+            Move::EnPassant => {
                 let captured = Piece::new(!stm, PieceType::Pawn);
 
                 self.remove_piece(captured, to ^ 8);
@@ -92,7 +92,7 @@ impl Board {
 
                 self.state.material -= captured.value();
             }
-            MoveKind::Castling => {
+            Move::Castling => {
                 let (rook_from, rook_to) = self.get_castling_rook(to);
                 let rook = Piece::new(stm, PieceType::Rook);
 
@@ -173,10 +173,10 @@ impl Board {
         }
 
         match mv.kind() {
-            MoveKind::EnPassant => {
+            Move::EnPassant => {
                 self.add_piece(Piece::new(!stm, PieceType::Pawn), to ^ 8);
             }
-            MoveKind::Castling => {
+            Move::Castling => {
                 let (rook_from, rook_to) = self.get_castling_rook(to);
 
                 self.remove_piece(Piece::new(stm, PieceType::Rook), rook_to);

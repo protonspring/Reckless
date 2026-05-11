@@ -2,7 +2,7 @@ use super::{Aligned, L1_SIZE};
 use crate::{
     board::Board,
     nnue::{AccumulatorCache, INPUT_BUCKETS_LAYOUT, Parameters, accumulator::CacheEntry, simd},
-    types::{ArrayVec, Bitboard, Color, Move, MoveKind, Piece, PieceType, Square},
+    types::{ArrayVec, Bitboard, Color, Move, Piece, PieceType, Square},
 };
 
 pub type PstFeature = u16;
@@ -111,7 +111,7 @@ impl PstAccumulator {
         let sub1 = pst_index(piece.color(), piece.piece_type(), mv.from(), king, pov);
 
         match mv.kind() {
-            MoveKind::Castling => {
+            Move::Castling => {
                 let (rook_from, rook_to) = board.get_castling_rook(mv.to());
 
                 let add2 = pst_index(piece.color(), PieceType::Rook, rook_to, king, pov);
@@ -119,15 +119,15 @@ impl PstAccumulator {
 
                 self.add2_sub2(prev, add1, add2, sub1, sub2, pov, parameters);
             }
-            MoveKind::EnPassant => {
+            Move::EnPassant => {
                 let sub2 = pst_index(!piece.color(), PieceType::Pawn, mv.to() ^ 8, king, pov);
                 self.add1_sub2(prev, add1, sub1, sub2, pov, parameters);
             }
-            MoveKind::Capture
-            | MoveKind::PromotionCaptureN
-            | MoveKind::PromotionCaptureB
-            | MoveKind::PromotionCaptureR
-            | MoveKind::PromotionCaptureQ => {
+            Move::Capture
+            | Move::PromotionCaptureN
+            | Move::PromotionCaptureB
+            | Move::PromotionCaptureR
+            | Move::PromotionCaptureQ => {
                 let sub2 = pst_index(!piece.color(), captured.piece_type(), mv.to(), king, pov);
                 self.add1_sub2(prev, add1, sub1, sub2, pov, parameters);
             }

@@ -1,5 +1,3 @@
-use std::mem;
-
 use super::{PieceType, Square};
 use crate::board::Board;
 
@@ -13,32 +11,28 @@ pub struct Move(u16);
 /// Represents a typed enumeration of move kinds, which is the 4-bit part of the encoded bit move.
 /// 
 /// See [From-To Based](https://www.chessprogramming.org/Encoding_Moves#From-To_Based) for more information.
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
-#[rustfmt::skip]
-pub enum MoveKind {
-    Normal            = 0b0000,
-    DoublePush        = 0b0001,
-    Castling          = 0b0010,
-
-    Capture           = 0b0100,
-    EnPassant         = 0b0101,
-
-    PromotionN        = 0b1000,
-    PromotionB        = 0b1001,
-    PromotionR        = 0b1010,
-    PromotionQ        = 0b1011,
-
-    PromotionCaptureN = 0b1100,
-    PromotionCaptureB = 0b1101,
-    PromotionCaptureR = 0b1110,
-    PromotionCaptureQ = 0b1111,
-}
+//#[rustfmt::skip]
 
 impl Move {
+
+    pub const DoublePush: u16        = 0b0001;
+    pub const Normal: u16            = 0b0000;
+    pub const Castling: u16          = 0b0010;
+    pub const Capture: u16           = 0b0100;
+    pub const EnPassant: u16         = 0b0101;
+    pub const PromotionN: u16        = 0b1000;
+    pub const PromotionB: u16        = 0b1001;
+    pub const PromotionR: u16        = 0b1010;
+    pub const PromotionQ: u16        = 0b1011;
+    pub const PromotionCaptureN: u16 = 0b1100;
+    pub const PromotionCaptureB: u16 = 0b1101;
+    pub const PromotionCaptureR: u16 = 0b1110;
+    pub const PromotionCaptureQ: u16 = 0b1111;
+
     pub const NULL: Self = Self(0);
 
-    pub const fn new(from: Square, to: Square, kind: MoveKind) -> Self {
-        Self(from as u16 | ((to as u16) << 6) | ((kind as u16) << 12))
+    pub const fn new(from: Square, to: Square, kind: u16) -> Self {
+        Self(from as u16 | ((to as u16) << 6) | (kind << 12))
     }
 
     pub const fn from(self) -> Square {
@@ -53,8 +47,8 @@ impl Move {
         (self.0 & 0b0000_1111_1111_1111) as usize
     }
 
-    pub const fn kind(self) -> MoveKind {
-        unsafe { mem::transmute((self.0 >> 12) as u8) }
+    pub const fn kind(self) -> u16 {
+        self.0 >> 12
     }
 
     pub const fn is_present(self) -> bool {
@@ -86,7 +80,7 @@ impl Move {
     }
 
     pub const fn is_en_passant(self) -> bool {
-        (self.0 >> 12) == MoveKind::EnPassant as u16
+        (self.0 >> 12) == Self::EnPassant as u16
     }
 
     pub fn capture_sq(self) -> Square {
@@ -94,11 +88,11 @@ impl Move {
     }
 
     pub const fn is_castling(self) -> bool {
-        (self.0 >> 12) == MoveKind::Castling as u16
+        (self.0 >> 12) == Self::Castling as u16
     }
 
     pub const fn is_double_push(self) -> bool {
-        (self.0 >> 12) == MoveKind::DoublePush as u16
+        (self.0 >> 12) == Self::DoublePush as u16
     }
 
     pub const fn promo_piece_type(self) -> PieceType {
