@@ -16,29 +16,29 @@ pub struct Move(u16);
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 #[rustfmt::skip]
 pub enum MoveKind {
-    Normal            = 0b0000,
-    DoublePush        = 0b0001,
-    Castling          = 0b0010,
+    Normal            = 0b0000 << 12,
+    DoublePush        = 0b0001 << 12,
+    Castling          = 0b0010 << 12,
 
-    Capture           = 0b0100,
-    EnPassant         = 0b0101,
+    Capture           = 0b0100 << 12,
+    EnPassant         = 0b0101 << 12,
 
-    PromotionN        = 0b1000,
-    PromotionB        = 0b1001,
-    PromotionR        = 0b1010,
-    PromotionQ        = 0b1011,
+    PromotionN        = 0b1000 << 12,
+    PromotionB        = 0b1001 << 12,
+    PromotionR        = 0b1010 << 12,
+    PromotionQ        = 0b1011 << 12,
 
-    PromotionCaptureN = 0b1100,
-    PromotionCaptureB = 0b1101,
-    PromotionCaptureR = 0b1110,
-    PromotionCaptureQ = 0b1111,
+    PromotionCaptureN = 0b1100 << 12,
+    PromotionCaptureB = 0b1101 << 12,
+    PromotionCaptureR = 0b1110 << 12,
+    PromotionCaptureQ = 0b1111 << 12,
 }
 
 impl Move {
     pub const NULL: Self = Self(0);
 
     pub const fn new(from: Square, to: Square, kind: MoveKind) -> Self {
-        Self(from as u16 | ((to as u16) << 6) | ((kind as u16) << 12))
+        Self(from as u16 | ((to as u16) << 6) | (kind as u16))
     }
 
     pub const fn from(self) -> Square {
@@ -54,7 +54,7 @@ impl Move {
     }
 
     pub const fn kind(self) -> MoveKind {
-        unsafe { mem::transmute((self.0 >> 12) as u8) }
+        unsafe { mem::transmute((self.0 & 0b1111_0000_0000_0000) as u16) }
     }
 
     pub const fn is_present(self) -> bool {
@@ -83,11 +83,11 @@ impl Move {
     }
 
     pub const fn is_special(self) -> bool {
-        (self.kind() as u8 & 11) != 0
+        (self.kind() as u16 & ((11 as u16) << 12)) != 0
     }
 
     pub const fn is_capture(self) -> bool {
-        (self.0 >> 14) & 1 != 0
+        self.0 & (1 << 14) != 0
     }
 
     pub const fn is_promotion(self) -> bool {
@@ -112,7 +112,7 @@ impl Move {
 
     pub const fn promo_piece_type(self) -> PieceType {
         debug_assert!(self.is_promotion());
-        PieceType::new(((self.kind() as usize) & 3) + PieceType::Knight as usize)
+        PieceType::new(((((self.kind() as u16) >> 12) as usize) & 3) + PieceType::Knight as usize)
     }
 
     pub fn to_uci(self, board: &Board) -> String {
