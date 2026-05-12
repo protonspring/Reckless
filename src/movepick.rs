@@ -53,14 +53,19 @@ impl MovePicker {
             self.stage = Stage::GoodNoisy;
             td.board.append_noisy_moves(&mut self.list);
             self.remove_tt();
-            self.score_noisy(td);
+
+            if !self.tt_move.is_quiet() {
+                self.score_noisy(td);
+            }
         }
 
         if self.stage == Stage::GoodNoisy {
             while !self.list.is_empty() {
                 let entry = self.get_best_entry();
                 let threshold = self.threshold.unwrap_or_else(|| -entry.score / 39 + 107);
-                if !td.board.see(entry.mv, threshold) {
+
+                // If the tt_move was quiet, assume all captures are bad
+                if self.tt_move.is_quiet() || !td.board.see(entry.mv, threshold) {
                     self.bad_noisy.push(entry.mv);
                     continue;
                 }
