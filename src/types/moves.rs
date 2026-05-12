@@ -58,28 +58,25 @@ impl Move {
     }
 
     pub const fn is_present(self) -> bool {
-        !self.is_null()
+        self.0 != 0
     }
 
     pub const fn is_null(self) -> bool {
         self.0 == 0
     }
 
-    pub const fn is_quiet(self) -> bool {
-        self.is_present() && !self.is_noisy()
+    pub const fn is_valid_quiet(self) -> bool {
+        !self.is_null() && !self.is_noisy()
     }
 
+    pub const fn is_quiet(self) -> bool {
+        !self.is_noisy()
+    }
+
+    // If we ignore the promotion bit (& 7), anything over 2
+    // accurately catches all captures and Queen promotions.
     pub const fn is_noisy(self) -> bool {
-        matches!(
-            self.kind(),
-            MoveKind::Capture
-                | MoveKind::EnPassant
-                | MoveKind::PromotionQ
-                | MoveKind::PromotionCaptureN
-                | MoveKind::PromotionCaptureB
-                | MoveKind::PromotionCaptureR
-                | MoveKind::PromotionCaptureQ
-        )
+        (self.kind() as u8 & 7) > 2
     }
 
     pub const fn is_special(self) -> bool {

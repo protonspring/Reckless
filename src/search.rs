@@ -501,7 +501,7 @@ fn search<NODE: NodeType>(
         && !in_check
         && estimated_score < alpha - 265 - 267 * depth * depth
         && alpha < 2048
-        && !tt_move.is_quiet()
+        && !tt_move.is_valid_quiet()
         && tt_bound != Bound::Lower
     {
         return qsearch::<NonPV>(td, alpha, beta, ply);
@@ -590,7 +590,7 @@ fn search<NODE: NodeType>(
     if cut_node
         && !is_win(beta)
         && if is_valid(tt_score) { tt_score >= probcut_beta && !is_decisive(tt_score) } else { eval >= beta }
-        && !tt_move.is_quiet()
+        && !tt_move.is_valid_quiet()
     {
         let mut move_picker = MovePicker::new(Move::NULL, Some(probcut_beta - eval));
 
