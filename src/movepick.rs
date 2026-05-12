@@ -22,6 +22,7 @@ pub struct MovePicker {
     stage: Stage,
     bad_noisy: ArrayVec<Move, MAX_MOVES>,
     bad_noisy_idx: usize,
+    last_capture_score: i32,
 }
 
 impl MovePicker {
@@ -33,6 +34,7 @@ impl MovePicker {
             stage: if tt_move.is_present() { Stage::HashMove } else { Stage::GenerateNoisy },
             bad_noisy: ArrayVec::new(),
             bad_noisy_idx: 0,
+            last_capture_score: i32::MAX,
         }
     }
 
@@ -65,10 +67,20 @@ impl MovePicker {
                     continue;
                 }
 
+                if self.last_capture_score == i32::MAX {
+                   self.last_capture_score = entry.score;
+                } else {
+                    if entry.score < self.last_capture_score / 2 {
+                        self.bad_noisy.push(entry.mv);
+                        continue;
+                    }
+                }
+
                 if NODE::ROOT {
                     self.score_noisy(td);
                 }
 
+                self.last_capture_score = entry.score;
                 return Some(entry.mv);
             }
 
