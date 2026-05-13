@@ -86,11 +86,22 @@ impl MovePicker {
         }
 
         if self.stage == Stage::Quiet {
-            if !skip_quiets && !self.list.is_empty() {
-                if NODE::ROOT {
-                    self.score_quiet(td, ply);
+            if !skip_quiets {
+                while !self.list.is_empty() {
+
+                    let entry = self.get_best_entry();
+
+                    //non captures that fail see while in check do nothing
+                    if td.board.in_check() && !td.board.see(entry.mv, 0) {
+                        self.bad_noisy.push(entry.mv);
+                        continue;
+                    }
+
+                    if NODE::ROOT {
+                        self.score_quiet(td, ply);
+                    }
+                    return Some(entry.mv);
                 }
-                return Some(self.get_best_entry().mv);
             }
 
             self.stage = Stage::BadNoisy;
