@@ -62,7 +62,7 @@ impl MovePicker {
             while !self.list.is_empty() {
                 let entry = self.get_best_entry();
 
-                if entry.score < 8000 {
+                if entry.score < 12000 {
                     let threshold = self.threshold.unwrap_or_else(|| -entry.score / 39 + 107);
 
                     if (self.tt_move.is_quiet() && self.noisy_count > 2) || !td.board.see(entry.mv, threshold) {
