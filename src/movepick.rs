@@ -61,10 +61,14 @@ impl MovePicker {
         if self.stage == Stage::GoodNoisy {
             while !self.list.is_empty() {
                 let entry = self.get_best_entry();
-                let threshold = self.threshold.unwrap_or_else(|| -entry.score / 39 + 107);
-                if (self.tt_move.is_quiet() && self.noisy_count > 2) || !td.board.see(entry.mv, threshold) {
-                    self.bad_noisy.push(entry.mv);
-                    continue;
+
+                if entry.score < 10000 {
+                    let threshold = self.threshold.unwrap_or_else(|| -entry.score / 39 + 107);
+
+                    if (self.tt_move.is_quiet() && self.noisy_count > 2) || !td.board.see(entry.mv, threshold) {
+                        self.bad_noisy.push(entry.mv);
+                        continue;
+                    }
                 }
 
                 if NODE::ROOT {
