@@ -62,9 +62,11 @@ impl MovePicker {
             while !self.list.is_empty() {
                 let entry = self.get_best_entry();
                 let threshold = self.threshold.unwrap_or_else(|| -entry.score / 39 + 107);
-                if (self.tt_move.is_quiet() && self.noisy_count > 2) || !td.board.see(entry.mv, threshold) {
-                    self.bad_noisy.push(entry.mv);
-                    continue;
+                if !td.board.in_check() {
+                    if (self.tt_move.is_quiet() && self.noisy_count > 2) || !td.board.see(entry.mv, threshold) {
+                        self.bad_noisy.push(entry.mv);
+                        continue;
+                    }
                 }
 
                 if NODE::ROOT {
@@ -131,12 +133,10 @@ impl MovePicker {
         for entry in self.list.iter_mut() {
             let mv = entry.mv;
             let captured = td.board.type_on(mv.capture_sq());
-            let pt = td.board.type_on(mv.from());
 
             entry.score = 15704 * captured.value() / 1024
                 + td.noisy_history.get(threats, td.board.moved_piece(mv), mv.to(), captured)
-                + 4057 * (mv.is_promotion() && mv.promo_piece_type() == PieceType::Queen) as i32
-                + (200000 - 20000 * pt as i32) * td.board.in_check() as i32;
+                + 4057 * (mv.is_promotion() && mv.promo_piece_type() == PieceType::Queen) as i32;
         }
     }
 
