@@ -55,7 +55,12 @@ impl MovePicker {
             self.stage = Stage::GoodNoisy;
             td.board.append_noisy_moves(&mut self.list);
             self.remove_tt();
-            self.score_noisy(td);
+
+            if td.board.in_check() {
+               self.score_noisy_evasions(td);
+            } else {
+                self.score_noisy(td);
+            }
         }
 
         if self.stage == Stage::GoodNoisy {
@@ -137,6 +142,14 @@ impl MovePicker {
                 + td.noisy_history.get(threats, td.board.moved_piece(mv), mv.to(), captured)
                 + 4057 * (mv.is_promotion() && mv.promo_piece_type() == PieceType::Queen) as i32
                 + (200000 - 20000 * pt as i32) * td.board.in_check() as i32;
+        }
+    }
+
+    fn score_noisy_evasions(&mut self, td: &ThreadData) {
+        for entry in self.list.iter_mut() {
+            let mv = entry.mv;
+            let captured = td.board.type_on(mv.to());
+            entry.score = captured.value() << 16;
         }
     }
 
