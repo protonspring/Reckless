@@ -55,7 +55,12 @@ impl MovePicker {
             self.stage = Stage::GoodNoisy;
             td.board.append_noisy_moves(&mut self.list);
             self.remove_tt();
-            self.score_noisy(td);
+
+            if td.board.in_check() {
+                self.score_noisy_evasions(td);
+            } else {
+                self.score_noisy(td);
+            }
         }
 
         if self.stage == Stage::GoodNoisy {
@@ -68,7 +73,11 @@ impl MovePicker {
                 }
 
                 if NODE::ROOT {
-                    self.score_noisy(td);
+                    if td.board.in_check() {
+                        self.score_noisy_evasions(td);
+                    } else {
+                        self.score_noisy(td);
+                    }
                 }
 
                 self.noisy_count += 1;
@@ -81,14 +90,23 @@ impl MovePicker {
                 self.stage = Stage::Quiet;
                 td.board.append_quiet_moves(&mut self.list);
                 self.remove_tt();
-                self.score_quiet(td, ply);
+
+                if td.board.in_check() {
+                    self.score_quiet_evasions(td, ply);
+                } else {
+                    self.score_quiet(td, ply);
+                }
             }
         }
 
         if self.stage == Stage::Quiet {
             if !skip_quiets && !self.list.is_empty() {
                 if NODE::ROOT {
-                    self.score_quiet(td, ply);
+                    if td.board.in_check() {
+                        self.score_quiet_evasions(td, ply);
+                    } else {
+                        self.score_quiet(td, ply);
+                    }
                 }
                 return Some(self.get_best_entry().mv);
             }
@@ -131,12 +149,30 @@ impl MovePicker {
         for entry in self.list.iter_mut() {
             let mv = entry.mv;
             let captured = td.board.type_on(mv.capture_sq());
-            let pt = td.board.type_on(mv.from());
 
             entry.score = 15704 * captured.value() / 1024
                 + td.noisy_history.get(threats, td.board.moved_piece(mv), mv.to(), captured)
-                + 4057 * (mv.is_promotion() && mv.promo_piece_type() == PieceType::Queen) as i32
-                + (200000 - 20000 * pt as i32) * td.board.in_check() as i32;
+                + 4057 * (mv.is_promotion() && mv.promo_piece_type() == PieceType::Queen) as i32;
+        }
+    }
+
+    fn score_noisy_evasions(&mut self, td: &ThreadData) {
+
+        for entry in self.list.iter_mut() {
+            let mv = entry.mv;
+            let pt = td.board.type_on(mv.from());
+            entry.score = 200000 - 20000 * pt as i32;
+        }
+    }
+
+    fn score_quiet_evasions(&mut self, td: &ThreadData, ply: isize) {
+
+        let threats = td.board.all_threats();
+        let side = td.board.side_to_move();
+
+        for entry in self.list.iter_mut() {
+            entry.score = td.quiet_history.get(threats, side, entry.mv)
+                + td.conthist(ply, 1, entry.mv);
         }
     }
 
