@@ -90,7 +90,7 @@ impl MovePicker {
                 while !self.list.is_empty() {
                     let entry = self.get_best_entry();
 
-                    if entry.score < -10000 {
+                    if entry.score < -13000 {
                         self.bad_moves.push(entry.mv);
                         continue;
                     }
