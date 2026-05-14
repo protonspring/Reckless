@@ -20,8 +20,8 @@ pub struct MovePicker {
     tt_move: Move,
     threshold: Option<i32>,
     stage: Stage,
-    bad_noisy: ArrayVec<Move, MAX_MOVES>,
-    bad_noisy_idx: usize,
+    bad_moves: ArrayVec<Move, MAX_MOVES>,
+    bad_moves_idx: usize,
     noisy_count: usize,
 }
 
@@ -32,8 +32,8 @@ impl MovePicker {
             tt_move,
             threshold,
             stage: if tt_move.is_present() { Stage::HashMove } else { Stage::GenerateNoisy },
-            bad_noisy: ArrayVec::new(),
-            bad_noisy_idx: 0,
+            bad_moves: ArrayVec::new(),
+            bad_moves_idx: 0,
             noisy_count: 0,
         }
     }
@@ -63,7 +63,7 @@ impl MovePicker {
                 let entry = self.get_best_entry();
                 let threshold = self.threshold.unwrap_or_else(|| -entry.score / 39 + 107);
                 if (self.tt_move.is_quiet() && self.noisy_count > 2) || !td.board.see(entry.mv, threshold) {
-                    self.bad_noisy.push(entry.mv);
+                    self.bad_moves.push(entry.mv);
                     continue;
                 }
 
@@ -86,20 +86,29 @@ impl MovePicker {
         }
 
         if self.stage == Stage::Quiet {
-            if !skip_quiets && !self.list.is_empty() {
-                if NODE::ROOT {
-                    self.score_quiet(td, ply);
+            if !skip_quiets {
+                while !self.list.is_empty() {
+                    let entry = self.get_best_entry();
+
+                    if entry.score < -10000 {
+                        self.bad_moves.push(entry.mv);
+                        continue;
+                    }
+
+                    if NODE::ROOT {
+                        self.score_quiet(td, ply);
+                    }
+                    return Some(entry.mv); //self.get_best_entry().mv);
                 }
-                return Some(self.get_best_entry().mv);
             }
 
             self.stage = Stage::BadNoisy;
         }
 
         // Stage::BadNoisy
-        if self.bad_noisy_idx < self.bad_noisy.len() {
-            let mv = self.bad_noisy[self.bad_noisy_idx];
-            self.bad_noisy_idx += 1;
+        if self.bad_moves_idx < self.bad_moves.len() {
+            let mv = self.bad_moves[self.bad_moves_idx];
+            self.bad_moves_idx += 1;
             return Some(mv);
         }
 
