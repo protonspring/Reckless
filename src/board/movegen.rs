@@ -145,8 +145,8 @@ impl super::Board {
 
     fn collect_pawn_moves<T: MoveGenerator>(&self, list: &mut MoveList, target: Bitboard, pinned: Bitboard) {
         let pawns = self.colored_pieces(self.side_to_move(), PieceType::Pawn);
-        let seventh_rank = Bitboard::SEVENTH_RANK[self.side_to_move()];
         let stm = self.side_to_move();
+        let seventh_rank = Bitboard::SEVENTH_RANK[stm];
         let up = Square::UP[stm];
         let empty = !self.occupancies();
 
