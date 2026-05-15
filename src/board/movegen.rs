@@ -148,6 +148,7 @@ impl super::Board {
         let seventh_rank = Bitboard::SEVENTH_RANK[self.side_to_move()];
         let stm = self.side_to_move();
         let up = Square::UP[stm];
+        let empty = !self.occupancies();
 
         if T::KIND == Kind::Noisy {
             let up_right = up + Square::RIGHT;
@@ -180,13 +181,12 @@ impl super::Board {
             }
 
             // push promotions to queen are "noisy"
-            let promotions = (pawns & seventh_rank).shift(up) & !self.occupancies();
+            let promotions = (pawns & seventh_rank).shift(up) & empty;
             list.push_pawns_setwise(up, promotions & target, MoveKind::PromotionQ);
         } else {
             let third_rank = Bitboard::THIRD_RANK[stm];
-            let empty = !self.occupancies();
             let pawns = Self::movable_pawns(pinned, pawns, Bitboard::file(self.king_square(stm).file()));
-            let promotions = (pawns & seventh_rank).shift(up) & empty;
+            let promotions = (pawns & seventh_rank).shift(up) & empty & target;
 
             let non_promotions = pawns & !seventh_rank;
             let single_pushes = non_promotions.shift(up) & empty;
@@ -194,9 +194,9 @@ impl super::Board {
 
             list.push_pawns_setwise(up, single_pushes & target, MoveKind::Normal);
             list.push_pawns_setwise(up * 2, double_pushes & target, MoveKind::DoublePush);
-            list.push_pawns_setwise(up, promotions & target, MoveKind::PromotionR);
-            list.push_pawns_setwise(up, promotions & target, MoveKind::PromotionB);
-            list.push_pawns_setwise(up, promotions & target, MoveKind::PromotionN);
+            list.push_pawns_setwise(up, promotions, MoveKind::PromotionR);
+            list.push_pawns_setwise(up, promotions, MoveKind::PromotionB);
+            list.push_pawns_setwise(up, promotions, MoveKind::PromotionN);
         }
     }
 
