@@ -154,10 +154,6 @@ impl super::Board {
         }
     }
 
-    fn movable_pawns(pinned: Bitboard, pawns: Bitboard, pin_mask: Bitboard) -> Bitboard {
-        pawns & (!pinned | pin_mask)
-    }
-
     fn collect_pawn_pushes<T: MoveGenerator>(
         &self, list: &mut MoveList, target: Bitboard, pinned: Bitboard, pawns: Bitboard, seventh_rank: Bitboard,
     ) {
@@ -165,7 +161,7 @@ impl super::Board {
         let up = Square::UP[stm];
         let third_rank = Bitboard::THIRD_RANK[stm];
         let empty = !self.occupancies();
-        let pawns = Self::movable_pawns(pinned, pawns, Bitboard::file(self.king_square(stm).file()));
+        let pawns = pawns & (!pinned | Bitboard::file(self.king_square(stm).file()));
         let promotions = (pawns & seventh_rank).shift(up) & empty;
 
         if T::KIND == Kind::Quiet {
@@ -193,8 +189,9 @@ impl super::Board {
         let up_left = Square::UP[stm] + Square::LEFT;
         let right_pin_mask = relative_diagonal(stm, self.king_square(stm));
         let left_pin_mask = relative_anti_diagonal(stm, self.king_square(stm));
-        let right_pawns = Self::movable_pawns(pinned, pawns, right_pin_mask) & !Bitboard::file(File::H);
-        let left_pawns = Self::movable_pawns(pinned, pawns, left_pin_mask) & !Bitboard::file(File::A);
+
+        let right_pawns = pawns & (!pinned | right_pin_mask) & !Bitboard::file(File::H);
+        let left_pawns = pawns & (!pinned | left_pin_mask) & !Bitboard::file(File::A);
         let target = target & self.colors(!stm);
 
         let right = (right_pawns & seventh_rank).shift(up_right);
