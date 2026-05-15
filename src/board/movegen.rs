@@ -147,10 +147,10 @@ impl super::Board {
         let pawns = self.colored_pieces(self.side_to_move(), PieceType::Pawn);
         let seventh_rank = Bitboard::SEVENTH_RANK[self.side_to_move()];
 
-        self.collect_pawn_pushes::<T>(list, target, pinned, pawns, seventh_rank);
-
         if T::KIND == Kind::Noisy {
-            self.collect_pawn_captures(list, target, pinned, pawns, seventh_rank);
+            self.collect_noisy_pawn_moves(list, target, pinned, pawns, seventh_rank);
+        } else {
+            self.collect_quiet_pawn_moves(list, target, pinned, pawns, seventh_rank);
         }
     }
 
@@ -158,7 +158,7 @@ impl super::Board {
         pawns & (!pinned | pin_mask)
     }
 
-    fn collect_pawn_pushes<T: MoveGenerator>(
+    fn collect_quiet_pawn_moves(
         &self, list: &mut MoveList, target: Bitboard, pinned: Bitboard, pawns: Bitboard, seventh_rank: Bitboard,
     ) {
         let stm = self.side_to_move();
@@ -168,29 +168,24 @@ impl super::Board {
         let pawns = Self::movable_pawns(pinned, pawns, Bitboard::file(self.king_square(stm).file()));
         let promotions = (pawns & seventh_rank).shift(up) & empty;
 
-        if T::KIND == Kind::Quiet {
-            let non_promotions = pawns & !seventh_rank;
-            let single_pushes = non_promotions.shift(up) & empty;
-            let double_pushes = (single_pushes & third_rank).shift(up) & empty;
+        let non_promotions = pawns & !seventh_rank;
+        let single_pushes = non_promotions.shift(up) & empty;
+        let double_pushes = (single_pushes & third_rank).shift(up) & empty;
 
-            list.push_pawns_setwise(up, single_pushes & target, MoveKind::Normal);
-            list.push_pawns_setwise(up * 2, double_pushes & target, MoveKind::DoublePush);
-            list.push_pawns_setwise(up, promotions & target, MoveKind::PromotionR);
-            list.push_pawns_setwise(up, promotions & target, MoveKind::PromotionB);
-            list.push_pawns_setwise(up, promotions & target, MoveKind::PromotionN);
-        }
-
-        if T::KIND == Kind::Noisy {
-            list.push_pawns_setwise(up, promotions & target, MoveKind::PromotionQ);
-        }
+        list.push_pawns_setwise(up, single_pushes & target, MoveKind::Normal);
+        list.push_pawns_setwise(up * 2, double_pushes & target, MoveKind::DoublePush);
+        list.push_pawns_setwise(up, promotions & target, MoveKind::PromotionR);
+        list.push_pawns_setwise(up, promotions & target, MoveKind::PromotionB);
+        list.push_pawns_setwise(up, promotions & target, MoveKind::PromotionN);
     }
 
-    fn collect_pawn_captures(
+    fn collect_noisy_pawn_moves(
         &self, list: &mut MoveList, target: Bitboard, pinned: Bitboard, pawns: Bitboard, seventh_rank: Bitboard,
     ) {
         let stm = self.side_to_move();
-        let up_right = Square::UP[stm] + Square::RIGHT;
-        let up_left = Square::UP[stm] + Square::LEFT;
+        let up = Square::UP[stm];
+        let up_right = up + Square::RIGHT;
+        let up_left = up + Square::LEFT;
         let right_pin_mask = relative_diagonal(stm, self.king_square(stm));
         let left_pin_mask = relative_anti_diagonal(stm, self.king_square(stm));
         let right_pawns = Self::movable_pawns(pinned, pawns, right_pin_mask) & !Bitboard::file(File::H);
@@ -217,5 +212,9 @@ impl super::Board {
                 list.push(pawn, self.en_passant(), MoveKind::EnPassant);
             }
         }
+
+        // push promotions to queen are "noisy"
+        let promotions = (pawns & seventh_rank).shift(up) & !self.occupancies();
+        list.push_pawns_setwise(up, promotions & target, MoveKind::PromotionQ);
     }
 }
