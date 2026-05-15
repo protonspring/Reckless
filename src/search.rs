@@ -520,11 +520,11 @@ fn search<NODE: NodeType>(
         && !excluded
         && estimated_score
             >= beta
-                + (1189 * depth * depth / 128 - (83 * improving as i32)
+                + (1189 * depth * depth / 128 - 96 * improvement / 1024
                     + 23 * depth
                     + 600 * correction_value.abs() / 1024
                     - 60 * (td.board.all_threats() & td.board.colors(stm)).is_empty() as i32
-                    + 29)
+                    - 19)
                     .max(1)
         && !is_loss(beta)
         && !is_win(estimated_score)
@@ -849,8 +849,7 @@ fn search<NODE: NodeType>(
 
             reduction += ((td.nodes() + td.id as u64 * 25) & 127) as i32 - 63;
 
-            let reduced_depth =
-                (new_depth - reduction / 1024).clamp(1, new_depth + (move_count <= 3) as i32 + 1) + 2 * NODE::PV as i32;
+            let reduced_depth = (new_depth - reduction / 1024).clamp(1, new_depth + 2) + 2 * NODE::PV as i32;
 
             td.stack[ply].reduction = reduction;
             score = -search::<NonPV>(td, -alpha - 1, -alpha, reduced_depth, true, ply + 1);
