@@ -75,14 +75,21 @@ pub fn relative_anti_diagonal(color: Color, sq: Square) -> Bitboard {
 }
 
 pub fn attacks(piece: Piece, square: Square, occupancies: Bitboard) -> Bitboard {
-    match piece.piece_type() {
-        PieceType::Pawn => pawn_attacks(square, piece.color()),
+    if piece.piece_type() == PieceType::Pawn {
+        pawn_attacks(square, piece.color())
+    } else {
+        non_pawn_attacks(piece.piece_type(), square, occupancies)
+    }
+}
+
+pub fn non_pawn_attacks(pt: PieceType, square: Square, occupancies: Bitboard) -> Bitboard {
+    match pt {
         PieceType::Knight => knight_attacks(square),
         PieceType::Bishop => bishop_attacks(square, occupancies),
         PieceType::Rook => rook_attacks(square, occupancies),
         PieceType::Queen => queen_attacks(square, occupancies),
         PieceType::King => king_attacks(square),
-        PieceType::None => Bitboard(0),
+        _ => Bitboard(0),
     }
 }
 

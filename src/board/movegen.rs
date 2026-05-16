@@ -1,6 +1,6 @@
 use crate::{
     lookup::{
-        between, bishop_attacks, king_attacks, knight_attacks, queen_attacks, ray_pass, relative_anti_diagonal,
+        between, bishop_attacks, king_attacks, non_pawn_attacks, queen_attacks, ray_pass, relative_anti_diagonal,
         relative_diagonal, rook_attacks,
     },
     types::{Bitboard, CastlingKind, File, MoveKind, MoveList, PieceType, Square},
@@ -67,21 +67,20 @@ impl super::Board {
 
         let occupancies = self.occupancies();
         let target = if self.in_check() {
-            between(self.king_square(self.side_to_move()), self.checkers().lsb()) | self.checkers().lsb().to_bb()
+            between(self.king_square(stm), self.checkers().lsb()) | self.checkers().lsb().to_bb()
         } else {
             Bitboard::ALL
         };
 
-        let pinned = self.pinned(self.side_to_move());
+        let pinned = self.pinned(stm);
 
         self.collect_pawn_moves::<T>(list, target, pinned);
 
-        let knights = self.colored_pieces(stm, PieceType::Knight);
         let bishops = self.colored_pieces(stm, PieceType::Bishop);
         let rooks = self.colored_pieces(stm, PieceType::Rook);
         let queens = self.colored_pieces(stm, PieceType::Queen);
 
-        self.collect_unpinned::<T, _>(list, target, knights & !pinned, knight_attacks);
+        self.collect_unpinned2::<T>(list, PieceType::Knight,  target, occupancies);
         self.collect_unpinned::<T, _>(list, target, bishops & !pinned, |sq| bishop_attacks(sq, occupancies));
         self.collect_unpinned::<T, _>(list, target, rooks & !pinned, |sq| rook_attacks(sq, occupancies));
         self.collect_unpinned::<T, _>(list, target, queens & !pinned, |sq| queen_attacks(sq, occupancies));
@@ -109,11 +108,26 @@ impl super::Board {
         }
     }
 
+    fn collect_unpinned2<T: MoveGenerator>(
+        &self, list: &mut MoveList, pt: PieceType, target: Bitboard, occ: Bitboard
+    ) {
+        let stm = self.side_to_move();
+        let pieces = self.colored_pieces(stm, pt) & !self.pinned(stm);
+        for from in pieces {
+            if T::KIND == Kind::Noisy {
+                list.push_setwise(from, non_pawn_attacks(pt, from, occ) & target & self.colors(!stm), MoveKind::Capture);
+            }
+            if T::KIND == Kind::Quiet {
+                list.push_setwise(from, non_pawn_attacks(pt, from, occ) & target & !self.occupancies(), MoveKind::Normal);
+            }
+        }
+    }
+
     fn collect_pinned<T: MoveGenerator, F: Fn(Square) -> Bitboard>(
         &self, list: &mut MoveList, target: Bitboard, bb: Bitboard, attacks: F,
     ) {
-        let king = self.king_square(self.side_to_move());
         let stm = self.side_to_move();
+        let king = self.king_square(stm);
         for from in bb {
             let pin_mask = ray_pass(king, from);
             if T::KIND == Kind::Noisy {
@@ -138,7 +152,7 @@ impl super::Board {
             && (self.castling_threat[kind] & self.all_threats()).is_empty()
             && !self.pinned(stm).contains(self.castling_rooks[kind])
         {
-            let king = self.king_square(self.side_to_move());
+            let king = self.king_square(stm);
             list.push(king, kind.landing_square(), MoveKind::Castling);
         }
     }
