@@ -1,8 +1,5 @@
 use crate::{
-    lookup::{
-        between, bishop_attacks, non_pawn_attacks, queen_attacks, ray_pass, relative_anti_diagonal,
-        relative_diagonal, rook_attacks,
-    },
+    lookup::{between, non_pawn_attacks, ray_pass, relative_anti_diagonal, relative_diagonal},
     types::{Bitboard, CastlingKind, File, MoveKind, MoveList, PieceType, Square},
 };
 
@@ -80,12 +77,7 @@ impl super::Board {
         self.collect_unpinned::<T>(list, PieceType::Rook, target, occupancies);
         self.collect_unpinned::<T>(list, PieceType::Queen, target, occupancies);
 
-        let bishops = self.colored_pieces(stm, PieceType::Bishop);
-        let rooks = self.colored_pieces(stm, PieceType::Rook);
-        let queens = self.colored_pieces(stm, PieceType::Queen);
-
         self.collect_pinned::<T>(list, PieceType::Bishop, target, occupancies);
-
         self.collect_pinned::<T>(list, PieceType::Rook, target, occupancies);
         self.collect_pinned::<T>(list, PieceType::Queen, target, occupancies);
 
