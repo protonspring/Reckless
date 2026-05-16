@@ -62,8 +62,8 @@ impl super::Board {
             return;
         }
 
-        let target = if self.in_check() {
-            between(self.king_square(stm), self.checkers().lsb()) | self.checkers().lsb().to_bb()
+        let mut target = if self.in_check() {
+            between(self.king_square(stm), self.checkers().lsb()) | self.checkers()
         } else {
             Bitboard::ALL
         };
@@ -72,14 +72,18 @@ impl super::Board {
 
         self.collect_pawn_moves::<T>(list, target, pinned);
 
+        target &= if T::KIND == Kind::Noisy { self.colors(!stm) } else { !occupancies };
+
         let bishops = self.colored_pieces(stm, PieceType::Bishop);
         let rooks = self.colored_pieces(stm, PieceType::Rook);
         let queens = self.colored_pieces(stm, PieceType::Queen);
+
 
         self.collect_unpinned::<T>(list, PieceType::Knight,  target, occupancies);
         self.collect_unpinned::<T>(list, PieceType::Bishop, target, occupancies);
         self.collect_unpinned::<T>(list, PieceType::Rook, target, occupancies);
         self.collect_unpinned::<T>(list, PieceType::Queen, target, occupancies);
+
 
         self.collect_pinned::<T, _>(list, target, bishops & pinned, |sq| bishop_attacks(sq, occupancies));
         self.collect_pinned::<T, _>(list, target, rooks & pinned, |sq| rook_attacks(sq, occupancies));
@@ -100,7 +104,7 @@ impl super::Board {
                 list.push_setwise(from, non_pawn_attacks(pt, from, occ) & target & self.colors(!stm), MoveKind::Capture);
             }
             if T::KIND == Kind::Quiet {
-                list.push_setwise(from, non_pawn_attacks(pt, from, occ) & target & !self.occupancies(), MoveKind::Normal);
+                list.push_setwise(from, non_pawn_attacks(pt, from, occ) & target & !occ, MoveKind::Normal);
             }
         }
     }
