@@ -56,8 +56,8 @@ impl super::Board {
         let stm = self.side_to_move();
         let occupancies = self.occupancies();
 
-        let mut kind_target = if T::KIND == Kind::Noisy { self.colors(!stm) } else { !occupancies };
-        let mut pawn_target = Bitboard::ALL;
+        let kind_target = if T::KIND == Kind::Noisy { self.colors(!stm) } else { !occupancies };
+        let mut target = Bitboard::ALL;
 
         self.collect_unpinned::<T>(list, PieceType::King, kind_target & !self.all_threats(), occupancies);
 
@@ -66,28 +66,29 @@ impl super::Board {
         }
 
         if self.in_check() {
-            kind_target &= between(self.king_square(stm), self.checkers().lsb()) | self.checkers();
-            pawn_target &= between(self.king_square(stm), self.checkers().lsb()) | self.checkers();
+            target &= between(self.king_square(stm), self.checkers().lsb()) | self.checkers();
         }
 
         let pinned = self.pinned(stm);
 
-        self.collect_pawn_moves::<T>(list, pawn_target, pinned); //bad noisy/quiet boundary
+        self.collect_pawn_moves::<T>(list, target, pinned); //bad noisy/quiet boundary
+
+        target &= kind_target;
 
         //let target2 = target; //if T::KIND == Kind::Quiet { target & !occupancies } else {target & self.colors(!stm) };
 
-        self.collect_unpinned::<T>(list, PieceType::Knight, kind_target, occupancies);
-        self.collect_unpinned::<T>(list, PieceType::Bishop, kind_target, occupancies);
-        self.collect_unpinned::<T>(list, PieceType::Rook, kind_target, occupancies);
-        self.collect_unpinned::<T>(list, PieceType::Queen, kind_target, occupancies);
+        self.collect_unpinned::<T>(list, PieceType::Knight, target, occupancies);
+        self.collect_unpinned::<T>(list, PieceType::Bishop, target, occupancies);
+        self.collect_unpinned::<T>(list, PieceType::Rook, target, occupancies);
+        self.collect_unpinned::<T>(list, PieceType::Queen, target, occupancies);
 
         let bishops = self.colored_pieces(stm, PieceType::Bishop);
         let rooks = self.colored_pieces(stm, PieceType::Rook);
         let queens = self.colored_pieces(stm, PieceType::Queen);
 
-        self.collect_pinned::<T, _>(list, kind_target, bishops & pinned, |sq| bishop_attacks(sq, occupancies));
-        self.collect_pinned::<T, _>(list, kind_target, rooks & pinned, |sq| rook_attacks(sq, occupancies));
-        self.collect_pinned::<T, _>(list, kind_target, queens & pinned, |sq| queen_attacks(sq, occupancies));
+        self.collect_pinned::<T, _>(list, target, bishops & pinned, |sq| bishop_attacks(sq, occupancies));
+        self.collect_pinned::<T, _>(list, target, rooks & pinned, |sq| rook_attacks(sq, occupancies));
+        self.collect_pinned::<T, _>(list, target, queens & pinned, |sq| queen_attacks(sq, occupancies));
 
         if T::KIND == Kind::Quiet {
             self.collect_castling(list);
