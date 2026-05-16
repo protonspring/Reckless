@@ -75,8 +75,6 @@ impl super::Board {
 
         target &= kind_target;
 
-        //let target2 = target; //if T::KIND == Kind::Quiet { target & !occupancies } else {target & self.colors(!stm) };
-
         self.collect_unpinned::<T>(list, PieceType::Knight, target, occupancies);
         self.collect_unpinned::<T>(list, PieceType::Bishop, target, occupancies);
         self.collect_unpinned::<T>(list, PieceType::Rook, target, occupancies);
@@ -86,18 +84,17 @@ impl super::Board {
         let rooks = self.colored_pieces(stm, PieceType::Rook);
         let queens = self.colored_pieces(stm, PieceType::Queen);
 
-        self.collect_pinned::<T, _>(list, target, bishops & pinned, |sq| bishop_attacks(sq, occupancies));
-        self.collect_pinned::<T, _>(list, target, rooks & pinned, |sq| rook_attacks(sq, occupancies));
-        self.collect_pinned::<T, _>(list, target, queens & pinned, |sq| queen_attacks(sq, occupancies));
+        self.collect_pinned::<T>(list, PieceType::Bishop, target, occupancies);
+
+        self.collect_pinned::<T>(list, PieceType::Rook, target, occupancies);
+        self.collect_pinned::<T>(list, PieceType::Queen, target, occupancies);
 
         if T::KIND == Kind::Quiet {
             self.collect_castling(list);
         }
     }
 
-    fn collect_unpinned<T: MoveGenerator>(
-        &self, list: &mut MoveList, pt: PieceType, target: Bitboard, occ: Bitboard
-    ) {
+    fn collect_unpinned<T: MoveGenerator>(&self, list: &mut MoveList, pt: PieceType, target: Bitboard, occ: Bitboard) {
         let stm = self.side_to_move();
         let pieces = self.colored_pieces(stm, pt) & !self.pinned(stm);
         for from in pieces {
@@ -106,19 +103,14 @@ impl super::Board {
         }
     }
 
-    fn collect_pinned<T: MoveGenerator, F: Fn(Square) -> Bitboard>(
-        &self, list: &mut MoveList, target: Bitboard, bb: Bitboard, attacks: F,
-    ) {
+    fn collect_pinned<T: MoveGenerator>(&self, list: &mut MoveList, pt: PieceType, target: Bitboard, occ: Bitboard) {
         let stm = self.side_to_move();
         let king = self.king_square(stm);
-        for from in bb {
+        let pieces = self.colored_pieces(stm, pt) & self.pinned(stm);
+        for from in pieces {
+            let kind = if T::KIND == Kind::Quiet { MoveKind::Normal } else { MoveKind::Capture };
             let pin_mask = ray_pass(king, from);
-            if T::KIND == Kind::Noisy {
-                list.push_setwise(from, attacks(from) & target & self.colors(!stm) & pin_mask, MoveKind::Capture);
-            }
-            if T::KIND == Kind::Quiet {
-                list.push_setwise(from, attacks(from) & target & !self.occupancies() & pin_mask, MoveKind::Normal);
-            }
+            list.push_setwise(from, non_pawn_attacks(pt, from, occ) & target & pin_mask, kind);
         }
     }
 
