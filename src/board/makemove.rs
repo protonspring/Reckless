@@ -73,7 +73,7 @@ impl Board {
         } else {
 
             if mv.is_capture() {
-
+                self.state.halfmove_clock = 0;
                 let capture_sq = mv.capture_sq();
                 let captured = self.piece_on(capture_sq);
 
@@ -82,6 +82,7 @@ impl Board {
 
                 self.remove_piece(captured, capture_sq);
                 observer.on_piece_change(self, captured, capture_sq, false);
+
                 self.add_piece(piece, to);
                 observer.on_piece_change(self, piece, to, true);
                 self.update_hash(captured, capture_sq);
@@ -102,24 +103,27 @@ impl Board {
         self.update_hash(piece, from);
         self.update_hash(piece, to);
 
-        match mv.kind() {
-            MoveKind::DoublePush => {
-                self.state.en_passant = to ^ 8;
-                self.state.key ^= ZOBRIST.en_passant[self.en_passant()];
+        if piece.piece_type() == PieceType::Pawn {
+            self.state.halfmove_clock = 0;
+            match mv.kind() {
+                MoveKind::DoublePush => {
+                    self.state.en_passant = to ^ 8;
+                    self.state.key ^= ZOBRIST.en_passant[self.en_passant()];
+                }
+                _ if mv.is_promotion() => {
+                    let promotion = Piece::new(stm, mv.promo_piece_type());
+
+                    self.remove_piece(piece, to);
+                    self.add_piece(promotion, to);
+                    observer.on_piece_mutate(self, piece, promotion, to);
+
+                    self.update_hash(piece, to);
+                    self.update_hash(promotion, to);
+
+                    self.state.material += promotion.value() - PieceType::Pawn.value();
+                }
+                _ => (),
             }
-            _ if mv.is_promotion() => {
-                let promotion = Piece::new(stm, mv.promo_piece_type());
-
-                self.remove_piece(piece, to);
-                self.add_piece(promotion, to);
-                observer.on_piece_mutate(self, piece, promotion, to);
-
-                self.update_hash(piece, to);
-                self.update_hash(promotion, to);
-
-                self.state.material += promotion.value() - PieceType::Pawn.value();
-            }
-            _ => (),
         }
 
         self.side_to_move = !self.side_to_move;
