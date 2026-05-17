@@ -84,13 +84,11 @@ impl Board {
                 observer.on_piece_change(self, captured, capture_sq, false);
                 self.add_piece(piece, to);
                 observer.on_piece_change(self, piece, to, true);
+                self.update_hash(captured, capture_sq);
 
                 if !mv.is_en_passant() {
-                    self.update_hash(captured, to);
                     self.state.captured = Some(captured); //if not ep
                     self.state.recapture_square = to; //if not ep
-                } else {
-                    self.update_hash(captured, capture_sq);
                 }
 
                 self.state.material -= captured.value();
