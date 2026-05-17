@@ -1,5 +1,5 @@
 use super::{Board, BoardObserver};
-use crate::types::{Move, MoveKind, Piece, PieceType, Square, ZOBRIST};
+use crate::types::{Move, Piece, PieceType, Square, ZOBRIST};
 
 impl Board {
     pub fn make_null_move(&mut self) {
@@ -100,24 +100,21 @@ impl Board {
 
         if piece.piece_type() == PieceType::Pawn {
             self.state.halfmove_clock = 0;
-            match mv.kind() {
-                MoveKind::DoublePush => {
-                    self.state.en_passant = to ^ 8;
-                    self.state.key ^= ZOBRIST.en_passant[self.en_passant()];
-                }
-                _ if mv.is_promotion() => {
-                    let promotion = Piece::new(stm, mv.promo_piece_type());
 
-                    self.remove_piece(piece, to);
-                    self.add_piece(promotion, to);
-                    observer.on_piece_mutate(self, piece, promotion, to);
+            if mv.is_double_push() {
+                self.state.en_passant = to ^ 8;
+                self.state.key ^= ZOBRIST.en_passant[self.en_passant()];
+            } else if mv.is_promotion() {
+                let promotion = Piece::new(stm, mv.promo_piece_type());
 
-                    self.update_hash(piece, to);
-                    self.update_hash(promotion, to);
+                self.remove_piece(piece, to);
+                self.add_piece(promotion, to);
+                observer.on_piece_mutate(self, piece, promotion, to);
 
-                    self.state.material += promotion.value() - PieceType::Pawn.value();
-                }
-                _ => (),
+                self.update_hash(piece, to);
+                self.update_hash(promotion, to);
+
+                self.state.material += promotion.value() - PieceType::Pawn.value();
             }
         }
 
