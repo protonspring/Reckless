@@ -84,6 +84,7 @@ impl Board {
             }
             MoveKind::EnPassant => {
                 let captured = Piece::new(!stm, PieceType::Pawn);
+                self.state.captured = Some(captured);
 
                 self.remove_piece(captured, to ^ 8);
                 observer.on_piece_change(self, captured, to ^ 8, false);
@@ -177,10 +178,7 @@ impl Board {
             self.add_piece(new_mover, from);
 
             if mv.is_capture() {
-                let captured = if mv.is_en_passant() {
-                    Some(Piece::new(!stm, PieceType::Pawn))
-                } else { self.state.captured };
-
+                let captured = self.state.captured;
                 self.add_piece(captured.expect("REASON"), mv.capture_sq());
             }
         }
