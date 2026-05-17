@@ -79,7 +79,6 @@ impl Board {
                     self.state.captured = Some(captured);
                     self.state.recapture_square = to;
                 }
-
                 self.state.material -= captured.value();
             }
 
