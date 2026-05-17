@@ -160,7 +160,7 @@ impl super::Board {
             let shift_masks = [!Bitboard::file(File::H), !Bitboard::file(File::A)];
 
             for i in 0..2 {
-                let dir_pawns = pawns & !(pinned | pin_masks[i]) & shift_masks[i];
+                let dir_pawns = pawns & (!pinned | pin_masks[i]) & shift_masks[i];
                 let promo_pawns = (dir_pawns & seventh_rank).shift(dirs[i]);
                 list.push_promotion_capture_setwise(dirs[i], promo_pawns & target);
 
