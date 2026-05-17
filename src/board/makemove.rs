@@ -45,7 +45,6 @@ impl Board {
 
         self.state.captured = None;
         self.state.recapture_square = Square::None;
-
         self.state.halfmove_clock += 1;
         self.state.plies_from_null += 1;
 
@@ -72,27 +71,21 @@ impl Board {
                 let capture_sq = mv.capture_sq();
                 let captured = self.piece_on(capture_sq);
 
-                self.remove_piece(piece, from);
-                observer.on_piece_change(self, piece, from, false);
-
                 self.remove_piece(captured, capture_sq);
                 observer.on_piece_change(self, captured, capture_sq, false);
-
-                self.add_piece(piece, to);
-                observer.on_piece_change(self, piece, to, true);
                 self.update_hash(captured, capture_sq);
 
                 if !mv.is_en_passant() {
-                    self.state.captured = Some(captured); //if not ep
-                    self.state.recapture_square = to; //if not ep
+                    self.state.captured = Some(captured);
+                    self.state.recapture_square = to;
                 }
 
                 self.state.material -= captured.value();
-            } else {
-                self.remove_piece(piece, from);
-                self.add_piece(piece, to);
-                observer.on_piece_move(self, piece, from, to);
             }
+
+            self.remove_piece(piece, from);
+            self.add_piece(piece, to);
+            observer.on_piece_move(self, piece, from, to);
         }
 
         self.update_hash(piece, from);
