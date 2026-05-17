@@ -68,17 +68,14 @@ impl Board {
 
             if mv.is_capture() {
                 self.state.halfmove_clock = 0;
-                let capture_sq = mv.capture_sq();
+                let capture_sq = mv.capture_sq(); //handles EP
                 let captured = self.piece_on(capture_sq);
 
                 self.remove_piece(captured, capture_sq);
                 observer.on_piece_change(self, captured, capture_sq, false);
                 self.update_hash(captured, capture_sq);
                 self.state.recapture_square = to;
-
-                if !mv.is_en_passant() {
-                    self.state.captured = Some(captured);
-                }
+                self.state.captured = Some(captured);
                 self.state.material -= captured.value();
             }
 
@@ -163,9 +160,7 @@ impl Board {
             self.add_piece(new_mover, from);
 
             if mv.is_capture() {
-                let captured =
-                    if mv.is_en_passant() { Some(Piece::new(!stm, PieceType::Pawn)) } else { self.state.captured };
-                self.add_piece(captured.expect("REASON"), mv.capture_sq());
+                self.add_piece(self.state.captured.expect("REASON"), mv.capture_sq());
             }
         }
 
