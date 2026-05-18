@@ -67,10 +67,10 @@ impl Board {
             self.update_hash(rook, rook_from);
             self.update_hash(rook, rook_to);
         } else {
+            self.remove_piece(piece, from);
             let captured = self.piece_on(to);
             if captured != Piece::None {
                 self.state.halfmove_clock = 0;
-                self.remove_piece(piece, from);
                 observer.on_piece_change(self, piece, from, false);
 
                 self.remove_piece(captured, to);
@@ -83,7 +83,6 @@ impl Board {
                 self.state.captured = Some(captured);
                 self.state.recapture_square = to;
             } else {
-                self.remove_piece(piece, from);
                 self.add_piece(piece, to);
                 observer.on_piece_move(self, piece, from, to);
             }
