@@ -68,7 +68,9 @@ impl Board {
             self.state.material -= captured.value();
             self.state.captured = Some(captured);
             self.state.recapture_square = to;
-        } else if !mv.is_castling() {
+        }
+
+        if mv.is_en_passant() || (!mv.is_capture() && !mv.is_castling()) {
             self.remove_piece(piece, from);
             self.add_piece(piece, to);
             observer.on_piece_move(self, piece, from, to);
