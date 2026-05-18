@@ -148,7 +148,6 @@ impl Board {
                     self.state.repetition = if stp.repetition != 0 { -(i as i32) } else { i as i32 };
                     break;
                 }
-
                 idx -= 2;
             }
         }
