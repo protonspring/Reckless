@@ -1242,9 +1242,15 @@ fn qsearch<NODE: NodeType>(td: &mut ThreadData, mut alpha: i32, beta: i32, ply: 
         move_count += 1;
 
         if !is_loss(best_score) {
-            // Late Move Pruning (LMP)
-            if move_count >= 3 && !td.board.is_direct_check(mv) {
-                break;
+
+            if !td.board.is_direct_check(mv)
+                && !mv.is_promotion()
+                && td.board.checkers().is_empty() {
+
+                // Late Move Pruning (LMP)
+                if move_count >= 3 {
+                    break;
+                }
             }
 
             // Static Exchange Evaluation Pruning (SEE Pruning)
