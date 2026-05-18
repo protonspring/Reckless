@@ -74,7 +74,6 @@ impl Board {
                 observer.on_piece_change(self, piece, from, false);
 
                 self.remove_piece(captured, to);
-                self.add_piece(piece, to);
                 observer.on_piece_mutate(self, captured, piece, to);
     
                 self.update_hash(captured, to);
@@ -83,9 +82,9 @@ impl Board {
                 self.state.captured = Some(captured);
                 self.state.recapture_square = to;
             } else {
-                self.add_piece(piece, to);
                 observer.on_piece_move(self, piece, from, to);
             }
+            self.add_piece(piece, to);
         }
 
         self.update_hash(piece, from);
