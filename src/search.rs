@@ -1251,11 +1251,13 @@ fn qsearch<NODE: NodeType>(td: &mut ThreadData, mut alpha: i32, beta: i32, ply: 
                 break;
             }
 
-            let futility_score = futility_start + captured.value();
+            if mv.is_capture() {
+                let futility_score = futility_start + captured.value();
 
-            if futility_score <= alpha {
-                best_score = best_score.max(futility_score);
-                continue;
+                if futility_score <= alpha {
+                    best_score = best_score.max(futility_score);
+                    continue;
+                }
             }
 
             // Static Exchange Evaluation Pruning (SEE Pruning)
