@@ -54,8 +54,8 @@ impl Board {
         }
         self.state.plies_from_null += 1;
 
-        let captured = self.piece_on(to);
-        if captured != Piece::None && !mv.is_castling() {
+        if mv.is_capture() && !mv.is_en_passant() && !mv.is_castling() {
+            let captured = self.piece_on(to);
             self.remove_piece(piece, from);
             observer.on_piece_change(self, piece, from, false);
 
