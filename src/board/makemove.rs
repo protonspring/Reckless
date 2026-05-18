@@ -98,9 +98,7 @@ impl Board {
                 if mv.is_double_push() {
                     self.state.en_passant = to ^ 8;
                     self.state.key ^= ZOBRIST.en_passant[self.en_passant()];
-                }
-
-                if mv.is_en_passant() {
+                } else if mv.is_en_passant() {
                     self.remove_piece(piece, from);
                     self.add_piece(piece, to);
                     observer.on_piece_move(self, piece, from, to);
@@ -113,9 +111,7 @@ impl Board {
                     self.update_hash(captured, to ^ 8);
 
                     self.state.material -= captured.value();
-                }
-
-                if mv.is_promotion() {
+                } else if mv.is_promotion() {
                     let promotion = Piece::new(stm, mv.promo_piece_type());
 
                     self.remove_piece(piece, to);
