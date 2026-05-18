@@ -88,7 +88,7 @@ impl Board {
                 self.state.recapture_square = to;
             }
 
-            if mv.is_en_passant() || !mv.is_capture() {
+            if !mv.is_capture() {
                 self.remove_piece(piece, from);
                 self.add_piece(piece, to);
                 observer.on_piece_move(self, piece, from, to);
@@ -101,6 +101,10 @@ impl Board {
                 }
 
                 if mv.is_en_passant() {
+                    self.remove_piece(piece, from);
+                    self.add_piece(piece, to);
+                    observer.on_piece_move(self, piece, from, to);
+
                     let captured = Piece::new(!stm, PieceType::Pawn);
 
                     self.remove_piece(captured, to ^ 8);
