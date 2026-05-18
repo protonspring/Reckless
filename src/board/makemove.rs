@@ -93,7 +93,6 @@ impl Board {
                 self.add_piece(piece, to);
                 observer.on_piece_move(self, piece, from, to);
             }
-        }
 
         if mv.is_double_push() {
             self.state.en_passant = to ^ 8;
@@ -122,6 +121,7 @@ impl Board {
             self.update_hash(promotion, to);
 
             self.state.material += promotion.value() - PieceType::Pawn.value();
+        }
         }
 
         self.update_hash(piece, from);
