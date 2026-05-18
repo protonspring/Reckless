@@ -54,44 +54,6 @@ impl Board {
         }
         self.state.plies_from_null += 1;
 
-        if mv.is_capture() && !mv.is_en_passant() && !mv.is_castling() {
-            let captured = self.piece_on(to);
-            self.remove_piece(piece, from);
-            observer.on_piece_change(self, piece, from, false);
-
-            self.remove_piece(captured, to);
-            self.add_piece(piece, to);
-            observer.on_piece_mutate(self, captured, piece, to);
-
-            self.update_hash(captured, to);
-
-            self.state.material -= captured.value();
-            self.state.captured = Some(captured);
-            self.state.recapture_square = to;
-        }
-
-        if mv.is_en_passant() || (!mv.is_capture() && !mv.is_castling()) {
-            self.remove_piece(piece, from);
-            self.add_piece(piece, to);
-            observer.on_piece_move(self, piece, from, to);
-        }
-
-        if mv.is_double_push() {
-            self.state.en_passant = to ^ 8;
-            self.state.key ^= ZOBRIST.en_passant[self.en_passant()];
-        }
-
-        if mv.is_en_passant() {
-            let captured = Piece::new(!stm, PieceType::Pawn);
-
-            self.remove_piece(captured, to ^ 8);
-            observer.on_piece_change(self, captured, to ^ 8, false);
-
-            self.update_hash(captured, to ^ 8);
-
-            self.state.material -= captured.value();
-        }
-
         if mv.is_castling() {
             let (rook_from, rook_to) = self.get_castling_rook(to);
             let rook = Piece::new(stm, PieceType::Rook);
@@ -108,6 +70,45 @@ impl Board {
 
             self.update_hash(rook, rook_from);
             self.update_hash(rook, rook_to);
+        } else {
+
+            if mv.is_capture() && !mv.is_en_passant() {
+                let captured = self.piece_on(to);
+                self.remove_piece(piece, from);
+                observer.on_piece_change(self, piece, from, false);
+
+                self.remove_piece(captured, to);
+                self.add_piece(piece, to);
+                observer.on_piece_mutate(self, captured, piece, to);
+
+                self.update_hash(captured, to);
+
+                self.state.material -= captured.value();
+                self.state.captured = Some(captured);
+                self.state.recapture_square = to;
+            }
+
+            if mv.is_en_passant() || !mv.is_capture() {
+                self.remove_piece(piece, from);
+                self.add_piece(piece, to);
+                observer.on_piece_move(self, piece, from, to);
+            }
+        }
+
+        if mv.is_double_push() {
+            self.state.en_passant = to ^ 8;
+            self.state.key ^= ZOBRIST.en_passant[self.en_passant()];
+        }
+
+        if mv.is_en_passant() {
+            let captured = Piece::new(!stm, PieceType::Pawn);
+
+            self.remove_piece(captured, to ^ 8);
+            observer.on_piece_change(self, captured, to ^ 8, false);
+
+            self.update_hash(captured, to ^ 8);
+
+            self.state.material -= captured.value();
         }
 
         if mv.is_promotion() {
