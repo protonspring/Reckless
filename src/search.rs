@@ -1187,6 +1187,7 @@ fn qsearch<NODE: NodeType>(td: &mut ThreadData, mut alpha: i32, beta: i32, ply: 
     let raw_eval;
     let eval;
     let mut best_score;
+    let mut futility_start = Score::NONE;
     let correction_value = eval_correction(td, ply);
 
     // Evaluation
@@ -1201,6 +1202,7 @@ fn qsearch<NODE: NodeType>(td: &mut ThreadData, mut alpha: i32, beta: i32, ply: 
         };
         eval = correct_eval(td, raw_eval, correction_value);
         best_score = eval;
+        futility_start = best_score + 400;
 
         if is_valid(tt_score)
             && (!NODE::PV || !is_decisive(tt_score))
@@ -1241,10 +1243,19 @@ fn qsearch<NODE: NodeType>(td: &mut ThreadData, mut alpha: i32, beta: i32, ply: 
     while let Some(mv) = move_picker.next::<NODE>(td, skip_quiets(best_score), ply) {
         move_count += 1;
 
+        let captured = td.board.piece_on(mv.to());
+
         if !is_loss(best_score) {
             // Late Move Pruning (LMP)
             if move_count >= 3 && !td.board.is_direct_check(mv) {
                 break;
+            }
+
+            let futility_score = futility_start + captured.value();
+
+            if futility_score <= alpha {
+                best_score = best_score.max(futility_score);
+                continue;
             }
 
             // Static Exchange Evaluation Pruning (SEE Pruning)
