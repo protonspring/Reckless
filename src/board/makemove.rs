@@ -92,13 +92,29 @@ impl Board {
                 self.update_hash(rook, rook_from);
                 self.update_hash(rook, rook_to);
             }
+            MoveKind::Capture => {
+                self.remove_piece(piece, from);
+                observer.on_piece_change(self, piece, from, false);
+
+                self.remove_piece(captured, to);
+                self.add_piece(piece, to);
+                observer.on_piece_mutate(self, captured, piece, to);
+
+                self.update_hash(captured, to);
+
+                self.state.material -= captured.value();
+                self.state.captured = Some(captured);
+
+                self.update_hash(piece, from);
+                self.update_hash(piece, to);
+            }
             _ => (),
         }
 
         //////////////////end new move pieces
 
 
-        if !mv.is_castling() && mv.kind() != MoveKind::Normal && !mv.is_double_push() {
+        if mv.kind() != MoveKind::Capture && !mv.is_castling() && mv.kind() != MoveKind::Normal && !mv.is_double_push() {
         //////////////////start move pieces
 
         if captured != Piece::None && !mv.is_castling() {
