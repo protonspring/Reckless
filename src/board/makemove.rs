@@ -46,12 +46,7 @@ impl Board {
         let captured = self.piece_on(to);
         self.state.captured = Some(captured);
         self.state.plies_from_null += 1;
-
-        if mv.kind() == MoveKind::Capture || pt == PieceType::Pawn {
-            self.state.halfmove_clock = 0;
-        } else {
-            self.state.halfmove_clock += 1;
-        }
+        self.state.halfmove_clock = (self.halfmove_clock() + 1) * !mv.is_capture() as u8;
 
         if mv.is_castling() {
             let (rook_from, rook_to) = self.get_castling_rook(to);
@@ -90,6 +85,9 @@ impl Board {
         self.update_hash(piece, from);
         self.update_hash(piece, to);
 
+        if pt == PieceType::Pawn {
+            self.state.halfmove_clock = 0;
+
         match mv.kind() {
             MoveKind::DoublePush => {
                 self.state.en_passant = to ^ 8;
@@ -119,6 +117,7 @@ impl Board {
                 self.state.material += promotion.value() - PieceType::Pawn.value();
             }
             _ => (),
+        }
         }
 
         self.side_to_move = !self.side_to_move;
