@@ -223,7 +223,7 @@ impl MovePicker {
             if other_pawns.contains(mv.from()) && !threats.contains(mv.to()) {
                 //println!("{}", td.board);
                 //println!("Move: {}-{}", mv.from(), mv.to());
-                entry.score += 2000;
+                entry.score += 4000;
             }
         }
     }
