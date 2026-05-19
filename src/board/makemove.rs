@@ -126,12 +126,12 @@ impl Board {
                 self.state.material -= captured.value();
                 self.state.captured = Some(captured);
             }
-            MoveKind::PromotionN => { //not a capture
+            MoveKind::PromotionN | MoveKind::PromotionB | MoveKind::PromotionR | MoveKind::PromotionQ => { //not a capture
                 self.update_hash(piece, from);
                 self.remove_piece(piece, from);
                 observer.on_piece_change(self, piece, from, false);
 
-                let promo_piece = Piece::new(stm, PieceType::Knight);
+                let promo_piece = Piece::new(stm, mv.promo_piece_type());
                 self.update_hash(promo_piece, to);
                 self.add_piece(promo_piece, to);
                 observer.on_piece_change(self, promo_piece, to, true);
@@ -161,7 +161,16 @@ impl Board {
         //////////////////end new move pieces
 
 
-        if mv.kind() != MoveKind::PromotionN && !mv.is_en_passant() && mv.kind() != MoveKind::Capture && !mv.is_castling() && mv.kind() != MoveKind::Normal && !mv.is_double_push() {
+        if 
+               mv.kind() != MoveKind::PromotionN
+            && mv.kind() != MoveKind::PromotionB
+            && mv.kind() != MoveKind::PromotionR
+            && mv.kind() != MoveKind::PromotionQ
+            && !mv.is_en_passant()
+            && mv.kind() != MoveKind::Capture
+            && !mv.is_castling()
+            && mv.kind() != MoveKind::Normal
+            && !mv.is_double_push() {
         //////////////////start move pieces
 
         if captured != Piece::None && !mv.is_castling() {
