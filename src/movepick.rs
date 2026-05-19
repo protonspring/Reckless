@@ -177,11 +177,9 @@ impl MovePicker {
 
         // don't move king wall pawns
         let my_king = td.board.king_square(side);
-        let wall_pawns = if Bitboard::HOME_ROWS[side].contains(my_king) {
-            king_attacks(my_king) & td.board.pieces(PieceType::Pawn)
-        } else {
-            Bitboard(0)
-        };
+        let wall_pawns = td.board.pieces(PieceType::Pawn)
+           & if Bitboard::QUEEN_SIDE.contains(my_king) { Bitboard::QUEEN_SIDE
+        } else { !Bitboard::QUEEN_SIDE };
 
         for entry in self.list.iter_mut() {
             let mv = entry.mv;
