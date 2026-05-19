@@ -183,6 +183,12 @@ impl MovePicker {
             Bitboard(0)
         };
 
+        //bonus for pushing pawns on opposite side as the king
+        //consider castling rights?
+        let other_pawns = td.board.pieces(PieceType::Pawn)
+           & if Bitboard::QUEEN_SIDE.contains(my_king) { !Bitboard::QUEEN_SIDE
+        } else { Bitboard::QUEEN_SIDE };
+
         for entry in self.list.iter_mut() {
             let mv = entry.mv;
             let pt = td.board.type_on(mv.from());
@@ -197,6 +203,12 @@ impl MovePicker {
                 - 8074 * threatened[pt].contains(mv.to()) as i32
                 + 5182 * offense[pt].contains(mv.to()) as i32
                 - 4255 * wall_pawns.contains(mv.from()) as i32;
+
+            if other_pawns.contains(mv.from()) && !threats.contains(mv.to()) {
+                //println!("{}", td.board);
+                //println!("Move: {}-{}", mv.from(), mv.to());
+                entry.score += 2000;
+            }
         }
     }
 }
