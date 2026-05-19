@@ -137,30 +137,30 @@ impl Board {
                 observer.on_piece_change(self, promo_piece, to, true);
 
                 self.state.material += promo_piece.value() - PieceType::Pawn.value();
-
-                //self.remove_piece(piece, from);
-                //self.add_piece(piece, to);
-                //observer.on_piece_move(self, piece, from, to);
-                //self.update_hash(piece, from);
-                //self.update_hash(piece, to);
-
-                //let promotion = Piece::new(stm, mv.promo_piece_type());
-
-                //self.remove_piece(piece, to);
-                //self.add_piece(promotion, to);
-                //observer.on_piece_mutate(self, piece, promotion, to);
-
-                //self.update_hash(piece, to);
-                //self.update_hash(promotion, to);
-
-                //self.state.material += promotion.value() - PieceType::Pawn.value();
             }
-            _ => (),
+            MoveKind::PromotionCaptureN | MoveKind::PromotionCaptureB | MoveKind::PromotionCaptureR | MoveKind::PromotionCaptureQ => {
+                self.update_hash(piece, from);
+                self.remove_piece(piece, from);
+                observer.on_piece_change(self, piece, from, false);
+
+                self.update_hash(captured, to);
+                self.remove_piece(captured, to);
+
+                let promo_piece = Piece::new(stm, mv.promo_piece_type());
+                self.update_hash(promo_piece, to);
+                self.add_piece(promo_piece, to);
+                observer.on_piece_mutate(self, captured, promo_piece, to);
+
+                self.state.material -= captured.value();
+                self.state.material += promo_piece.value() - PieceType::Pawn.value();
+            }
+            //_ => (),
         }
 
         //////////////////end new move pieces
 
 
+/*
         if 
                mv.kind() != MoveKind::PromotionN
             && mv.kind() != MoveKind::PromotionB
@@ -244,6 +244,7 @@ impl Board {
         }
 
         //////////////////end move pieces
+        */
 
         self.side_to_move = !self.side_to_move;
 
