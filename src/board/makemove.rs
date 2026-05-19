@@ -108,13 +108,31 @@ impl Board {
                 self.update_hash(piece, from);
                 self.update_hash(piece, to);
             }
+            MoveKind::EnPassant => {
+                self.update_hash(piece, from);
+                self.update_hash(piece, to);
+
+                self.remove_piece(piece, from);
+                self.add_piece(piece, to);
+                observer.on_piece_move(self, piece, from, to);
+
+                let captured = Piece::new(!stm, PieceType::Pawn);
+
+                self.remove_piece(captured, to ^ 8);
+                observer.on_piece_change(self, captured, to ^ 8, false);
+
+                self.update_hash(captured, to ^ 8);
+
+                self.state.material -= captured.value();
+                self.state.captured = Some(captured);
+            }
             _ => (),
         }
 
         //////////////////end new move pieces
 
 
-        if mv.kind() != MoveKind::Capture && !mv.is_castling() && mv.kind() != MoveKind::Normal && !mv.is_double_push() {
+        if !mv.is_en_passant() && mv.kind() != MoveKind::Capture && !mv.is_castling() && mv.kind() != MoveKind::Normal && !mv.is_double_push() {
         //////////////////start move pieces
 
         if captured != Piece::None && !mv.is_castling() {
