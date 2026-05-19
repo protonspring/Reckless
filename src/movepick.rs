@@ -3,7 +3,7 @@ use crate::{
     search::NodeType,
     setwise::{bishop_attacks_setwise, knight_attacks_setwise, pawn_attacks_setwise, rook_attacks_setwise},
     thread::ThreadData,
-    types::{ArrayVec, Bitboard, MAX_MOVES, Move, MoveEntry, MoveList, PieceType},
+    types::{ArrayVec, Bitboard, CastlingKind, Color, MAX_MOVES, Move, MoveEntry, MoveList, PieceType},
 };
 
 #[derive(Copy, Clone, Eq, PartialEq, PartialOrd)]
@@ -184,10 +184,26 @@ impl MovePicker {
         };
 
         //bonus for pushing pawns on opposite side as the king
-        //consider castling rights?
-        let other_pawns = td.board.pieces(PieceType::Pawn)
-           & if Bitboard::QUEEN_SIDE.contains(my_king) { !Bitboard::QUEEN_SIDE
-        } else { Bitboard::QUEEN_SIDE };
+        let mut other_pawns = td.board.pieces(PieceType::Pawn);
+
+        if Bitboard::QUEEN_SIDE.contains(my_king) {
+            other_pawns &= !Bitboard::QUEEN_SIDE;
+
+            let ckind = if side == Color::White { CastlingKind::WhiteKingside } else { CastlingKind::BlackKingside };
+
+            if td.board.castling().is_allowed(ckind) {
+                other_pawns = Bitboard(0);
+            }
+        } else {
+            other_pawns &= Bitboard::QUEEN_SIDE;
+            let ckind = if side == Color::White { CastlingKind::WhiteQueenside } else { CastlingKind::BlackQueenside };
+
+            if td.board.castling().is_allowed(ckind) {
+                other_pawns = Bitboard(0);
+            }
+        }
+
+        // limit other pawns only if we cannot castle to that side
 
         for entry in self.list.iter_mut() {
             let mv = entry.mv;
@@ -207,7 +223,7 @@ impl MovePicker {
             if other_pawns.contains(mv.from()) && !threats.contains(mv.to()) {
                 //println!("{}", td.board);
                 //println!("Move: {}-{}", mv.from(), mv.to());
-                entry.score += 4000;
+                entry.score += 2000;
             }
         }
     }
