@@ -53,6 +53,33 @@ impl Board {
             self.state.halfmove_clock += 1;
         }
 
+        ///////////////start new move pieces
+        match mv.kind() {
+            MoveKind::Normal => {
+                self.remove_piece(piece, from);
+                self.add_piece(piece, to);
+                observer.on_piece_move(self, piece, from, to);
+                self.update_hash(piece, from);
+                self.update_hash(piece, to);
+            }
+            MoveKind::DoublePush => {
+                self.remove_piece(piece, from);
+                self.add_piece(piece, to);
+                observer.on_piece_move(self, piece, from, to);
+                self.state.en_passant = to ^ 8;
+                self.state.key ^= ZOBRIST.en_passant[self.en_passant()];
+                self.update_hash(piece, from);
+                self.update_hash(piece, to);
+            }
+            _ => (),
+        }
+
+        //////////////////end new move pieces
+
+
+        if mv.kind() != MoveKind::Normal && !mv.is_double_push() {
+        //////////////////start move pieces
+
         if captured != Piece::None && !mv.is_castling() {
             self.remove_piece(piece, from);
             observer.on_piece_change(self, piece, from, false);
@@ -121,6 +148,9 @@ impl Board {
             }
             _ => (),
         }
+        }
+
+        //////////////////end move pieces
 
         self.side_to_move = !self.side_to_move;
 
