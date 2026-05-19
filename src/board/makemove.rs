@@ -71,13 +71,34 @@ impl Board {
                 self.update_hash(piece, from);
                 self.update_hash(piece, to);
             }
+            MoveKind::Castling => {
+
+                self.update_hash(piece, from);
+                self.update_hash(piece, to);
+
+                let (rook_from, rook_to) = self.get_castling_rook(to);
+                let rook = Piece::new(stm, PieceType::Rook);
+
+                self.remove_piece(rook, rook_from);
+                observer.on_piece_change(self, rook, rook_from, false);
+
+                self.remove_piece(piece, from);
+                self.add_piece(piece, to);
+                observer.on_piece_move(self, piece, from, to);
+
+                self.add_piece(rook, rook_to);
+                observer.on_piece_change(self, rook, rook_to, true);
+
+                self.update_hash(rook, rook_from);
+                self.update_hash(rook, rook_to);
+            }
             _ => (),
         }
 
         //////////////////end new move pieces
 
 
-        if mv.kind() != MoveKind::Normal && !mv.is_double_push() {
+        if !mv.is_castling() && mv.kind() != MoveKind::Normal && !mv.is_double_push() {
         //////////////////start move pieces
 
         if captured != Piece::None && !mv.is_castling() {
