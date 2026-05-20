@@ -11,7 +11,7 @@ mod magics;
 mod maps;
 
 const BASE_URL: &str = "https://github.com/codedeliveryservice/RecklessNetworks/releases/download/networks";
-const NETWORK_NAME: &str = "v59-f6f160f4.nnue";
+const NETWORK_NAME: &str = "v60-7f587dfb.nnue";
 
 fn main() {
     generate_model_env();
@@ -83,6 +83,9 @@ fn write(mut buf: BufWriter<File>) -> Result<(), std::io::Error> {
     write_map!("KNIGHT_MAP", "u64", maps::generate_knight_map());
 
     write_map!("PAWN_MAP", "[u64; 64]", maps::generate_pawn_map());
+
+    write_map!("RAYPASS", "[u64; 64]", maps::generate_rays_map());
+    write_map!("BETWEEN", "[u64; 64]", maps::generate_between_map());
 
     write_map!("ROOK_MAP", "u64", maps::generate_rook_map());
     write_map!("BISHOP_MAP", "u64", maps::generate_bishop_map());

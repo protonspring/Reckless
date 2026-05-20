@@ -22,39 +22,19 @@ pub struct MovePicker {
     stage: Stage,
     bad_noisy: ArrayVec<Move, MAX_MOVES>,
     bad_noisy_idx: usize,
+    noisy_count: usize,
 }
 
 impl MovePicker {
-    pub const fn new(tt_move: Move) -> Self {
+    pub const fn new(tt_move: Move, threshold: Option<i32>) -> Self {
         Self {
             list: MoveList::new(),
             tt_move,
-            threshold: None,
+            threshold,
             stage: if tt_move.is_present() { Stage::HashMove } else { Stage::GenerateNoisy },
             bad_noisy: ArrayVec::new(),
             bad_noisy_idx: 0,
-        }
-    }
-
-    pub const fn new_probcut(threshold: i32) -> Self {
-        Self {
-            list: MoveList::new(),
-            tt_move: Move::NULL,
-            threshold: Some(threshold),
-            stage: Stage::GenerateNoisy,
-            bad_noisy: ArrayVec::new(),
-            bad_noisy_idx: 0,
-        }
-    }
-
-    pub const fn new_qsearch() -> Self {
-        Self {
-            list: MoveList::new(),
-            tt_move: Move::NULL,
-            threshold: None,
-            stage: Stage::GenerateNoisy,
-            bad_noisy: ArrayVec::new(),
-            bad_noisy_idx: 0,
+            noisy_count: 0,
         }
     }
 
@@ -74,18 +54,15 @@ impl MovePicker {
         if self.stage == Stage::GenerateNoisy {
             self.stage = Stage::GoodNoisy;
             td.board.append_noisy_moves(&mut self.list);
+            self.remove_tt();
             self.score_noisy(td);
         }
 
         if self.stage == Stage::GoodNoisy {
             while !self.list.is_empty() {
                 let entry = self.get_best_entry();
-                if entry.mv == self.tt_move {
-                    continue;
-                }
-
-                let threshold = self.threshold.unwrap_or_else(|| -entry.score / 45 + 111);
-                if !td.board.see(entry.mv, threshold) {
+                let threshold = self.threshold.unwrap_or_else(|| -entry.score / 39 + 107);
+                if (self.tt_move.is_quiet() && self.noisy_count > 2) || !td.board.see(entry.mv, threshold) {
                     self.bad_noisy.push(entry.mv);
                     continue;
                 }
@@ -94,6 +71,7 @@ impl MovePicker {
                     self.score_noisy(td);
                 }
 
+                self.noisy_count += 1;
                 return Some(entry.mv);
             }
 
@@ -102,24 +80,17 @@ impl MovePicker {
             } else {
                 self.stage = Stage::Quiet;
                 td.board.append_quiet_moves(&mut self.list);
+                self.remove_tt();
                 self.score_quiet(td, ply);
             }
         }
 
         if self.stage == Stage::Quiet {
-            if !skip_quiets {
-                while !self.list.is_empty() {
-                    let entry = self.get_best_entry();
-                    if entry.mv == self.tt_move {
-                        continue;
-                    }
-
-                    if NODE::ROOT {
-                        self.score_quiet(td, ply);
-                    }
-
-                    return Some(entry.mv);
+            if !skip_quiets && !self.list.is_empty() {
+                if NODE::ROOT {
+                    self.score_quiet(td, ply);
                 }
+                return Some(self.get_best_entry().mv);
             }
 
             self.stage = Stage::BadNoisy;
@@ -148,6 +119,12 @@ impl MovePicker {
         self.list.remove(best_index)
     }
 
+    fn remove_tt(&mut self) {
+        if let Some(pos) = self.list.iter().position(|&e| e.mv == self.tt_move) {
+            self.list.remove(pos);
+        }
+    }
+
     fn score_noisy(&mut self, td: &ThreadData) {
         let threats = td.board.all_threats();
 
@@ -156,9 +133,9 @@ impl MovePicker {
             let captured = td.board.type_on(mv.capture_sq());
             let pt = td.board.type_on(mv.from());
 
-            entry.score = 16 * captured.value()
+            entry.score = 15704 * captured.value() / 1024
                 + td.noisy_history.get(threats, td.board.moved_piece(mv), mv.to(), captured)
-                + 4000 * (mv.is_promotion() && mv.promo_piece_type() == PieceType::Queen) as i32
+                + 4057 * (mv.is_promotion() && mv.promo_piece_type() == PieceType::Queen) as i32
                 + (200000 - 20000 * pt as i32) * td.board.in_check() as i32;
         }
     }
@@ -176,7 +153,7 @@ impl MovePicker {
             [Bitboard(0), pawn_threats, pawn_threats, minor_threats, rook_threats, Bitboard(0)]
         };
 
-        let escape = [0, 7768, 8218, 13424, 20208, 0];
+        let escape = [0, 8297, 8292, 13144, 21081, 0];
 
         // safe squares where we can attack an opponent piece
         let offense = {
@@ -218,20 +195,24 @@ impl MovePicker {
             let mv = entry.mv;
             let pt = td.board.type_on(mv.from());
 
-            entry.score = 2048 * td.quiet_history.get(threats, side, mv) / 1024
-                + 1536 * td.conthist(ply, 1, mv) / 1024
-                + td.conthist(ply, 2, mv)
-                + td.conthist(ply, 4, mv)
-                + td.conthist(ply, 6, mv)
+            entry.score = 1973 * td.quiet_history.get(threats, side, mv) / 1024
+                + 1573 * td.conthist(ply, 1, mv) / 1024
+                + 956 * td.conthist(ply, 2, mv) / 1024
+                + 987 * td.conthist(ply, 4, mv) / 1024
+                + 944 * td.conthist(ply, 6, mv) / 1024
                 + escape[pt] * threatened[pt].contains(mv.from()) as i32
-                + 9325 * td.board.checking_squares(pt).contains(mv.to()) as i32
-                - 7584 * threatened[pt].contains(mv.to()) as i32
-                + 5000 * offense[pt].contains(mv.to()) as i32
-                - 4000 * wall_pawns.contains(mv.from()) as i32;
+                + 9503 * td.board.checking_squares(pt).contains(mv.to()) as i32
+                - 8074 * threatened[pt].contains(mv.to()) as i32
+                + 5182 * offense[pt].contains(mv.to()) as i32
+                - 4255 * wall_pawns.contains(mv.from()) as i32;
 
             if !passed_pawns.is_empty() && pt == PieceType::King {
                 let passed_pawn = if side == Color::White { passed_pawns.msb() } else { passed_pawns.lsb() };
-                if mv.to().distance_from(passed_pawn) < mv.from().distance_from(passed_pawn) {
+                let queening_square = (Bitboard::file(passed_pawn.file()) & Bitboard::HOME_ROWS[!side]).lsb();
+                if mv.to().distance_from(queening_square) < mv.from().distance_from(queening_square) {
+                    //println!("{}", td.board);
+                    //println!("move; {}-{}", mv.from(), mv.to());
+                    //println!("queening square: {}", queening_square as u8);
                     entry.score += 3000;
                 }
             }
