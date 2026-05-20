@@ -213,7 +213,7 @@ impl MovePicker {
                     //println!("{}", td.board);
                     //println!("move; {}-{}", mv.from(), mv.to());
                     //println!("queening square: {}", queening_square as u8);
-                    entry.score += 3000;
+                    entry.score += 6000;
                 }
             }
         }
