@@ -209,10 +209,12 @@ impl Board {
         self.pieces[piece.piece_type()].set(square);
     }
 
-    pub fn remove_piece(&mut self, piece: Piece, square: Square) {
+    pub fn remove_piece(&mut self, square: Square) -> Piece {
+        let piece = self.mailbox[square];
         self.mailbox[square] = Piece::None;
         self.colors[piece.color()].clear(square);
         self.pieces[piece.piece_type()].clear(square);
+        piece
     }
 
     pub fn update_hash(&mut self, piece: Piece, square: Square) {
@@ -256,6 +258,11 @@ impl Board {
     /// after the root, or repeated twice before or at the root.
     pub const fn draw_by_repetition(&self, ply: i32) -> bool {
         self.state.repetition != 0 && self.state.repetition < ply
+    }
+
+    pub fn has_repeated(&self) -> bool {
+        let end = self.state.plies_from_null.min(self.state.halfmove_clock as usize);
+        self.state_stack.iter().rev().take(end.saturating_sub(3)).any(|s| s.repetition != 0)
     }
 
     pub fn draw_by_fifty_move_rule(&self) -> bool {
