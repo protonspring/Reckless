@@ -202,7 +202,7 @@ impl MovePicker {
                 - 4255 * wall_pawns.contains(mv.from()) as i32;
 
             if block_pawn.contains(mv.to()) {
-                entry.score += 2000;
+                entry.score += 4000;
             }
         }
     }
