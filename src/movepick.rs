@@ -197,6 +197,12 @@ impl MovePicker {
                 - 8074 * threatened[pt].contains(mv.to()) as i32
                 + 5182 * offense[pt].contains(mv.to()) as i32
                 - 4255 * wall_pawns.contains(mv.from()) as i32;
+
+            if pt == PieceType::Knight && Bitboard::EDGES.contains(mv.from()) {
+                //println!("{}", td.board);
+                //println!("Move: {}-{}", mv.from(), mv.to());
+                entry.score -= 2000;
+            }
         }
     }
 }
