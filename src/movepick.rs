@@ -205,7 +205,7 @@ impl MovePicker {
             if pt == PieceType::King
                 && (king_attacks(my_king) & pawns).is_empty()
                 && !(king_attacks(mv.to()) & pawns).is_empty() {
-                entry.score += 2000;
+                entry.score += 4000;
             }
         }
     }
