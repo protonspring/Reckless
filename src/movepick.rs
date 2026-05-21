@@ -201,7 +201,7 @@ impl MovePicker {
             if pt == PieceType::Knight && Bitboard::EDGES.contains(mv.from()) {
                 //println!("{}", td.board);
                 //println!("Move: {}-{}", mv.from(), mv.to());
-                entry.score -= 4000;
+                entry.score -= 8000;
             }
         }
     }
