@@ -183,6 +183,7 @@ impl MovePicker {
             Bitboard(0)
         };
 
+
         for entry in self.list.iter_mut() {
             let mv = entry.mv;
             let pt = td.board.type_on(mv.from());
@@ -197,6 +198,15 @@ impl MovePicker {
                 - 8074 * threatened[pt].contains(mv.to()) as i32
                 + 5182 * offense[pt].contains(mv.to()) as i32
                 - 4255 * wall_pawns.contains(mv.from()) as i32;
+
+            //lonely king
+            //bonus for moving within range of a pawn
+            let pawns = td.board.pieces(PieceType::Pawn);
+            if pt == PieceType::King
+                && (king_attacks(my_king) & pawns).is_empty()
+                && !(king_attacks(mv.to()) & pawns).is_empty() {
+                entry.score += 2000;
+            }
         }
     }
 }
