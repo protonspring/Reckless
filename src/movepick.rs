@@ -173,7 +173,7 @@ impl MovePicker {
             let mut p = pawn_attacks_setwise(td.board.colors(!side), !side) & !threats;
 
             // Add advanced pawn attacks to pawn offense
-            p |= pawn_threats & Bitboard::LEVER_RANKS[side] & !non_pawn_threats;
+            p |= pawn_threats & Bitboard::ADVANCED_RANKS[side] & !non_pawn_threats;
 
             let n = knight_attacks_setwise(knight_vulnerable) & !threats;
             let b = bishop_attacks_setwise(bishop_vulnerable, occupancies) & !threats;
