@@ -138,7 +138,7 @@ impl MovePicker {
                 + 4057 * (mv.is_promotion() && mv.promo_piece_type() == PieceType::Queen) as i32
                 + (200000 - 20000 * pt as i32) * td.board.in_check() as i32;
 
-            if pt == captured {
+            if pt == PieceType::Pawn && captured == PieceType::Pawn {
                 entry.score += 4000;
             }
         }
