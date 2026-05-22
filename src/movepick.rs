@@ -139,7 +139,7 @@ impl MovePicker {
                 + (200000 - 20000 * pt as i32) * td.board.in_check() as i32;
 
             if pt == captured {
-                entry.score += 2000;
+                entry.score += 4000;
             }
         }
     }
