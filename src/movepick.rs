@@ -3,7 +3,7 @@ use crate::{
     search::NodeType,
     setwise::{bishop_attacks_setwise, knight_attacks_setwise, pawn_attacks_setwise, rook_attacks_setwise},
     thread::ThreadData,
-    types::{ArrayVec, Bitboard, MAX_MOVES, Move, MoveEntry, MoveList, PieceType},
+    types::{ArrayVec, Bitboard, File, MAX_MOVES, Move, MoveEntry, MoveList, PieceType, Square},
 };
 
 #[derive(Copy, Clone, Eq, PartialEq, PartialOrd)]
@@ -143,14 +143,20 @@ impl MovePicker {
     fn score_quiet(&mut self, td: &ThreadData, ply: isize) {
         let threats = td.board.all_threats();
         let side = td.board.side_to_move();
+        let up = Square::UP[side];
         let occupancies = td.board.occupancies();
         let pawn_threats = td.board.piece_threats(PieceType::Pawn);
+        let enemy_pawns = td.board.colored_pieces(!side, PieceType::Pawn);
 
         let non_pawn_threats = td.board.piece_threats(PieceType::Knight)
             | td.board.piece_threats(PieceType::Bishop)
             | td.board.piece_threats(PieceType::Rook)
             | td.board.piece_threats(PieceType::Queen)
             | td.board.piece_threats(PieceType::King);
+
+        let pawn_dbl_threats =
+            (enemy_pawns.shift(up + Square::RIGHT) & !Bitboard::file(File::A))
+            & (enemy_pawns.shift(up + Square::LEFT) & !Bitboard::file(File::H));
 
         let threatened = {
             let minor_threats =
@@ -174,6 +180,7 @@ impl MovePicker {
 
             // Add advanced pawn attacks to pawn offense
             p |= pawn_threats & Bitboard::LEVER_RANKS[side] & !non_pawn_threats;
+            p &= !pawn_dbl_threats;
 
             let n = knight_attacks_setwise(knight_vulnerable) & !threats;
             let b = bishop_attacks_setwise(bishop_vulnerable, occupancies) & !threats;
