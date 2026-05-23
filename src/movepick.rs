@@ -3,7 +3,7 @@ use crate::{
     search::NodeType,
     setwise::{bishop_attacks_setwise, knight_attacks_setwise, pawn_attacks_setwise, rook_attacks_setwise},
     thread::ThreadData,
-    types::{ArrayVec, Bitboard, MAX_MOVES, Move, MoveEntry, MoveList, PieceType},
+    types::{ArrayVec, Bitboard, MAX_MOVES, Move, MoveEntry, MoveList, PieceType, Square},
 };
 
 #[derive(Copy, Clone, Eq, PartialEq, PartialOrd)]
@@ -187,11 +187,9 @@ impl MovePicker {
 
         // don't move king wall pawns
         let my_king = td.board.king_square(side);
-        let wall_pawns = if Bitboard::HOME_ROWS[side].contains(my_king) {
-            king_attacks(my_king) & td.board.pieces(PieceType::Pawn)
-        } else {
-            Bitboard(0)
-        };
+        let wall_pawns = td.board.pieces(PieceType::Pawn)
+            & king_attacks(my_king)
+            & Bitboard::rank(my_king.rank()).shift(Square::UP[side]);
 
         for entry in self.list.iter_mut() {
             let mv = entry.mv;
@@ -204,8 +202,8 @@ impl MovePicker {
                 + 944 * td.conthist(ply, 6, mv) / 1024
                 + escape[pt] * threatened[pt].contains(mv.from()) as i32
                 + 9503 * td.board.checking_squares(pt).contains(mv.to()) as i32
-                - 8074 * threatened[pt].contains(mv.to()) as i32
                 + 5182 * offense[pt].contains(mv.to()) as i32
+                - 8074 * threatened[pt].contains(mv.to()) as i32
                 - 4255 * wall_pawns.contains(mv.from()) as i32;
         }
     }
