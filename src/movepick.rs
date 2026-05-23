@@ -18,7 +18,7 @@ pub enum Stage {
 pub struct MovePicker {
     list: MoveList,
     tt_move: Move,
-    threshold: Option<i32>,
+    threshold: i32,
     stage: Stage,
     bad_noisy: ArrayVec<Move, MAX_MOVES>,
     bad_noisy_idx: usize,
@@ -26,11 +26,11 @@ pub struct MovePicker {
 }
 
 impl MovePicker {
-    pub const fn new(tt_move: Move, threshold: Option<i32>) -> Self {
+    pub fn new(tt_move: Move, threshold: Option<i32>) -> Self {
         Self {
             list: MoveList::new(),
             tt_move,
-            threshold,
+            threshold: threshold.unwrap_or_else(|| 0),
             stage: if tt_move.is_present() { Stage::HashMove } else { Stage::GenerateNoisy },
             bad_noisy: ArrayVec::new(),
             bad_noisy_idx: 0,
@@ -61,8 +61,7 @@ impl MovePicker {
         if self.stage == Stage::GoodNoisy {
             while !self.list.is_empty() {
                 let entry = self.get_best_entry();
-                let threshold = self.threshold.unwrap_or_else(|| -entry.score / 39 + 107);
-                if (self.tt_move.is_quiet() && self.noisy_count > 2) || !td.board.see(entry.mv, threshold) {
+                if (self.tt_move.is_quiet() && self.noisy_count > 2) || !td.board.see(entry.mv, self.threshold) {
                     self.bad_noisy.push(entry.mv);
                     continue;
                 }
@@ -133,10 +132,11 @@ impl MovePicker {
             let captured = td.board.type_on(mv.capture_sq());
             let pt = td.board.type_on(mv.from());
 
-            entry.score = 15704 * captured.value() / 1024
+            entry.score = (15704 * captured.value() / 1024
                 + td.noisy_history.get(threats, td.board.moved_piece(mv), mv.to(), captured)
                 + 4057 * (mv.is_promotion() && mv.promo_piece_type() == PieceType::Queen) as i32
-                + (200000 - 20000 * pt as i32) * td.board.in_check() as i32;
+                + (200000 - 20000 * pt as i32) * td.board.in_check() as i32)
+                / 40;
         }
     }
 
