@@ -18,7 +18,7 @@ pub enum Stage {
 pub struct MovePicker {
     list: MoveList,
     tt_move: Move,
-    threshold: Option<i32>,
+    threshold: i32,
     stage: Stage,
     bad_noisy: ArrayVec<Move, MAX_MOVES>,
     bad_noisy_idx: usize,
@@ -26,7 +26,7 @@ pub struct MovePicker {
 }
 
 impl MovePicker {
-    pub const fn new(tt_move: Move, threshold: Option<i32>) -> Self {
+    pub const fn new(tt_move: Move, threshold: i32) -> Self {
         Self {
             list: MoveList::new(),
             tt_move,
@@ -61,7 +61,7 @@ impl MovePicker {
         if self.stage == Stage::GoodNoisy {
             while !self.list.is_empty() {
                 let entry = self.get_best_entry();
-                let threshold = self.threshold.unwrap_or_else(|| -entry.score / 39 + 107);
+                let threshold = self.threshold.max(-entry.score / 39 + 107);
                 if (self.tt_move.is_quiet() && self.noisy_count > 2) || !td.board.see(entry.mv, threshold) {
                     self.bad_noisy.push(entry.mv);
                     continue;

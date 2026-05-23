@@ -606,7 +606,7 @@ fn search<NODE: NodeType>(
         && if is_valid(tt_score) { tt_score >= probcut_beta && !is_decisive(tt_score) } else { eval >= beta }
         && !tt_move.is_quiet()
     {
-        let mut move_picker = MovePicker::new(Move::NULL, Some(probcut_beta - eval));
+        let mut move_picker = MovePicker::new(Move::NULL, probcut_beta - eval);
 
         while let Some(mv) = move_picker.next::<NODE>(td, true, ply) {
             if move_picker.stage() == Stage::BadNoisy {
@@ -712,7 +712,7 @@ fn search<NODE: NodeType>(
     let mut noisy_moves = ArrayVec::<Move, 32>::new();
 
     let mut move_count = 0;
-    let mut move_picker = MovePicker::new(tt_move, None);
+    let mut move_picker = MovePicker::new(tt_move, -Score::MATE_IN_MAX);
     let mut skip_quiets = false;
     let mut current_search_count = 0;
     let mut tt_move_score = Score::NONE;
@@ -1249,7 +1249,7 @@ fn qsearch<NODE: NodeType>(td: &mut ThreadData, mut alpha: i32, beta: i32, ply: 
     let mut best_move = Move::NULL;
 
     let mut move_count = 0;
-    let mut move_picker = MovePicker::new(Move::NULL, None);
+    let mut move_picker = MovePicker::new(Move::NULL, -Score::MATE_IN_MAX);
 
     let skip_quiets = |best_score| !in_check || !is_loss(best_score);
 
