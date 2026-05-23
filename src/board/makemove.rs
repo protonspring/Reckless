@@ -45,6 +45,7 @@ impl Board {
         let captured = self.piece_on(to);
         self.state.captured = Some(captured);
         self.state.plies_from_null += 1;
+        self.state.recapture_sq = Square::None;
 
         if mv.kind() == MoveKind::Capture || piece.piece_type() == PieceType::Pawn {
             self.state.halfmove_clock = 0;
@@ -78,6 +79,7 @@ impl Board {
 
             self.state.material -= captured.value();
             self.state.captured = Some(captured);
+            self.state.recapture_sq = to;
         } else {
             self.remove_piece(from);
             self.add_piece(piece, to);
@@ -100,6 +102,7 @@ impl Board {
 
                 self.state.material -= captured.value();
                 self.state.captured = Some(captured);
+                self.state.recapture_sq = to;
             }
             _ if mv.is_promotion() => {
                 let promotion = Piece::new(stm, mv.promo_piece_type());
