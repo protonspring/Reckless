@@ -52,12 +52,13 @@ impl Board {
             self.state.halfmove_clock += 1;
         }
 
+        self.remove_piece(from);
+
         if mv.is_castling() {
             let (rook_from, rook_to) = self.get_castling_rook(to);
             let rook = self.remove_piece(rook_from);
             observer.on_piece_change(self, rook, rook_from, false);
 
-            self.remove_piece(from);
             self.add_piece(piece, to);
             observer.on_piece_move(self, piece, from, to);
 
@@ -67,7 +68,6 @@ impl Board {
             self.update_hash(rook, rook_from);
             self.update_hash(rook, rook_to);
         } else if captured != Piece::None {
-            self.remove_piece(from);
             observer.on_piece_change(self, piece, from, false);
 
             self.remove_piece(to);
@@ -79,7 +79,6 @@ impl Board {
             self.state.material -= captured.value();
             self.state.captured = Some(captured);
         } else {
-            self.remove_piece(from);
             self.add_piece(piece, to);
             observer.on_piece_move(self, piece, from, to);
         }
