@@ -62,7 +62,10 @@ impl MovePicker {
             while !self.list.is_empty() {
                 let entry = self.get_best_entry();
                 let threshold = self.threshold.unwrap_or_else(|| -entry.score / 39 + 107);
-                if ((td.board.in_check() || self.tt_move.is_quiet()) && self.noisy_count > 2) || !td.board.see(entry.mv, threshold) {
+                //if ((td.board.in_check() || self.tt_move.is_quiet()) && self.noisy_count > 2) || !td.board.see(entry.mv, threshold) {
+                if (self.tt_move.is_quiet() && self.noisy_count > 2)
+                    || (td.board.in_check() && self.noisy_count > 1)
+                    || !td.board.see(entry.mv, threshold) {
                     self.bad_noisy.push(entry.mv);
                     continue;
                 }
