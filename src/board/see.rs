@@ -14,6 +14,11 @@ impl super::Board {
             return true;
         }
 
+        // Capturing a checking piece always passes see
+        if self.in_check() && self.occupancies().contains(mv.to()) {
+            return true;
+        }
+
         // In the best case, we win a piece, but still end up with a negative balance
         let mut balance = self.move_value(mv) - threshold;
         if balance < 0 {
