@@ -144,8 +144,7 @@ impl MovePicker {
 
         if td.board.in_check() {
             for entry in self.list.iter_mut() {
-                let pt = td.board.type_on(entry.mv.from());
-                entry.score = 40000 - 4000 * pt as i32;
+                entry.score = 1024 * td.conthist(ply, 1, entry.mv) / 1024
             }
             return;
         }
