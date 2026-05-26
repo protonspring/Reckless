@@ -141,6 +141,15 @@ impl MovePicker {
     }
 
     fn score_quiet(&mut self, td: &ThreadData, ply: isize) {
+
+        if td.board.in_check() {
+            for entry in self.list.iter_mut() {
+                let pt = td.board.type_on(entry.mv.from());
+                entry.score = 40000 - 4000 * pt as i32;
+            }
+            return;
+        }
+
         let threats = td.board.all_threats();
         let side = td.board.side_to_move();
         let occupancies = td.board.occupancies();
