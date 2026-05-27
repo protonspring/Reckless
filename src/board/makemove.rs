@@ -49,9 +49,7 @@ impl Board {
         self.state.plies_from_null += 1;
 
         if mv.kind() == MoveKind::Capture || piece.piece_type() == PieceType::Pawn {
-            self.state.fmr_clock = 0;
-        } else {
-            self.state.fmr_clock += 1;
+            self.state.fmr_start = self.halfmove_number;
         }
 
         if mv.is_castling() {
