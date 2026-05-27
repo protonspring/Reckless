@@ -175,7 +175,7 @@ impl TranspositionTable {
         self.age.store((self.age() + 1) & AGE_MASK, Ordering::Relaxed);
     }
 
-    pub fn read(&self, hash: u64, halfmove_clock: u8, ply: isize) -> Option<Entry> {
+    pub fn read(&self, hash: u64, halfmove_clock: usize, ply: isize) -> Option<Entry> {
         let cluster = {
             let index = index(hash, self.len());
             unsafe { &*self.ptr().add(index) }
@@ -306,7 +306,7 @@ const fn verification_key(hash: u64) -> u16 {
 }
 
 /// Adjust mate distance from "plies from the root" to "plies from the current position".
-const fn score_from_tt(score: i32, ply: isize, halfmove_clock: u8) -> i32 {
+const fn score_from_tt(score: i32, ply: isize, halfmove_clock: usize) -> i32 {
     if score == Score::NONE {
         return Score::NONE;
     }

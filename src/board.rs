@@ -27,7 +27,7 @@ struct InternalState {
     keys: Keys,
     en_passant: Square,
     castling: Castling,
-    fiftymove_clock: u8,
+    fiftymove_clock: usize,
     material: i32,
     plies_from_null: usize,
     repetition: i32,
@@ -132,7 +132,7 @@ impl Board {
         self.state.castling
     }
 
-    pub const fn fiftymove_clock(&self) -> u8 {
+    pub const fn fiftymove_clock(&self) -> usize {
         self.state.fiftymove_clock
     }
 
@@ -249,7 +249,7 @@ impl Board {
     }
 
     pub fn has_repeated(&self) -> bool {
-        let end = self.state.plies_from_null.min(self.state.fiftymove_clock as usize);
+        let end = self.state.plies_from_null.min(self.fiftymove_clock());
         self.state_stack.iter().rev().take(end.saturating_sub(3)).any(|s| s.repetition != 0)
     }
 
@@ -269,7 +269,7 @@ impl Board {
     ///
     /// <http://web.archive.org/web/20201107002606/https://marcelk.net/2013-04-06/paper/upcoming-rep-v2.pdf>
     pub fn upcoming_repetition(&self, ply: usize) -> bool {
-        let half_moves = self.state.plies_from_null.min(self.state.fiftymove_clock as usize);
+        let half_moves = self.state.plies_from_null.min(self.fiftymove_clock() as usize);
         if half_moves < 3 {
             return false;
         }
