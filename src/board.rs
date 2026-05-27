@@ -27,7 +27,6 @@ struct InternalState {
     keys: Keys,
     en_passant: Square,
     castling: Castling,
-    fiftymove_clock: usize,
     fiftymove_start: usize,
     material: i32,
     plies_from_null: usize,
@@ -72,7 +71,7 @@ impl Board {
     pub fn side_to_move(&self) -> Color {
         Color::new((self.halfmove_number & 1) as u8)
     }
-
+    
     pub fn fiftymove_clock_bucket(&self) -> usize {
         (self.fiftymove_clock().saturating_sub(8) as usize / 8).min(15)
     }
@@ -134,19 +133,6 @@ impl Board {
     }
 
     pub fn fiftymove_clock(&self) -> usize {
-        //let clock1 = self.state.fiftymove_clock;
-        //let clock2 = self.halfmove_number - self.state.fiftymove_start;
-
-        //if clock1 != clock2 && clock1 != clock2 + 1 && clock1 != clock2 - 1 {
-        //if clock1 != clock2 {
-        //if self.state.fiftymove_start > self.halfmove_number {
-            //println!("NEGATIVE: stm: {}, {} != {}", self.side_to_move(), clock1, clock2);
-            //println!("NEGATIVE: stm: {}, {} != {}", self.side_to_move(), self.state.fiftymove_start, self.halfmove_number);
-        //} else {
-            //println!("matches");
-        //}
-
-        //self.state.fiftymove_clock
         self.halfmove_number - self.state.fiftymove_start
     }
 
