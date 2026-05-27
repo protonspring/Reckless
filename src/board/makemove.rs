@@ -48,8 +48,11 @@ impl Board {
         self.state.captured = Some(captured);
         self.state.plies_from_null += 1;
 
+        self.halfmove_number += 1;
+
         if mv.kind() == MoveKind::Capture || piece.piece_type() == PieceType::Pawn {
             self.state.fiftymove_clock = 0;
+            self.state.fiftymove_start = self.halfmove_number;
         } else {
             self.state.fiftymove_clock += 1;
         }
@@ -113,7 +116,6 @@ impl Board {
             self.state.material += promotion.value() - PieceType::Pawn.value();
         }
 
-        self.halfmove_number += 1;
 
         self.state.castling.raw &= self.castling_rights[from] & self.castling_rights[to];
         self.state.keys.toggle_castling(self.state.castling);

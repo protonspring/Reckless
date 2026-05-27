@@ -25,6 +25,8 @@ impl Board {
         let mut board = Self::default();
         let mut parts = fen.split_whitespace();
 
+        //println!("{}", fen);
+
         let rows = parts.next().ok_or(ParseFenError::MissingPlacementData)?.split('/');
 
         for (rank, row) in rows.rev().enumerate() {
@@ -56,7 +58,10 @@ impl Board {
         board.state.en_passant = parts.next().unwrap_or_default().try_into().unwrap_or_default();
         board.state.fiftymove_clock = parts.next().unwrap_or_default().parse().unwrap_or_default();
         let fullmove_number: usize = parts.next().unwrap_or_default().parse().unwrap_or_default();
-        board.halfmove_number = (2 * fullmove_number) + side_to_move as usize;
+        board.halfmove_number = (2 * (fullmove_number - 1)) + side_to_move as usize;
+        board.state.fiftymove_start = board.halfmove_number - board.state.fiftymove_clock;
+
+        //println!("fmr_clock: {}, halfmove: {}, start: {}", board.state.fiftymove_clock, board.halfmove_number, board.state.fiftymove_start);
 
         board.update_threats();
         board.update_hash_keys();
