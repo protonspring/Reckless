@@ -1,5 +1,6 @@
 use super::{Board, BoardObserver};
 use crate::types::{Move, MoveKind, Piece, PieceType, Square};
+use crate::lookup::{pawn_attacks, bishop_attacks, rook_attacks};
 
 impl Board {
     pub fn make_null_move(&mut self) {
@@ -92,8 +93,24 @@ impl Board {
                 self.state.material -= captured.value();
                 self.state.captured = Some(captured);
             } else if mv.is_double_push() {
-                self.state.en_passant = to ^ 8;
-                self.state.keys.toggle_en_passant(self.en_passant());
+
+                //make sure an ep capture is actually legal
+                let ep_square = to ^ 8;
+                let enemy_king = self.king_square(!stm);
+                let ep_takers = pawn_attacks(ep_square, stm) & self.colored_pieces(!stm, PieceType::Pawn);
+
+                for ep_taker in ep_takers {
+                    let occ = self.occupancies() ^ to.to_bb() ^ ep_taker.to_bb() ^ ep_square.to_bb();
+
+                    let slide_attackers = (rook_attacks(enemy_king, occ) & self.pieces2(PieceType::Rook, PieceType::Queen))
+                        | (bishop_attacks(enemy_king, occ) & self.pieces2(PieceType::Bishop, PieceType::Queen));
+
+                    if (slide_attackers & self.colors(stm)).is_empty() {
+                        self.state.en_passant = to ^ 8;
+                        self.state.keys.toggle_en_passant(self.en_passant());
+                        break;
+                    }
+                }
             }
         }
 

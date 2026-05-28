@@ -528,6 +528,8 @@ impl Board {
             }
         }
 
+        println!("cleared broken ep");
+
         self.state.keys.toggle_en_passant(self.en_passant());
         self.state.en_passant = Square::None;
     }
