@@ -110,8 +110,27 @@ impl super::Board {
         list.push_pawns_setwise(dir, captures ^ promos, MoveKind::Capture);
 
         let ep = self.en_passant();
-        if ep != Square::None && pawns.contains(ep.shift(-dir)) {
-            list.push(ep.shift(-dir), self.en_passant(), MoveKind::EnPassant);
+        if ep != Square::None {
+
+            let pawn_attacker = ep.shift(-dir);
+            if pawns.contains(pawn_attacker) {
+
+                let stm = self.side_to_move();
+                if !self.colored_pieces(stm, PieceType::Pawn).contains(pawn_attacker) {
+                    println!("PAWN NO EXIST!");
+                }
+
+                let king = self.king_square(stm);
+                let pushed_pawn = ep ^ 8;
+                let occ = (ep.to_bb() | (self.occupancies() ^ pushed_pawn.to_bb())) ^ pawn_attacker.to_bb();
+
+                let slide_attackers = (rook_attacks(king, occ) & self.pieces2(PieceType::Rook, PieceType::Queen))
+                    | (bishop_attacks(king, occ) & self.pieces2(PieceType::Bishop, PieceType::Queen));
+
+                if (slide_attackers & self.colors(!stm)).is_empty() {
+                    list.push(pawn_attacker, self.en_passant(), MoveKind::EnPassant);
+                }
+            }
         }
     }
 
