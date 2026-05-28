@@ -212,7 +212,7 @@ impl MovePicker {
 
             // resist releasing a pin
             if td.board.pinners(side).contains(mv.from()) && !ray_pass(their_king, mv.from()).contains(mv.to()) {
-                entry.score -= 2000;
+                entry.score -= 4000;
             }
         }
     }
