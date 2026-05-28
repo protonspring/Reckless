@@ -1,5 +1,5 @@
 use crate::{
-    lookup::king_attacks,
+    lookup::{king_attacks, ray_pass},
     search::NodeType,
     setwise::{bishop_attacks_setwise, knight_attacks_setwise, pawn_attacks_setwise, rook_attacks_setwise},
     thread::ThreadData,
@@ -187,6 +187,7 @@ impl MovePicker {
 
         // don't move king wall pawns
         let my_king = td.board.king_square(side);
+        let their_king = td.board.king_square(!side);
         let wall_pawns = if Bitboard::HOME_ROWS[side].contains(my_king) {
             king_attacks(my_king) & td.board.pieces(PieceType::Pawn)
         } else {
@@ -195,7 +196,8 @@ impl MovePicker {
 
         for entry in self.list.iter_mut() {
             let mv = entry.mv;
-            let pt = td.board.type_on(mv.from());
+            let piece = td.board.piece_on(mv.from());
+            let pt = piece.piece_type();
 
             entry.score = 1973 * td.quiet_history.get(threats, side, mv) / 1024
                 + 1573 * td.conthist(ply, 1, mv) / 1024
@@ -207,6 +209,11 @@ impl MovePicker {
                 - 8074 * threatened[pt].contains(mv.to()) as i32
                 + 5182 * offense[pt].contains(mv.to()) as i32
                 - 4255 * wall_pawns.contains(mv.from()) as i32;
+
+            // resist releasing a pin
+            if td.board.pinners(side).contains(mv.from()) && !ray_pass(their_king, mv.from()).contains(mv.to()) {
+                entry.score -= 2000;
+            }
         }
     }
 }
