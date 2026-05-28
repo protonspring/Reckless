@@ -116,10 +116,6 @@ impl super::Board {
             if pawns.contains(pawn_attacker) {
 
                 let stm = self.side_to_move();
-                if !self.colored_pieces(stm, PieceType::Pawn).contains(pawn_attacker) {
-                    println!("PAWN NO EXIST!");
-                }
-
                 let king = self.king_square(stm);
                 let pushed_pawn = ep ^ 8;
                 let occ = (ep.to_bb() | (self.occupancies() ^ pushed_pawn.to_bb())) ^ pawn_attacker.to_bb();
