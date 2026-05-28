@@ -137,7 +137,6 @@ impl Board {
         self.state.keys.toggle_castling(self.state.castling);
 
         self.update_threats();
-        self.validate_en_passant();
 
         self.state.repetition = 0;
 
