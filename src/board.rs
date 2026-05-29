@@ -27,7 +27,6 @@ struct InternalState {
     keys: Keys,
     en_passant: Square,
     castling: Castling,
-    fiftymove_clock: usize,
     fiftymove_start: usize,
     material: i32,
     plies_from_null: usize,
@@ -69,20 +68,7 @@ impl Board {
         self.halfmove_number / 2
     }
 
-    //pub const fn fiftymove_clock(&self) -> u8 {
-    pub fn fiftymove_clock(&self) -> u8 {
-        let clock1 = self.state.fiftymove_clock as u8;
-        let clock2 = self.fiftymove_clock2();
-
-        if clock1 != clock2 {
-
-            println!("Diff: {}-{}", clock1, clock2);
-        }
-
-        self.state.fiftymove_clock as u8
-    }
-
-    pub const fn fiftymove_clock2(&self) -> u8 {
+    pub const fn fiftymove_clock(&self) -> u8 {
         (self.halfmove_number - self.state.fiftymove_start) as u8
     }
 

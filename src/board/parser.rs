@@ -54,10 +54,10 @@ impl Board {
         board.set_castling(parts.next().unwrap());
 
         board.state.en_passant = parts.next().unwrap_or_default().try_into().unwrap_or_default();
-        board.state.fiftymove_clock = parts.next().unwrap_or_default().parse().unwrap_or_default();
+        let fiftymove_clock: usize = parts.next().unwrap_or_default().parse().unwrap_or_default();
         let fullmove_number: usize = parts.next().unwrap_or_default().parse().unwrap_or_default();
         board.halfmove_number = (2 * fullmove_number) + side_to_move as usize;
-        board.state.fiftymove_start = board.halfmove_number - board.state.fiftymove_clock;
+        board.state.fiftymove_start = board.halfmove_number - fiftymove_clock;
 
         board.update_threats();
         board.update_hash_keys();
