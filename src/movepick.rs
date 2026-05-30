@@ -215,7 +215,7 @@ impl MovePicker {
                 let new_attacks = attacks(piece, mv.to(), td.board.occupancies());
 
                 if !(new_attacks & td.board.colored_pieces(!side, PieceType::Queen)).is_empty() {
-                    entry.score += 16000;
+                    entry.score += 4000;
                 }
             }
         }
