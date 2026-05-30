@@ -1,5 +1,5 @@
 use crate::{
-    lookup::king_attacks,
+    lookup::{attacks, king_attacks},
     search::NodeType,
     setwise::{bishop_attacks_setwise, knight_attacks_setwise, pawn_attacks_setwise, rook_attacks_setwise},
     thread::ThreadData,
@@ -195,7 +195,8 @@ impl MovePicker {
 
         for entry in self.list.iter_mut() {
             let mv = entry.mv;
-            let pt = td.board.type_on(mv.from());
+            let piece = td.board.piece_on(mv.from());
+            let pt = piece.piece_type();
 
             entry.score = 1973 * td.quiet_history.get(threats, side, mv) / 1024
                 + 1573 * td.conthist(ply, 1, mv) / 1024
@@ -207,6 +208,16 @@ impl MovePicker {
                 - 8074 * threatened[pt].contains(mv.to()) as i32
                 + 5182 * offense[pt].contains(mv.to()) as i32
                 - 4255 * wall_pawns.contains(mv.from()) as i32;
+
+            //discovery checks that attack queens
+            if td.board.dc_blockers(side).contains(mv.from()) {
+
+                let new_attacks = attacks(piece, mv.to(), td.board.occupancies());
+
+                if !(new_attacks & td.board.colored_pieces(!side, PieceType::Queen)).is_empty() {
+                    entry.score += 8000;
+                }
+            }
         }
     }
 }

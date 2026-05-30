@@ -101,6 +101,10 @@ impl Board {
         self.state.pinners[color as usize]
     }
 
+    pub const fn dc_blockers(&self, color: Color) -> Bitboard {
+        self.state.dc_blockers[color as usize]
+    }
+
     pub const fn checking_squares(&self, pt: PieceType) -> Bitboard {
         self.state.checking_squares[pt as usize]
     }
