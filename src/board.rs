@@ -399,6 +399,14 @@ impl Board {
     /// Roughly 90–95% accurate. Does not account for discovered checks, promotions,
     /// en passant, or checks delivered via castling.
     pub fn is_direct_check(&self, mv: Move) -> bool {
+        let stm = self.side_to_move();
+
+        if self.state.dc_blockers[stm].contains(mv.from()) {
+            if !ray_pass(self.king_square(!stm), mv.from()).contains(mv.to()) {
+                return true;
+            }
+        }
+
         self.checking_squares(self.moved_piece(mv).piece_type()).contains(mv.to())
     }
 
@@ -468,16 +476,9 @@ impl Board {
                     }
                     1 => {
                         if !(self.colors(color) & blockers).is_empty() {
-                            //println!("{}", self);
-                            //println!("color: {}", color as u8);
-                            //println!("blockers: {}", blockers);
                             self.state.pinners[!color].set(square);
                             self.state.pinned[color] |= blockers;
                         } else {
-                            //println!("{}", self);
-                            //println!("color: {}", color as u8);
-                            //println!("dc checker: {}", square as u8);
-                            //println!("dc blocker: {}", blockers);
                             self.state.dc_checkers[!color].set(square);
                             self.state.dc_blockers[!color] |= blockers;
                         }
