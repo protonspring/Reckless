@@ -436,6 +436,8 @@ impl Board {
 
         self.state.pinned = [Bitboard::default(); 2];
         self.state.pinners = [Bitboard::default(); 2];
+        self.state.dc_blockers = [Bitboard::default(); 2];
+        self.state.dc_checkers = [Bitboard::default(); 2];
 
         for color in [Color::White, Color::Black] {
             let king = self.king_square(color);
@@ -474,10 +476,10 @@ impl Board {
                         } else {
                             //println!("{}", self);
                             //println!("color: {}", color as u8);
-                            //println!("pinner: {}", square as u8);
-                            //println!("blockers: {}", blockers);
-                            self.state.dc_blockers[!color].set(square);
-                            self.state.dc_checkers[!color] |= blockers;
+                            //println!("dc checker: {}", square as u8);
+                            //println!("dc blocker: {}", blockers);
+                            self.state.dc_checkers[!color].set(square);
+                            self.state.dc_blockers[!color] |= blockers;
                         }
                     }
                     _ => (),

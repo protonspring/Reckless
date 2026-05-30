@@ -51,9 +51,13 @@ impl super::Board {
 
             // Moving a discovery blocker gives discovered check
             // Here, only the king can recapture
-            //if (self.state.dc_blockers[!stm] & !king_rays[stm]).contains(last_attacker) {
-                //our_attackers &= self.pieces(PieceType::King);
-            //}
+            if (self.state.dc_blockers[!stm] & !king_rays[stm]).contains(last_attacker) {
+                //println!("{}", self);
+                //println!("moved blocker from: {}", last_attacker);
+                //println!("to square: {}", mv.to());
+                //println!("color: {}", stm);
+                our_attackers &= self.pieces(PieceType::King);
+            }
 
             // Exclude pinned pieces if pinners are still on the board
             if (self.pinners(!stm) & occupancies) != Bitboard(0) {
