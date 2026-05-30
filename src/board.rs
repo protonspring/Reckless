@@ -36,6 +36,8 @@ struct InternalState {
     all_threats: Bitboard,
     pinned: [Bitboard; Color::NUM],
     pinners: [Bitboard; Color::NUM],
+    dc_blockers: [Bitboard; Color::NUM],
+    dc_checkers: [Bitboard; Color::NUM],
     checkers: Bitboard,
     checking_squares: [Bitboard; PieceType::NUM],
 }
@@ -432,9 +434,6 @@ impl Board {
             | self.piece_threats(PieceType::Queen)
             | self.piece_threats(PieceType::King);
 
-        let diagonal = self.pieces2(PieceType::Bishop, PieceType::Queen);
-        let orthogonal = self.pieces2(PieceType::Rook, PieceType::Queen);
-
         self.state.pinned = [Bitboard::default(); 2];
         self.state.pinners = [Bitboard::default(); 2];
 
@@ -453,19 +452,33 @@ impl Board {
                     self.checking_squares(PieceType::Bishop) | self.checking_squares(PieceType::Rook);
             }
 
-            let diagonal = diagonal & bishop_attacks(king, self.colors(!color)) & self.colors(!color);
-            let orthogonal = orthogonal & rook_attacks(king, self.colors(!color)) & self.colors(!color);
+            let diagonal = self.pieces2(PieceType::Bishop, PieceType::Queen)
+                & bishop_attacks(king, Bitboard(0)) & self.colors(!color);
+            let orthogonal = self.pieces2(PieceType::Rook, PieceType::Queen)
+                & rook_attacks(king, Bitboard(0)) & self.colors(!color);
 
             for square in diagonal | orthogonal {
-                let blockers = between(king, square) & self.colors(color);
+                let blockers = between(king, square) & self.occupancies();
                 match blockers.popcount() {
                     0 => {
                         debug_assert_eq!(color, stm);
                         self.state.checkers.set(square);
                     }
                     1 => {
-                        self.state.pinners[!color].set(square);
-                        self.state.pinned[color] |= blockers;
+                        if !(self.colors(color) & blockers).is_empty() {
+                            //println!("{}", self);
+                            //println!("color: {}", color as u8);
+                            //println!("blockers: {}", blockers);
+                            self.state.pinners[!color].set(square);
+                            self.state.pinned[color] |= blockers;
+                        } else {
+                            //println!("{}", self);
+                            //println!("color: {}", color as u8);
+                            //println!("pinner: {}", square as u8);
+                            //println!("blockers: {}", blockers);
+                            self.state.dc_blockers[!color].set(square);
+                            self.state.dc_checkers[!color] |= blockers;
+                        }
                     }
                     _ => (),
                 }
