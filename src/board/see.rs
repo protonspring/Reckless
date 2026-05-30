@@ -51,7 +51,9 @@ impl super::Board {
 
             // Moving a discovery blocker gives discovered check
             // Here, only the king can recapture
-            //if (self.state.dc_blockers(!stm) & !king_rays[stm]
+            //if (self.state.dc_blockers[!stm] & !king_rays[stm]).contains(last_attacker) {
+                //our_attackers &= self.pieces(PieceType::King);
+            //}
 
             // Exclude pinned pieces if pinners are still on the board
             if (self.pinners(!stm) & occupancies) != Bitboard(0) {
@@ -62,29 +64,29 @@ impl super::Board {
                 break;
             }
 
-            let attacker = self.least_valuable_attacker(our_attackers);
+            let attacker_type = self.least_valuable_attacker(our_attackers);
 
             // The king cannot capture a protected piece; the side to move loses the exchange
-            if attacker == PieceType::King && !(attackers & self.colors(!stm)).is_empty() {
+            if attacker_type == PieceType::King && !(attackers & self.colors(!stm)).is_empty() {
                 break;
             }
 
             // Make the capture
-            last_attacker = (self.pieces(attacker) & our_attackers).lsb();
+            last_attacker = (self.pieces(attacker_type) & our_attackers).lsb();
             occupancies.clear(last_attacker);
             stm = !stm;
 
             // Assume our piece is going to be captured
-            balance = -balance - 1 - attacker.value();
+            balance = -balance - 1 - attacker_type.value();
             if balance >= 0 {
                 break;
             }
 
             // Capturing a piece may reveal a new sliding attacker
-            if [PieceType::Pawn, PieceType::Bishop, PieceType::Queen].contains(&attacker) {
+            if [PieceType::Pawn, PieceType::Bishop, PieceType::Queen].contains(&attacker_type) {
                 attackers |= bishop_attacks(mv.to(), occupancies) & diagonal;
             }
-            if [PieceType::Rook, PieceType::Queen].contains(&attacker) {
+            if [PieceType::Rook, PieceType::Queen].contains(&attacker_type) {
                 attackers |= rook_attacks(mv.to(), occupancies) & orthogonal;
             }
             attackers &= occupancies;
