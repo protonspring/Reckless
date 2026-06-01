@@ -39,20 +39,8 @@ impl Board {
 
         self.increment_stack();
 
-        if mv.is_promotion() {
-            to_piece = Piece::new(stm, mv.promo_piece_type());
-            self.state.material += to_piece.value() - PieceType::Pawn.value();
-        }
-
-        let captured = self.piece_on(to);
-        self.state.captured = Some(captured);
         self.state.plies_from_null += 1;
-
-        if mv.kind() == MoveKind::Capture || piece.piece_type() == PieceType::Pawn {
-            self.state.fiftymove_clock = 0;
-        } else {
-            self.state.fiftymove_clock += 1;
-        }
+        self.state.fiftymove_clock += 1;
 
         if mv.is_castling() {
             let (rook_from, rook_to) = self.get_castling_rook(to);
@@ -69,6 +57,18 @@ impl Board {
             self.update_hash(rook, rook_from);
             self.update_hash(rook, rook_to);
         } else {
+            let captured = self.piece_on(to);
+            self.state.captured = Some(captured);
+
+            if mv.kind() == MoveKind::Capture || piece.piece_type() == PieceType::Pawn {
+                self.state.fiftymove_clock = 0;
+            }
+
+            if mv.is_promotion() {
+                to_piece = Piece::new(stm, mv.promo_piece_type());
+                self.state.material += to_piece.value() - PieceType::Pawn.value();
+            }
+
             self.remove_piece(from);
             observer.on_piece_change(self, piece, from, false);
 
@@ -98,16 +98,14 @@ impl Board {
             }
         }
 
-        self.update_hash(piece, from);
-        self.update_hash(to_piece, to);
-
         self.state.castling.raw &= self.castling_rights[from] & self.castling_rights[to];
         self.state.keys.toggle_castling(self.state.castling);
+        self.state.repetition = 0;
 
+        self.update_hash(piece, from);
+        self.update_hash(to_piece, to);
         self.update_threats();
         self.validate_en_passant();
-
-        self.state.repetition = 0;
 
         let end = self.state.plies_from_null.min(self.fiftymove_clock() as usize);
 
