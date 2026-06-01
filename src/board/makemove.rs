@@ -101,12 +101,10 @@ impl Board {
         }
 
         self.update_hash(piece, from);
+        self.update_hash(to_piece, to);
 
         if mv.is_promotion() {
-            self.update_hash(to_piece, to);
             self.state.material += to_piece.value() - PieceType::Pawn.value();
-        } else {
-            self.update_hash(piece, to);
         }
 
         self.state.castling.raw &= self.castling_rights[from] & self.castling_rights[to];
