@@ -102,10 +102,6 @@ impl Board {
             if mv.is_promotion() {
                 let promotion = Piece::new(stm, mv.promo_piece_type());
 
-                //self.remove_piece(to);
-                //self.add_piece(promotion, to);
-                //observer.on_piece_mutate(self, piece, promotion, to);
-
                 self.update_hash(piece, to);
                 self.update_hash(promotion, to);
 
