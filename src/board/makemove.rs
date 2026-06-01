@@ -83,8 +83,9 @@ impl Board {
                 self.state.captured = Some(captured);
             } else {
                 self.remove_piece(from);
+                observer.on_piece_change(self, piece, from, false);
                 self.add_piece(piece, to);
-                observer.on_piece_move(self, piece, from, to);
+                observer.on_piece_change(self, piece, to, true);
 
                 if mv.is_en_passant() {
                     let captured = self.remove_piece(to ^ 8);
