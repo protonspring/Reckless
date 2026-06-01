@@ -98,12 +98,12 @@ impl Board {
                     self.state.keys.toggle_en_passant(self.en_passant());
                 }
             }
+        }
 
-            if mv.is_promotion() {
-                self.update_hash(piece, to);
-                self.update_hash(to_piece, to);
-                self.state.material += to_piece.value() - PieceType::Pawn.value();
-            }
+        if mv.is_promotion() {
+            self.update_hash(piece, to);
+            self.update_hash(to_piece, to);
+            self.state.material += to_piece.value() - PieceType::Pawn.value();
         }
 
         self.update_hash(piece, from);
