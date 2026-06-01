@@ -35,6 +35,11 @@ impl Board {
         let to = mv.to();
         let piece = self.piece_on(from);
         let stm = self.side_to_move();
+        let mut to_piece = piece;
+
+        if mv.is_promotion() {
+            to_piece = Piece::new(stm, mv.promo_piece_type());
+        }
 
         self.increment_stack();
 
@@ -62,50 +67,53 @@ impl Board {
 
             self.update_hash(rook, rook_from);
             self.update_hash(rook, rook_to);
-        } else if captured != Piece::None {
-            self.remove_piece(from);
-            observer.on_piece_change(self, piece, from, false);
-
-            self.remove_piece(to);
-            self.add_piece(piece, to);
-            observer.on_piece_mutate(self, captured, piece, to);
-
-            self.update_hash(captured, to);
-
-            self.state.material -= captured.value();
-            self.state.captured = Some(captured);
         } else {
-            self.remove_piece(from);
-            self.add_piece(piece, to);
-            observer.on_piece_move(self, piece, from, to);
 
-            if mv.is_en_passant() {
-                let captured = self.remove_piece(to ^ 8);
-                observer.on_piece_change(self, captured, to ^ 8, false);
-                self.update_hash(captured, to ^ 8);
+            if captured != Piece::None {
+                self.remove_piece(from);
+                observer.on_piece_change(self, piece, from, false);
+
+                self.remove_piece(to);
+                self.add_piece(piece, to);
+                observer.on_piece_mutate(self, captured, piece, to);
+
+                self.update_hash(captured, to);
+
                 self.state.material -= captured.value();
                 self.state.captured = Some(captured);
-            } else if mv.is_double_push() {
-                self.state.en_passant = to ^ 8;
-                self.state.keys.toggle_en_passant(self.en_passant());
+            } else {
+                self.remove_piece(from);
+                self.add_piece(piece, to);
+                observer.on_piece_move(self, piece, from, to);
+
+                if mv.is_en_passant() {
+                    let captured = self.remove_piece(to ^ 8);
+                    observer.on_piece_change(self, captured, to ^ 8, false);
+                    self.update_hash(captured, to ^ 8);
+                    self.state.material -= captured.value();
+                    self.state.captured = Some(captured);
+                } else if mv.is_double_push() {
+                    self.state.en_passant = to ^ 8;
+                    self.state.keys.toggle_en_passant(self.en_passant());
+                }
+            }
+
+            if mv.is_promotion() {
+                let promotion = Piece::new(stm, mv.promo_piece_type());
+
+                self.remove_piece(to);
+                self.add_piece(promotion, to);
+                observer.on_piece_mutate(self, piece, promotion, to);
+
+                self.update_hash(piece, to);
+                self.update_hash(promotion, to);
+
+                self.state.material += promotion.value() - PieceType::Pawn.value();
             }
         }
 
         self.update_hash(piece, from);
         self.update_hash(piece, to);
-
-        if mv.is_promotion() {
-            let promotion = Piece::new(stm, mv.promo_piece_type());
-
-            self.remove_piece(to);
-            self.add_piece(promotion, to);
-            observer.on_piece_mutate(self, piece, promotion, to);
-
-            self.update_hash(piece, to);
-            self.update_hash(promotion, to);
-
-            self.state.material += promotion.value() - PieceType::Pawn.value();
-        }
 
         self.state.castling.raw &= self.castling_rights[from] & self.castling_rights[to];
         self.state.keys.toggle_castling(self.state.castling);
