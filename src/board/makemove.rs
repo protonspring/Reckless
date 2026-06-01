@@ -7,6 +7,7 @@ impl Board {
         self.state_stack.push(self.state);
         self.state.keys.toggle_side();
         self.state.keys.toggle_castling(self.state.castling);
+        self.state.repetition = 0;
 
         if self.en_passant() != Square::None {
             self.state.keys.toggle_en_passant(self.en_passant());
@@ -17,7 +18,6 @@ impl Board {
     pub fn make_null_move(&mut self) {
         self.increment_stack();
         self.state.plies_from_null = 0;
-        self.state.repetition = 0;
         self.state.captured = None;
         self.update_threats();
     }
@@ -42,11 +42,8 @@ impl Board {
         self.state.captured = Some(captured);
         self.state.plies_from_null += 1;
 
-        if mv.kind() == MoveKind::Capture || piece.piece_type() == PieceType::Pawn {
-            self.state.fiftymove_clock = 0;
-        } else {
-            self.state.fiftymove_clock += 1;
-        }
+        let reset_fmr = mv.kind() == MoveKind::Capture || piece.piece_type() == PieceType::Pawn;
+        self.state.fiftymove_clock = (self.fiftymove_clock() + 1) * !reset_fmr  as u8;
 
         if mv.is_castling() {
             let (rook_from, rook_to) = self.get_castling_rook(to);
@@ -112,8 +109,6 @@ impl Board {
 
         self.update_threats();
         self.validate_en_passant();
-
-        self.state.repetition = 0;
 
         let end = self.state.plies_from_null.min(self.fiftymove_clock() as usize);
 
