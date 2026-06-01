@@ -14,6 +14,7 @@ impl Bitboard {
     pub const LIGHT_SQUARES: Self = Self(0x55AA55AA55AA55AA);
     pub const BOTH_HOME_ROWS: Self = Self(0xFF000000000000FF);
     pub const SIXTH_RANK: [Self; 2] = [Self::rank(Rank::R6), Self::rank(Rank::R3)];
+    pub const SEVENTH_RANK: [Self; 2] = [Self::rank(Rank::R7), Self::rank(Rank::R2)];
     pub const THIRD_RANK: [Self; 2] = [Self::rank(Rank::R3), Self::rank(Rank::R6)];
     pub const HOME_ROWS: [Self; 2] = [Self::rank(Rank::R1), Self::rank(Rank::R8)];
     pub const CORNERS: Self = Self(0x8100000000000081);
