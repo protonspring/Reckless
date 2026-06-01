@@ -100,12 +100,9 @@ impl Board {
             }
 
             if mv.is_promotion() {
-                let promotion = Piece::new(stm, mv.promo_piece_type());
-
                 self.update_hash(piece, to);
-                self.update_hash(promotion, to);
-
-                self.state.material += promotion.value() - PieceType::Pawn.value();
+                self.update_hash(to_piece, to);
+                self.state.material += to_piece.value() - PieceType::Pawn.value();
             }
         }
 
