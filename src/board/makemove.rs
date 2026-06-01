@@ -71,8 +71,9 @@ impl Board {
         } else {
 
             self.remove_piece(from);
+            observer.on_piece_change(self, piece, from, false);
+
             if captured != Piece::None {
-                observer.on_piece_change(self, piece, from, false);
 
                 self.remove_piece(to);
                 self.add_piece(to_piece, to);
@@ -83,7 +84,6 @@ impl Board {
                 self.state.material -= captured.value();
                 self.state.captured = Some(captured);
             } else {
-                observer.on_piece_change(self, piece, from, false);
                 self.add_piece(to_piece, to);
                 observer.on_piece_change(self, to_piece, to, true);
 
