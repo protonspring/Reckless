@@ -69,12 +69,10 @@ impl Board {
             self.update_hash(rook, rook_from);
             self.update_hash(rook, rook_to);
         } else {
-
             self.remove_piece(from);
             observer.on_piece_change(self, piece, from, false);
 
             if captured != Piece::None {
-
                 self.remove_piece(to);
                 self.add_piece(to_piece, to);
                 observer.on_piece_mutate(self, captured, to_piece, to);
