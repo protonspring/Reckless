@@ -37,11 +37,12 @@ impl Board {
         let stm = self.side_to_move();
         let mut to_piece = piece;
 
+        self.increment_stack();
+
         if mv.is_promotion() {
             to_piece = Piece::new(stm, mv.promo_piece_type());
+            self.state.material += to_piece.value() - PieceType::Pawn.value();
         }
-
-        self.increment_stack();
 
         let captured = self.piece_on(to);
         self.state.captured = Some(captured);
@@ -104,7 +105,6 @@ impl Board {
         self.update_hash(to_piece, to);
 
         if mv.is_promotion() {
-            self.state.material += to_piece.value() - PieceType::Pawn.value();
         }
 
         self.state.castling.raw &= self.castling_rights[from] & self.castling_rights[to];
