@@ -70,8 +70,8 @@ impl Board {
             self.update_hash(rook, rook_to);
         } else {
 
+            self.remove_piece(from);
             if captured != Piece::None {
-                self.remove_piece(from);
                 observer.on_piece_change(self, piece, from, false);
 
                 self.remove_piece(to);
@@ -83,7 +83,6 @@ impl Board {
                 self.state.material -= captured.value();
                 self.state.captured = Some(captured);
             } else {
-                self.remove_piece(from);
                 observer.on_piece_change(self, piece, from, false);
                 self.add_piece(to_piece, to);
                 observer.on_piece_change(self, to_piece, to, true);
