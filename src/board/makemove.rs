@@ -39,13 +39,6 @@ impl Board {
 
         self.increment_stack();
 
-        if mv.is_promotion() {
-            to_piece = Piece::new(stm, mv.promo_piece_type());
-            self.state.material += to_piece.value() - PieceType::Pawn.value();
-        }
-
-        let captured = self.piece_on(to);
-        self.state.captured = Some(captured);
         self.state.plies_from_null += 1;
 
         if mv.kind() == MoveKind::Capture || piece.piece_type() == PieceType::Pawn {
@@ -69,8 +62,16 @@ impl Board {
             self.update_hash(rook, rook_from);
             self.update_hash(rook, rook_to);
         } else {
+            if mv.is_promotion() {
+                to_piece = Piece::new(stm, mv.promo_piece_type());
+                self.state.material += to_piece.value() - PieceType::Pawn.value();
+            }
+
             self.remove_piece(from);
             observer.on_piece_change(self, piece, from, false);
+
+            let captured = self.piece_on(to);
+            self.state.captured = Some(captured);
 
             if captured != Piece::None {
                 self.remove_piece(to);
