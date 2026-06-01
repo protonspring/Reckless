@@ -104,9 +104,6 @@ impl Board {
         self.update_hash(piece, from);
         self.update_hash(to_piece, to);
 
-        if mv.is_promotion() {
-        }
-
         self.state.castling.raw &= self.castling_rights[from] & self.castling_rights[to];
         self.state.keys.toggle_castling(self.state.castling);
 
