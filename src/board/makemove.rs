@@ -74,8 +74,8 @@ impl Board {
                 observer.on_piece_change(self, piece, from, false);
 
                 self.remove_piece(to);
-                self.add_piece(piece, to);
-                observer.on_piece_mutate(self, captured, piece, to);
+                self.add_piece(to_piece, to);
+                observer.on_piece_mutate(self, captured, to_piece, to);
 
                 self.update_hash(captured, to);
 
@@ -84,8 +84,8 @@ impl Board {
             } else {
                 self.remove_piece(from);
                 observer.on_piece_change(self, piece, from, false);
-                self.add_piece(piece, to);
-                observer.on_piece_change(self, piece, to, true);
+                self.add_piece(to_piece, to);
+                observer.on_piece_change(self, to_piece, to, true);
 
                 if mv.is_en_passant() {
                     let captured = self.remove_piece(to ^ 8);
@@ -102,9 +102,9 @@ impl Board {
             if mv.is_promotion() {
                 let promotion = Piece::new(stm, mv.promo_piece_type());
 
-                self.remove_piece(to);
-                self.add_piece(promotion, to);
-                observer.on_piece_mutate(self, piece, promotion, to);
+                //self.remove_piece(to);
+                //self.add_piece(promotion, to);
+                //observer.on_piece_mutate(self, piece, promotion, to);
 
                 self.update_hash(piece, to);
                 self.update_hash(promotion, to);
