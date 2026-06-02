@@ -53,8 +53,7 @@ impl Board {
             let rook = self.remove_piece(rook_from);
             observer.on_piece_change(self, rook, rook_from, false);
 
-            self.remove_piece(from);
-            self.add_piece(piece, to);
+            self.move_piece(from, to);
             observer.on_piece_move(self, piece, from, to);
 
             self.add_piece(rook, rook_to);
@@ -63,11 +62,10 @@ impl Board {
             self.update_hash(rook, rook_from);
             self.update_hash(rook, rook_to);
         } else if captured != Piece::None {
-            self.remove_piece(from);
             observer.on_piece_change(self, piece, from, false);
 
             self.remove_piece(to);
-            self.add_piece(piece, to);
+            self.move_piece(from, to);
             observer.on_piece_mutate(self, captured, piece, to);
 
             self.update_hash(captured, to);
@@ -75,8 +73,7 @@ impl Board {
             self.state.material -= captured.value();
             self.state.captured = Some(captured);
         } else {
-            self.remove_piece(from);
-            self.add_piece(piece, to);
+            self.move_piece(from, to);
             observer.on_piece_move(self, piece, from, to);
 
             if mv.is_en_passant() {

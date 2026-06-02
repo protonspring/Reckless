@@ -210,6 +210,11 @@ impl Board {
         piece
     }
 
+    pub fn move_piece(&mut self, from: Square, to: Square) {
+        let piece = self.remove_piece(from);
+        self.add_piece(piece, to);
+    }
+
     pub fn update_hash(&mut self, piece: Piece, square: Square) {
         self.state.keys.toggle(piece, square);
     }
