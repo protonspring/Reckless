@@ -35,6 +35,7 @@ impl Board {
         let to = mv.to();
         let piece = self.piece_on(from);
         let stm = self.side_to_move();
+        let mut to_piece = piece;
 
         self.increment_stack();
 
@@ -46,6 +47,11 @@ impl Board {
             self.state.fiftymove_clock = 0;
         } else {
             self.state.fiftymove_clock += 1;
+        }
+
+        if mv.is_promotion() {
+            to_piece = Piece::new(stm, mv.promo_piece_type());
+            self.state.material += to_piece.value() - PieceType::Pawn.value();
         }
 
         if mv.is_castling() {
@@ -64,15 +70,16 @@ impl Board {
             observer.on_piece_change(self, piece, from, false);
 
             self.remove_piece(to);
-            self.add_piece(piece, to);
-            observer.on_piece_mutate(self, captured, piece, to);
+            self.add_piece(to_piece, to);
+            observer.on_piece_mutate(self, captured, to_piece, to);
 
             self.state.material -= captured.value();
             self.state.captured = Some(captured);
         } else {
             self.remove_piece(from);
-            self.add_piece(piece, to);
-            observer.on_piece_move(self, piece, from, to);
+            observer.on_piece_change(self, piece, from, false);
+            self.add_piece(to_piece, to);
+            observer.on_piece_change(self, to_piece, to, true);
 
             if mv.is_en_passant() {
                 let captured = self.remove_piece(to ^ 8);
@@ -83,16 +90,6 @@ impl Board {
                 self.state.en_passant = to ^ 8;
                 self.state.keys.toggle_en_passant(self.en_passant());
             }
-        }
-
-        if mv.is_promotion() {
-            let promotion = Piece::new(stm, mv.promo_piece_type());
-
-            self.remove_piece(to);
-            self.add_piece(promotion, to);
-            observer.on_piece_mutate(self, piece, promotion, to);
-
-            self.state.material += promotion.value() - PieceType::Pawn.value();
         }
 
         self.state.castling.raw &= self.castling_rights[from] & self.castling_rights[to];
