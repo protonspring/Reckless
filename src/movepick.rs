@@ -63,8 +63,11 @@ impl MovePicker {
                 let entry = self.get_best_entry();
                 let threshold = self.threshold.unwrap_or_else(|| -entry.score / 39 + 107);
 
-                // Capturing a hanging piece is never bad
-                if td.board.all_threats().contains(entry.mv.to()) {
+                // Capturing a more valuable piece is never bad
+                let frompt = td.board.type_on(entry.mv.from());
+                let topt = td.board.type_on(entry.mv.to());
+                //if td.board.all_threats().contains(entry.mv.to()) {
+                if frompt >= topt{
                     if (self.tt_move.is_quiet() && self.noisy_count > 2) || !td.board.see(entry.mv, threshold) {
                         self.bad_noisy.push(entry.mv);
                         continue;
