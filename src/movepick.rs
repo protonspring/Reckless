@@ -62,9 +62,12 @@ impl MovePicker {
             while !self.list.is_empty() {
                 let entry = self.get_best_entry();
                 let threshold = self.threshold.unwrap_or_else(|| -entry.score / 39 + 107);
-                if (self.tt_move.is_quiet() && self.noisy_count > 2) || !td.board.see(entry.mv, threshold) {
-                    self.bad_noisy.push(entry.mv);
-                    continue;
+                // queen promos are never "bad"
+                if !(entry.mv.is_promotion() && entry.mv.promo_piece_type() == PieceType::Queen) {
+                    if (self.tt_move.is_quiet() && self.noisy_count > 2) || !td.board.see(entry.mv, threshold) {
+                        self.bad_noisy.push(entry.mv);
+                        continue;
+                    }
                 }
 
                 if NODE::ROOT {
