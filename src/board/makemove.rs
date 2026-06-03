@@ -1,5 +1,5 @@
 use super::{Board, BoardObserver};
-use crate::types::{Move, MoveKind, Piece, PieceType, Square};
+use crate::types::{Move, Piece, PieceType, Square};
 
 impl Board {
     fn increment_stack(&mut self) {
@@ -41,12 +41,8 @@ impl Board {
         let captured = self.piece_on(to);
         self.state.captured = captured;
         self.state.plies_from_null += 1;
-
-        if mv.kind() == MoveKind::Capture || piece.piece_type() == PieceType::Pawn {
-            self.state.fiftymove_clock = 0;
-        } else {
-            self.state.fiftymove_clock += 1;
-        }
+        self.state.fiftymove_clock = (self.fiftymove_clock() + 1)
+            * !(mv.is_capture() || piece.piece_type() == PieceType::Pawn) as u8;
 
         if mv.is_castling() {
             let (rook_from, rook_to) = self.get_castling_rook(to);
